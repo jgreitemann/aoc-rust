@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "aoc_companion",
+    "aoc_2017",
+]
+
+[workspace.dependencies]
+aoc_companion = { path = "aoc_companion" }
+assert_matches = "1.5.0"
+itertools = "0.10.3"
+tokio = "1.21.1"

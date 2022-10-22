@@ -1,0 +1,31 @@
+## File system
+.DS_Store
+
+## Temporary files
+*~
+\#*
+\#*\#
+.#*
+
+## IDE configs
+*.swp
+*.swo
+Session.vim
+.cproject
+.idea
+.fleet
+*.iml
+.vscode
+.project
+.favorites.json
+.settings
+
+## Tools
+.valgrindrc
+.cargo
+
+## Configuration
+/config.toml
+
+## Build artifacts
+/target
