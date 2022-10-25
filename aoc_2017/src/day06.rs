@@ -1,16 +1,19 @@
 use aoc_companion::prelude::*;
-use std::collections::{HashSet, HashMap};
 use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
 
 pub struct Door {
-    bank: Vec<i32>
+    bank: Vec<i32>,
 }
 
-impl ParseInput for Door {
+impl ParseInput<'_> for Door {
     type Error = std::num::ParseIntError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        let bank = input.split_whitespace().map(|s| s.parse()).collect::<Result<Vec<_>, _>>()?;
+        let bank = input
+            .split_whitespace()
+            .map(|s| s.parse())
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Self { bank })
     }
 }
@@ -20,7 +23,9 @@ impl Part1 for Door {
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_redistribution_cycles_until_recurrence(self.bank.clone()))
+        Ok(count_redistribution_cycles_until_recurrence(
+            self.bank.clone(),
+        ))
     }
 }
 
@@ -52,7 +57,7 @@ fn redistribute(bank: &mut [i32]) {
 }
 
 struct Redistributor {
-    current: Vec<i32>
+    current: Vec<i32>,
 }
 
 impl Iterator for Redistributor {
@@ -66,23 +71,30 @@ impl Iterator for Redistributor {
 }
 
 fn count_redistribution_cycles_until_recurrence(bank: Vec<i32>) -> usize {
-    Redistributor{current: bank}.scan(HashSet::new(), |seen, state| {
-        if seen.insert(state) {
-            Some(())
-        } else {
-            None
-        }
-    }).count()
+    Redistributor { current: bank }
+        .scan(HashSet::new(), |seen, state| {
+            if seen.insert(state) {
+                Some(())
+            } else {
+                None
+            }
+        })
+        .count()
 }
 
 fn redistribution_cycle_loop_length(bank: Vec<i32>) -> usize {
-    Redistributor{current: bank}.enumerate().scan(HashMap::new(), |seen, (idx, state)| {
-        if let Some(prev_idx) = seen.insert(state, idx) {
-            Some(idx - prev_idx)
-        } else {
-            Some(0)
-        }
-    }).skip_while(|&x| x == 0).next().unwrap()
+    Redistributor { current: bank }
+        .enumerate()
+        .scan(HashMap::new(), |seen, (idx, state)| {
+            if let Some(prev_idx) = seen.insert(state, idx) {
+                Some(idx - prev_idx)
+            } else {
+                Some(0)
+            }
+        })
+        .skip_while(|&x| x == 0)
+        .next()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -91,26 +103,29 @@ mod tests {
 
     #[test]
     fn redistribution_reproduces_example() {
-        let mut bank = [0,2,7,0];
+        let mut bank = [0, 2, 7, 0];
         redistribute(&mut bank);
-        assert_eq!(bank, [2,4,1,2]);
+        assert_eq!(bank, [2, 4, 1, 2]);
         redistribute(&mut bank);
-        assert_eq!(bank, [3,1,2,3]);
+        assert_eq!(bank, [3, 1, 2, 3]);
         redistribute(&mut bank);
-        assert_eq!(bank, [0,2,3,4]);
+        assert_eq!(bank, [0, 2, 3, 4]);
         redistribute(&mut bank);
-        assert_eq!(bank, [1,3,4,1]);
+        assert_eq!(bank, [1, 3, 4, 1]);
         redistribute(&mut bank);
-        assert_eq!(bank, [2,4,1,2]);
+        assert_eq!(bank, [2, 4, 1, 2]);
     }
 
     #[test]
     fn number_of_redistribution_cycles_until_recurrence_matches_example() {
-        assert_eq!(count_redistribution_cycles_until_recurrence(vec![0,2,7,0]), 5);
+        assert_eq!(
+            count_redistribution_cycles_until_recurrence(vec![0, 2, 7, 0]),
+            5
+        );
     }
 
-#[test]
-fn loop_length_of_redistribution_cycles_matches_example() {
-        assert_eq!(redistribution_cycle_loop_length(vec![0,2,7,0]), 4);
+    #[test]
+    fn loop_length_of_redistribution_cycles_matches_example() {
+        assert_eq!(redistribution_cycle_loop_length(vec![0, 2, 7, 0]), 4);
     }
 }

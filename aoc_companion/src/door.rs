@@ -32,9 +32,9 @@ pub enum DoorError {
     DependentParseError,
 }
 
-pub trait ParseInput: Sized {
+pub trait ParseInput<'input>: Sized {
     type Error: std::error::Error + Send + Sync + 'static;
-    fn parse(input: &str) -> Result<Self, Self::Error>;
+    fn parse(input: &'input str) -> Result<Self, Self::Error>;
 }
 
 pub trait Part1 {
@@ -86,12 +86,14 @@ pub mod detail {
     // http://lukaskalbertodt.github.io/2019/12/05/generalized-autoref-based-specialization.html
     pub struct AutoRefSpecializationWrapper<T>(pub PhantomData<T>);
 
-    pub trait DoorSolution {
-        fn solve(&self, input: &str) -> DoorResult;
+    pub trait DoorSolution<'input> {
+        fn solve(&self, input: &'input str) -> DoorResult;
     }
 
-    impl<D: ParseInput + Part1> DoorSolution for AutoRefSpecializationWrapper<D> {
-        fn solve(&self, input: &str) -> DoorResult {
+    impl<'input, D> DoorSolution<'input> for AutoRefSpecializationWrapper<D>
+    where D: ParseInput<'input> + Part1
+    {
+        fn solve(&self, input: &'input str) -> DoorResult {
             DoorResult {
                 part1: match D::parse(input) {
                     Ok(door) => DoorPartResult::timed(|| door.part1()),
@@ -102,8 +104,10 @@ pub mod detail {
         }
     }
 
-    impl<D: ParseInput + Part1 + Part2> DoorSolution for &AutoRefSpecializationWrapper<D> {
-        fn solve(&self, input: &str) -> DoorResult {
+    impl<'input, D> DoorSolution<'input> for &AutoRefSpecializationWrapper<D>
+    where D: ParseInput<'input> + Part1 + Part2
+    {
+        fn solve(&self, input: &'input str) -> DoorResult {
             match D::parse(input) {
                 Ok(door) => DoorResult {
                     part1: DoorPartResult::timed(|| door.part1()),

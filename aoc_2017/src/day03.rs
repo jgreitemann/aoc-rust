@@ -6,7 +6,7 @@ pub struct Door {
     input: usize,
 }
 
-impl ParseInput for Door {
+impl ParseInput<'_> for Door {
     type Error = ParseIntError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {

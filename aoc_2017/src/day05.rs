@@ -12,7 +12,7 @@ pub struct Door {
     jumps: Vec<isize>,
 }
 
-impl ParseInput for Door {
+impl ParseInput<'_> for Door {
     type Error = std::num::ParseIntError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
