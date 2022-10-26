@@ -6,7 +6,13 @@ use std::{
 };
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub enum ParseError {
+    #[error("Input line doesn't not match regular expression: {line:?}")]
+    LineDoesNotMatch { line: String },
+}
+
+#[derive(Debug, Error)]
+pub enum GraphError {
     #[error("The graph is cyclic")]
     GraphIsCyclic,
     #[error("There are multiple tree components")]
@@ -18,18 +24,17 @@ pub struct Door<'input> {
 }
 
 impl<'input> ParseInput<'input> for Door<'input> {
-    type Error = std::convert::Infallible;
+    type Error = ParseError;
 
     fn parse(input: &'input str) -> Result<Self, Self::Error> {
-        Ok(Self {
-            forward_relations: parse_input(input),
-        })
+        let forward_relations = parse_input(input)?;
+        Ok(Self { forward_relations })
     }
 }
 
 impl<'input> Part1 for Door<'input> {
     type Output = ProgramName<'input>;
-    type Error = Error;
+    type Error = GraphError;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
         find_bottom_program(&self.forward_relations)
@@ -53,14 +58,21 @@ struct ForwardRelation<'input> {
 
 fn parse_input<'input>(
     input: &'input str,
-) -> HashMap<ProgramName<'input>, ForwardRelation<'input>> {
+) -> Result<HashMap<ProgramName<'input>, ForwardRelation<'input>>, ParseError> {
     let re = regex::Regex::new(
-        r"(?P<prog>\w+) \((?P<weight>\d+)\)(?: -> (?P<decendents>(?:\w+)(?:, (?:\w+))*))?",
+        r"^(?P<prog>\w+) \((?P<weight>\d+)\)(?: -> (?P<decendents>(?:\w+)(?:, (?:\w+))*))?$",
     )
     .unwrap();
 
-    re.captures_iter(input)
-        .map(|caps| {
+    input
+        .lines()
+        .map(|line| {
+            re.captures(line)
+                .ok_or_else(|| ParseError::LineDoesNotMatch {
+                    line: line.to_string(),
+                })
+        })
+        .map_ok(|caps| {
             (
                 ProgramName(caps.name("prog").unwrap().as_str()),
                 ForwardRelation {
@@ -83,7 +95,7 @@ fn parse_input<'input>(
 
 fn find_bottom_program<'input>(
     forward_relations: &HashMap<ProgramName<'input>, ForwardRelation<'input>>,
-) -> Result<ProgramName<'input>, Error> {
+) -> Result<ProgramName<'input>, GraphError> {
     let dependent_programs: HashSet<ProgramName> = forward_relations
         .values()
         .flat_map(|r| r.decendents.iter())
@@ -94,8 +106,8 @@ fn find_bottom_program<'input>(
         .filter(|k| !dependent_programs.contains(k))
         .cloned()
         .at_most_one()
-        .map_err(|_| Error::MultipleTreeComponents)?
-        .ok_or(Error::GraphIsCyclic)
+        .map_err(|_| GraphError::MultipleTreeComponents)?
+        .ok_or(GraphError::GraphIsCyclic)
 }
 
 #[cfg(test)]
@@ -122,7 +134,7 @@ cntj (57)
     #[fixture]
     #[once]
     fn forward_relations() -> HashMap<ProgramName<'static>, ForwardRelation<'static>> {
-        parse_input(EXAMPLE_INPUT)
+        parse_input(EXAMPLE_INPUT).unwrap()
     }
 
     #[rstest]
@@ -139,7 +151,7 @@ cntj (57)
     #[case("ugml", 68, &["gyxo", "ebii", "jptl"])]
     #[case("gyxo", 61, &[])]
     #[case("cntj", 57, &[])]
-    fn input_is_parsed(
+    fn valid_input_is_parsed(
         forward_relations: &HashMap<ProgramName, ForwardRelation>,
         #[case] prog: &str,
         #[case] exp_weight: u32,
@@ -156,6 +168,16 @@ cntj (57)
     }
 
     #[rstest]
+    #[case("A -> B")]
+    #[case("A (42) B")]
+    #[case("A (-1) -> B")]
+    #[case("A (42) -> , B")]
+    #[case("A (42) -> B\nfoo")]
+    fn invalid_input_produces_errors(#[case] input: &str) {
+        assert_matches!(parse_input(input), Err(ParseError::LineDoesNotMatch { .. }));
+    }
+
+    #[rstest]
     fn bottom_program_is_found(forward_relations: &HashMap<ProgramName, ForwardRelation>) {
         assert_matches!(
             find_bottom_program(forward_relations),
@@ -163,31 +185,33 @@ cntj (57)
         );
     }
 
-    #[rstest]
+    #[test]
     fn bottom_program_does_not_exist_because_of_cycles() {
         let forward_relations = parse_input(
             r#"A (42) -> B
 B (42) -> C
 C (42) -> A
 "#,
-        );
+        )
+        .unwrap();
         assert_matches!(
             find_bottom_program(&forward_relations),
-            Err(Error::GraphIsCyclic)
+            Err(GraphError::GraphIsCyclic)
         );
     }
 
-    #[rstest]
+    #[test]
     fn bottom_program_is_ambiguous_because_graph_has_multiple_components() {
         let forward_relations = parse_input(
             r#"A (42) -> B
 B (42) -> C
 D (42) -> E
 "#,
-        );
+        )
+        .unwrap();
         assert_matches!(
             find_bottom_program(&forward_relations),
-            Err(Error::MultipleTreeComponents)
+            Err(GraphError::MultipleTreeComponents)
         );
     }
 }
