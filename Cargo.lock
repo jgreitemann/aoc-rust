@@ -26,6 +26,7 @@ dependencies = [
  "itertools",
  "regex",
  "rstest",
+ "thiserror",
  "tokio",
 ]
 

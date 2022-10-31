@@ -8,4 +8,5 @@ members = [
 aoc_companion = { path = "aoc_companion" }
 assert_matches = "1.5.0"
 itertools = "0.10.3"
+thiserror = "1.0.37"
 tokio = "1.21.1"
