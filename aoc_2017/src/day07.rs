@@ -4,6 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
 };
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ParseError {
