@@ -91,7 +91,8 @@ pub mod detail {
     }
 
     impl<'input, D> DoorSolution<'input> for AutoRefSpecializationWrapper<D>
-    where D: ParseInput<'input> + Part1
+    where
+        D: ParseInput<'input> + Part1,
     {
         fn solve(&self, input: &'input str) -> DoorResult {
             DoorResult {
@@ -105,7 +106,8 @@ pub mod detail {
     }
 
     impl<'input, D> DoorSolution<'input> for &AutoRefSpecializationWrapper<D>
-    where D: ParseInput<'input> + Part1 + Part2
+    where
+        D: ParseInput<'input> + Part1 + Part2,
     {
         fn solve(&self, input: &'input str) -> DoorResult {
             match D::parse(input) {

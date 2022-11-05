@@ -280,6 +280,9 @@ c inc -20 if c == 10
 
     #[test]
     fn largest_intermediate_register_value_is_determined() {
-        assert_matches!(largest_intermediate_register_value(EXAMPLE_INSTRUCTIONS), Ok(10));
+        assert_matches!(
+            largest_intermediate_register_value(EXAMPLE_INSTRUCTIONS),
+            Ok(10)
+        );
     }
 }
