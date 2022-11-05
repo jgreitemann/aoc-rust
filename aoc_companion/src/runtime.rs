@@ -1,4 +1,5 @@
 use crate::api::*;
+use crate::cli::*;
 use crate::door::*;
 use crate::output::*;
 use crate::validation::*;
@@ -9,10 +10,13 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
+    let opts = Options::parse();
+
     let (tx, rx) = mpsc::channel(25);
     let updater_task = tokio::task::spawn(process_progress_updates(rx, prefilled_screen()?, doors));
 
-    let result = run_door_tasks(tx, doors).await;
+    let client = caching_client(opts.empty_cache)?;
+    let result = run_door_tasks(tx, doors, client).await;
 
     let final_table = updater_task.await?;
     if result.is_ok() {
@@ -49,9 +53,15 @@ where
     validate_answer(date, answer, &status, client.as_ref()).await
 }
 
-async fn run_door_tasks(tx: mpsc::Sender<DoorProgress>, doors: &'static [DoorEntry]) -> Result<()> {
-    let client = Arc::new(caching_client()?);
-
+async fn run_door_tasks<C>(
+    tx: mpsc::Sender<DoorProgress>,
+    doors: &'static [DoorEntry],
+    client: C,
+) -> Result<()>
+where
+    C: AoCClient + Send + Sync + 'static,
+{
+    let client = Arc::new(client);
     let mut set = tokio::task::JoinSet::new();
     for entry in doors {
         set.spawn(handle_door(entry, client.clone(), tx.clone()));

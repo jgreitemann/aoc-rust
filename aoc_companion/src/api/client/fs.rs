@@ -13,6 +13,12 @@ impl FilesystemCache {
             dir: std::env::temp_dir().join("aoc-cache"),
         }
     }
+
+    pub fn clean_tmp() -> std::io::Result<Self> {
+        let cache = Self::tmp();
+        std::fs::remove_dir_all(&cache.dir)?;
+        Ok(cache)
+    }
 }
 
 #[async_trait]

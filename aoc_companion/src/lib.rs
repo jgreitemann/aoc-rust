@@ -1,4 +1,5 @@
 mod api;
+mod cli;
 pub mod door;
 mod output;
 mod runtime;

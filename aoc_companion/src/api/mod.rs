@@ -10,9 +10,13 @@ pub fn plain_client() -> anyhow::Result<impl AoCClient> {
 }
 
 #[allow(dead_code)]
-pub fn caching_client() -> anyhow::Result<impl AoCClient> {
+pub fn caching_client(empty_cache: bool) -> anyhow::Result<impl AoCClient> {
     Ok(client::CachingClient::new(
         client::WebClient::new()?,
-        client::FilesystemCache::tmp(),
+        if empty_cache {
+            client::FilesystemCache::clean_tmp()?
+        } else {
+            client::FilesystemCache::tmp()
+        },
     ))
 }
