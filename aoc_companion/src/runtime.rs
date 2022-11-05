@@ -4,18 +4,23 @@ use crate::output::*;
 use crate::validation::*;
 
 use anyhow::Result;
+use std::io::Write;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
     let (tx, rx) = mpsc::channel(25);
     let updater_task = tokio::task::spawn(process_progress_updates(rx, prefilled_screen()?, doors));
-    run_door_tasks(tx, doors).await?;
+
+    let result = run_door_tasks(tx, doors).await;
 
     let final_table = updater_task.await?;
-    print!("{final_table}");
+    if result.is_ok() {
+        print!("{final_table}");
+    }
+    std::io::stdout().lock().flush()?;
 
-    Ok(())
+    result
 }
 
 async fn handle_door<C>(
