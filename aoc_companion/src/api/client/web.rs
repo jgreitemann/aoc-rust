@@ -3,9 +3,18 @@ use crate::door::{DoorDate, Part};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use thiserror::Error;
 
 use std::collections::HashMap;
 use std::sync::Arc;
+
+#[derive(Debug, Error)]
+pub enum SessionError {
+    #[error("Failed to retrieve SESSION environment variable")]
+    CannotAccessSessionEnvVar,
+    #[error("The session token is invalid; it may have expired. Log into https://adventofcode.com/ and update the session token.")]
+    AuthenticationInvalidOrExpired,
+}
 
 pub struct WebClient {
     http: reqwest::Client,
@@ -13,8 +22,7 @@ pub struct WebClient {
 
 impl WebClient {
     pub fn new() -> Result<Self> {
-        let session =
-            std::env::var("SESSION").context("Failed to retrieve SESSION environment variable")?;
+        let session = std::env::var("SESSION").context(SessionError::CannotAccessSessionEnvVar)?;
 
         let jar = reqwest::cookie::Jar::default();
         jar.add_cookie_str(
@@ -24,6 +32,7 @@ impl WebClient {
 
         let http = reqwest::Client::builder()
             .cookie_provider(Arc::new(jar))
+            .redirect(reqwest::redirect::Policy::none())
             .build()?;
 
         Ok(Self { http })
@@ -37,10 +46,16 @@ impl AoCClient for WebClient {
             .http
             .get(format!("https://adventofcode.com/{year}/day/{day}/input"))
             .send()
-            .await?
-            .text()
             .await?;
-        Ok(resp)
+
+        if resp.status() == reqwest::StatusCode::from_u16(400).unwrap() {
+            // Bad request in case of authentication failure
+            return Err(SessionError::AuthenticationInvalidOrExpired).context(format!(
+                "Failed to authenticate when downloading input for day {day}, {year}"
+            ));
+        }
+
+        Ok(resp.text().await?)
     }
 
     async fn get_day(&self, &DoorDate { year, day }: &DoorDate) -> Result<DayResponse> {
@@ -67,10 +82,17 @@ impl AoCClient for WebClient {
             .post(format!("https://adventofcode.com/{year}/day/{day}/answer"))
             .form(&form)
             .send()
-            .await?
-            .text()
             .await?;
-        AnswerResponse::parse(&resp).with_context(|| {
+
+        if resp.status() == reqwest::StatusCode::from_u16(302).unwrap() {
+            // Redirect in case of authentication failure
+            return Err(SessionError::AuthenticationInvalidOrExpired).context(format!(
+                "Failed to authenticate when posting the answer for day {day}, {year}"
+            ));
+        }
+
+        let text = resp.text().await?;
+        AnswerResponse::parse(&text).with_context(|| {
             format!(
                 "Failed to parse server response after posting the answer for day {day}, {year}"
             )
