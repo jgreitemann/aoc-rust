@@ -28,9 +28,9 @@ pub async fn validate_answer(
     answer: DoorResult,
     submitted: &DayResponse,
     client: &(dyn AoCClient + Send + Sync),
-) -> ValidationResult {
+) -> Result<ValidationResult> {
     use Part::*;
-    ValidationResult {
+    Ok(ValidationResult {
         date: date.clone(),
         part1: validate_part(
             date,
@@ -39,7 +39,7 @@ pub async fn validate_answer(
             submitted.first_half.as_deref(),
             client,
         )
-        .await,
+        .await?,
         part2: validate_part(
             date,
             Part2,
@@ -47,8 +47,8 @@ pub async fn validate_answer(
             submitted.second_half.as_deref(),
             client,
         )
-        .await,
-    }
+        .await?,
+    })
 }
 
 async fn validate_part(
@@ -57,31 +57,37 @@ async fn validate_part(
     guess: Result<DoorPartResult>,
     submitted: Option<&str>,
     client: &(dyn AoCClient + Send + Sync),
-) -> Result<PartValidation> {
+) -> Result<Result<PartValidation>> {
     use PartValidity::*;
-    let guess = guess?;
-    let answer = &guess.answer;
-    let validity = match submitted {
-        Some(correct) if correct == answer => AlreadySolved,
-        Some(correct) => DisparateAnswer {
-            correct: correct.to_owned(),
-        },
-        None => GuessSubmitted(client.post_answer(date, part, &answer).await?),
-    };
 
-    // sanity check
+    Ok(match guess {
+        Ok(DoorPartResult { ref answer, .. }) => {
+            let validity = match submitted {
+                Some(correct) if correct == answer => AlreadySolved,
+                Some(correct) => DisparateAnswer {
+                    correct: correct.to_owned(),
+                },
+                None => GuessSubmitted(client.post_answer(date, part, &answer).await?),
+            };
 
-    use AnswerResponse::*;
-    match &validity {
-        GuessSubmitted(IncorrectTooHigh { guess })
-        | GuessSubmitted(IncorrectTooLow { guess })
-        | GuessSubmitted(IncorrectTooManyGuesses { guess }) => {
-            assert_eq!(guess, answer, "The guess '{guess}' stated in the server response does not match the answer '{answer}' which we calculated; this may indicate a bug which led to us submitting the wrong thing");
+            // sanity check
+            use AnswerResponse::*;
+            match &validity {
+                GuessSubmitted(IncorrectTooHigh { guess })
+                | GuessSubmitted(IncorrectTooLow { guess })
+                | GuessSubmitted(IncorrectTooManyGuesses { guess }) => {
+                    assert_eq!(guess, answer, "The guess '{guess}' stated in the server response does not match the answer '{answer}' which we calculated; this may indicate a bug which led to us submitting the wrong thing");
+                }
+                _ => {}
+            }
+
+            Ok(PartValidation {
+                guess: guess.unwrap(),
+                validity,
+            })
         }
-        _ => {}
-    }
-
-    Ok(PartValidation { guess, validity })
+        Err(e) => Err(e),
+    })
 }
 
 #[cfg(test)]
@@ -167,7 +173,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
                     validity: AlreadySolved,
@@ -177,7 +183,7 @@ mod tests {
                     validity: AlreadySolved,
                     ..
                 })
-            }
+            })
         );
     }
 
@@ -198,11 +204,11 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation { validity: DisparateAnswer { correct }, ..}),
                 part2: Ok(PartValidation { validity: AlreadySolved, ..})
-            } if &correct == "42"
+            }) if &correct == "42"
         );
     }
 
@@ -223,7 +229,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
                     validity: GuessSubmitted(Correct),
@@ -233,7 +239,7 @@ mod tests {
                     validity: GuessSubmitted(Correct),
                     ..
                 })
-            }
+            })
         );
         assert_matches!(
             validate_answer(
@@ -249,7 +255,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
                     validity: AlreadySolved,
@@ -259,7 +265,7 @@ mod tests {
                     validity: GuessSubmitted(Correct),
                     ..
                 })
-            }
+            })
         );
     }
 
@@ -280,7 +286,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
                     validity: GuessSubmitted(IncorrectTooHigh { .. }),
@@ -290,7 +296,7 @@ mod tests {
                     validity: GuessSubmitted(IncorrectTooManyGuesses { .. }),
                     ..
                 })
-            }
+            })
         );
     }
 
@@ -311,7 +317,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
+            Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
                     validity: AlreadySolved,
@@ -321,7 +327,7 @@ mod tests {
                     validity: GuessSubmitted(GuessedTooRecently),
                     ..
                 })
-            }
+            })
         );
     }
 
@@ -345,17 +351,7 @@ mod tests {
                 &client
             )
             .await,
-            ValidationResult {
-                date: DoorDate {
-                    day: 27,
-                    year: 2042
-                },
-                part1: Ok(PartValidation {
-                    validity: AlreadySolved,
-                    ..
-                }),
-                part2: Err(_)
-            }
+            Err(_)
         );
     }
 }

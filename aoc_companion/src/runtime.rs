@@ -41,7 +41,7 @@ where
     progress_sender
         .send(DoorProgress(*date, Progress::ValidatingAnswer))
         .await?;
-    Ok(validate_answer(date, answer, &status, client.as_ref()).await)
+    validate_answer(date, answer, &status, client.as_ref()).await
 }
 
 async fn run_door_tasks(tx: mpsc::Sender<DoorProgress>, doors: &'static [DoorEntry]) -> Result<()> {
