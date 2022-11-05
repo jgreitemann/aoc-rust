@@ -70,6 +70,10 @@ impl AoCClient for WebClient {
             .await?
             .text()
             .await?;
-        Ok(AnswerResponse::parse(&resp))
+        AnswerResponse::parse(&resp).with_context(|| {
+            format!(
+                "Failed to parse server response after posting the answer for day {day}, {year}"
+            )
+        })
     }
 }
