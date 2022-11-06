@@ -34,24 +34,36 @@ fn write_answer(
     use PartValidity::*;
     let (message, emoji) = match validation {
         Ok(PartValidation {
-            guess: DoorPartResult { answer, time },
-            validity: AlreadySolved,
+            guess: DoorPartResult::Computed { answer, time },
+            validity: Consistent,
         }) => (format!("{answer} ({time:?})"), '⭐'),
         Ok(PartValidation {
-            guess: DoorPartResult { answer, .. },
+            guess: DoorPartResult::Computed { answer, .. },
             validity: DisparateAnswer { correct },
         }) => (format!("{answer}, but correct answer was {correct}"), '💢'),
         Ok(PartValidation {
-            guess: DoorPartResult { answer, time },
+            guess: DoorPartResult::Computed { answer, time },
             validity: GuessSubmitted(Correct),
         }) => (format!("{answer} ({time:?})"), '🌟'),
         Ok(PartValidation {
-            guess: DoorPartResult { answer, .. },
+            guess: DoorPartResult::Computed { answer, .. },
             validity: GuessSubmitted(GuessedTooRecently),
         }) => (
             format!("{answer} (unable to submit; guessed too recently)"),
             '🕑',
         ),
+        Ok(PartValidation {
+            guess: DoorPartResult::Skipped,
+            validity: Skipped { correct },
+        }) => (format!("{correct} (skipped)"), '⭐'),
+        Ok(PartValidation {
+            guess: DoorPartResult::Skipped,
+            validity: _,
+        })
+        | Ok(PartValidation {
+            guess: DoorPartResult::Computed { .. },
+            validity: Skipped { .. },
+        }) => panic!("Inconsistent PartValidation state"),
         Ok(PartValidation {
             validity: GuessSubmitted(IncorrectTooLow { guess }),
             ..

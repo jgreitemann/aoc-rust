@@ -11,7 +11,8 @@ pub struct PartValidation {
 
 #[derive(Debug, PartialEq)]
 pub enum PartValidity {
-    AlreadySolved,
+    Consistent,
+    Skipped { correct: String },
     DisparateAnswer { correct: String },
     GuessSubmitted(AnswerResponse),
 }
@@ -61,9 +62,9 @@ async fn validate_part(
     use PartValidity::*;
 
     Ok(match guess {
-        Ok(DoorPartResult { ref answer, .. }) => {
+        Ok(DoorPartResult::Computed { ref answer, .. }) => {
             let validity = match submitted {
-                Some(correct) if correct == answer => AlreadySolved,
+                Some(correct) if correct == answer => Consistent,
                 Some(correct) => DisparateAnswer {
                     correct: correct.to_owned(),
                 },
@@ -86,6 +87,12 @@ async fn validate_part(
                 validity,
             })
         }
+        Ok(DoorPartResult::Skipped) => Ok(PartValidation {
+            guess: guess.unwrap(),
+            validity: Skipped {
+                correct: submitted.unwrap().to_owned(),
+            },
+        }),
         Err(e) => Err(e),
     })
 }
@@ -106,7 +113,7 @@ mod tests {
     };
 
     fn make_part_result(ans: &str) -> Result<DoorPartResult> {
-        Ok(DoorPartResult {
+        Ok(DoorPartResult::Computed {
             answer: ans.to_string(),
             time: Default::default(),
         })
@@ -176,11 +183,11 @@ mod tests {
             Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
-                    validity: AlreadySolved,
+                    validity: Consistent,
                     ..
                 }),
                 part2: Ok(PartValidation {
-                    validity: AlreadySolved,
+                    validity: Consistent,
                     ..
                 })
             })
@@ -207,7 +214,7 @@ mod tests {
             Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation { validity: DisparateAnswer { correct }, ..}),
-                part2: Ok(PartValidation { validity: AlreadySolved, ..})
+                part2: Ok(PartValidation { validity: Consistent, ..})
             }) if &correct == "42"
         );
     }
@@ -258,7 +265,7 @@ mod tests {
             Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
-                    validity: AlreadySolved,
+                    validity: Consistent,
                     ..
                 }),
                 part2: Ok(PartValidation {
@@ -320,7 +327,7 @@ mod tests {
             Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
-                    validity: AlreadySolved,
+                    validity: Consistent,
                     ..
                 }),
                 part2: Ok(PartValidation {

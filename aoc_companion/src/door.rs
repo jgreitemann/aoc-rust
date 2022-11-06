@@ -49,12 +49,15 @@ pub trait Part2 {
     fn part2(&self) -> Result<Self::Output, Self::Error>;
 }
 
-pub struct DoorEntry(pub DoorDate, pub fn(&str) -> DoorResult);
+pub struct DoorEntry(pub DoorDate, pub fn(&str, usize) -> DoorResult);
 
 #[derive(Debug, PartialEq)]
-pub struct DoorPartResult {
-    pub answer: String,
-    pub time: std::time::Duration,
+pub enum DoorPartResult {
+    Computed {
+        answer: String,
+        time: std::time::Duration,
+    },
+    Skipped,
 }
 
 impl DoorPartResult {
@@ -67,7 +70,7 @@ impl DoorPartResult {
         let start = std::time::Instant::now();
         let answer = part_fn()?;
         let end = std::time::Instant::now();
-        Ok(DoorPartResult {
+        Ok(DoorPartResult::Computed {
             answer: answer.to_string(),
             time: end - start,
         })
@@ -87,18 +90,22 @@ pub mod detail {
     pub struct AutoRefSpecializationWrapper<T>(pub PhantomData<T>);
 
     pub trait DoorSolution<'input> {
-        fn solve(&self, input: &'input str) -> DoorResult;
+        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult;
     }
 
     impl<'input, D> DoorSolution<'input> for AutoRefSpecializationWrapper<D>
     where
         D: ParseInput<'input> + Part1,
     {
-        fn solve(&self, input: &'input str) -> DoorResult {
+        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult {
             DoorResult {
-                part1: match D::parse(input) {
-                    Ok(door) => DoorPartResult::timed(|| door.part1()),
-                    Err(err) => Err(anyhow::Error::from(err)),
+                part1: if parts_solved == 0 {
+                    match D::parse(input) {
+                        Ok(door) => DoorPartResult::timed(|| door.part1()),
+                        Err(err) => Err(anyhow::Error::from(err)),
+                    }
+                } else {
+                    Ok(DoorPartResult::Skipped)
                 },
                 part2: Err(anyhow!(DoorError::SolutionNotImplemented)),
             }
@@ -109,16 +116,32 @@ pub mod detail {
     where
         D: ParseInput<'input> + Part1 + Part2,
     {
-        fn solve(&self, input: &'input str) -> DoorResult {
-            match D::parse(input) {
-                Ok(door) => DoorResult {
-                    part1: DoorPartResult::timed(|| door.part1()),
-                    part2: DoorPartResult::timed(|| door.part2()),
-                },
-                Err(err) => DoorResult {
-                    part1: Err(anyhow::Error::from(err)),
-                    part2: Err(anyhow!(DoorError::DependentParseError)),
-                },
+        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult {
+            if parts_solved >= 2 {
+                DoorResult {
+                    part1: Ok(DoorPartResult::Skipped),
+                    part2: Ok(DoorPartResult::Skipped),
+                }
+            } else {
+                match D::parse(input) {
+                    Ok(door) => {
+                        if parts_solved == 0 {
+                            DoorResult {
+                                part1: DoorPartResult::timed(|| door.part1()),
+                                part2: DoorPartResult::timed(|| door.part2()),
+                            }
+                        } else {
+                            DoorResult {
+                                part1: Ok(DoorPartResult::Skipped),
+                                part2: DoorPartResult::timed(|| door.part2()),
+                            }
+                        }
+                    }
+                    Err(err) => DoorResult {
+                        part1: Err(anyhow::Error::from(err)),
+                        part2: Err(anyhow!(DoorError::DependentParseError)),
+                    },
+                }
             }
         }
     }
@@ -127,9 +150,10 @@ pub mod detail {
 #[macro_export]
 macro_rules! door {
     ($date:expr, $d:ty) => {
-        aoc_companion::door::DoorEntry($date, |input| {
+        aoc_companion::door::DoorEntry($date, |input, parts_solved| {
             use aoc_companion::door::detail::*;
-            (&&AutoRefSpecializationWrapper(std::marker::PhantomData::<$d>)).solve(input)
+            (&&AutoRefSpecializationWrapper(std::marker::PhantomData::<$d>))
+                .solve(input, parts_solved)
         })
     };
 }

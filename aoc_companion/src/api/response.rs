@@ -35,7 +35,7 @@ fn solution_after_article(article: ElementRef) -> Option<String> {
 }
 
 impl DayResponse {
-    pub fn parse(response: &str) -> Self {
+    pub(crate) fn parse(response: &str) -> Self {
         let document = Html::parse_document(response);
         let article_selector = Selector::parse("article").unwrap();
         let articles = document.select(&article_selector);
@@ -50,6 +50,13 @@ impl DayResponse {
             first_half,
             second_half,
         }
+    }
+
+    pub(crate) fn solved_count(&self) -> usize {
+        [&self.first_half, &self.second_half]
+            .into_iter()
+            .flatten()
+            .count()
     }
 }
 

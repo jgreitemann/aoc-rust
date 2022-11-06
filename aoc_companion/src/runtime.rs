@@ -16,7 +16,7 @@ pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
     let (tx, rx) = mpsc::channel(25);
     let updater_task = tokio::task::spawn(process_progress_updates(rx, prefilled_screen()?, doors));
 
-    let result = run_door_tasks(tx, doors, client).await;
+    let result = run_door_tasks(tx, doors, client, &opts).await;
 
     let final_table = updater_task.await?;
     if result.is_ok() {
@@ -31,6 +31,7 @@ async fn handle_door<C>(
     DoorEntry(date, door_fn): &DoorEntry,
     client: Arc<C>,
     progress_sender: mpsc::Sender<DoorProgress>,
+    opts: Options,
 ) -> Result<ValidationResult>
 where
     C: AoCClient + Send + Sync,
@@ -46,7 +47,12 @@ where
     progress_sender
         .send(DoorProgress(*date, Progress::ComputingAnswer))
         .await?;
-    let answer = door_fn(&input);
+    let parts_considered_solved = if opts.skip_solved {
+        status.solved_count()
+    } else {
+        0
+    };
+    let answer = door_fn(&input, parts_considered_solved);
     progress_sender
         .send(DoorProgress(*date, Progress::ValidatingAnswer))
         .await?;
@@ -57,6 +63,7 @@ async fn run_door_tasks<C>(
     tx: mpsc::Sender<DoorProgress>,
     doors: &'static [DoorEntry],
     client: C,
+    opts: &Options,
 ) -> Result<()>
 where
     C: AoCClient + Send + Sync + 'static,
@@ -64,7 +71,7 @@ where
     let client = Arc::new(client);
     let mut set = tokio::task::JoinSet::new();
     for entry in doors {
-        set.spawn(handle_door(entry, client.clone(), tx.clone()));
+        set.spawn(handle_door(entry, client.clone(), tx.clone(), opts.clone()));
     }
 
     while let Some(result) = set.join_next().await {
