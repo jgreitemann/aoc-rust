@@ -11,11 +11,11 @@ use tokio::sync::mpsc;
 
 pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
     let opts = Options::parse();
+    let client = caching_client(opts.empty_cache)?;
 
     let (tx, rx) = mpsc::channel(25);
     let updater_task = tokio::task::spawn(process_progress_updates(rx, prefilled_screen()?, doors));
 
-    let client = caching_client(opts.empty_cache)?;
     let result = run_door_tasks(tx, doors, client).await;
 
     let final_table = updater_task.await?;
