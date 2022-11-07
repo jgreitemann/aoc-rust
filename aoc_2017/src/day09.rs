@@ -1,5 +1,7 @@
 use aoc_companion::prelude::*;
 
+use core::iter::FilterMap;
+
 pub struct Door<'input> {
     stream: &'input str,
 }
@@ -21,13 +23,34 @@ impl Part1 for Door<'_> {
     }
 }
 
+impl Part2 for Door<'_> {
+    type Output = usize;
+    type Error = std::convert::Infallible;
+
+    fn part2(&self) -> Result<Self::Output, Self::Error> {
+        Ok(self.stream.chars().ignore_bangs().count_garbage())
+    }
+}
+
 trait StreamIterator: Iterator<Item = char> + Sized {
     fn ignore_bangs(self) -> IgnoreBangs<Self> {
         IgnoreBangs { iter: self }
     }
 
-    fn skip_garbage(self) -> SkipGarbage<Self> {
-        SkipGarbage { iter: self }
+    fn skip_garbage(self) -> FilterMap<IdentifyGarbage<Self>, fn(StreamElement) -> Option<char>> {
+        IdentifyGarbage { iter: self }.filter_map(|elem| match elem {
+            StreamElement::ValidChar(c) => Some(c),
+            StreamElement::GarbageRun { .. } => None,
+        })
+    }
+
+    fn count_garbage(self) -> usize {
+        IdentifyGarbage { iter: self }
+            .filter_map(|elem| match elem {
+                StreamElement::ValidChar(_) => None,
+                StreamElement::GarbageRun { length } => Some(length),
+            })
+            .sum()
     }
 
     fn group_scores(self) -> GroupScores<Self> {
@@ -70,28 +93,35 @@ where
     }
 }
 
-struct SkipGarbage<I: Iterator<Item = char>> {
+enum StreamElement {
+    ValidChar(char),
+    GarbageRun { length: usize },
+}
+
+struct IdentifyGarbage<I: Iterator<Item = char>> {
     iter: I,
 }
 
-impl<I> Iterator for SkipGarbage<I>
+impl<I> Iterator for IdentifyGarbage<I>
 where
     I: Iterator<Item = char>,
 {
-    type Item = char;
+    type Item = StreamElement;
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut garbage_run = false;
+        let mut length = 0;
+
         while let Some(c) = self.iter.next() {
             if garbage_run {
                 match c {
-                    '>' => garbage_run = false,
-                    _ => continue,
+                    '>' => return Some(StreamElement::GarbageRun { length }),
+                    _ => length += 1,
                 }
             } else {
                 match c {
                     '<' => garbage_run = true,
-                    _ => return Some(c),
+                    c => return Some(StreamElement::ValidChar(c)),
                 }
             }
         }
@@ -176,5 +206,17 @@ mod tests {
     #[case("{{<a!>},{<a!>},{<a!>},{<ab>}}", 3)]
     fn stream_group_score_sums(#[case] stream: &str, #[case] total_score: usize) {
         assert_eq!(stream_group_scores(stream).sum::<usize>(), total_score);
+    }
+
+    #[rstest]
+    #[case("<>", 0)]
+    #[case("<random characters>", 17)]
+    #[case("<<<<>", 3)]
+    #[case("<{!>}>", 2)]
+    #[case("<!!>", 0)]
+    #[case("<!!!>>", 0)]
+    #[case(r#"<{o"i!a,<{i<a>"#, 10)]
+    fn count_garbabe(#[case] stream: &str, #[case] total_garbage: usize) {
+        assert_eq!(stream.chars().ignore_bangs().count_garbage(), total_garbage);
     }
 }
