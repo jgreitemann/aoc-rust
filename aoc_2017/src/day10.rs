@@ -1,6 +1,7 @@
 use aoc_companion::prelude::*;
 
 use itertools::Itertools;
+use tap::tap::Tap;
 use thiserror::Error;
 
 pub struct Door {
@@ -36,9 +37,8 @@ impl Part1 for Door {
 fn apply_ties<const N: usize>(lengths: &[usize]) -> KnotState<N> {
     lengths
         .into_iter()
-        .fold(KnotState::new(), |mut state, &length| {
-            state.tie(length);
-            state
+        .fold(KnotState::new(), |state, &length| {
+            state.tap_mut(|s| s.tie(length))
         })
 }
 
