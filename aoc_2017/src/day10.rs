@@ -4,16 +4,17 @@ use itertools::Itertools;
 use tap::tap::Tap;
 use thiserror::Error;
 
-pub struct Door {
-    lengths: Vec<usize>,
+use std::num::ParseIntError;
+
+pub struct Door<'input> {
+    input: &'input str,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::num::ParseIntError;
+impl<'input> ParseInput<'input> for Door<'input> {
+    type Error = std::convert::Infallible;
 
-    fn parse(input: &str) -> Result<Self, Self::Error> {
-        let lengths = input.trim().split(',').map(str::parse).try_collect()?;
-        Ok(Self { lengths })
+    fn parse(input: &'input str) -> Result<Self, Self::Error> {
+        Ok(Self { input })
     }
 }
 
@@ -21,36 +22,39 @@ impl ParseInput<'_> for Door {
 pub enum Error {
     #[error("The size of the string is insufficient to perform the operation")]
     NotEnoughElements,
-    #[error("Result of multiplication overflowed")]
-    Overflow,
+    #[error(transparent)]
+    ParseError(#[from] ParseIntError),
 }
 
-impl Part1 for Door {
-    type Output = usize;
+impl Part1 for Door<'_> {
+    type Output = u16;
     type Error = Error;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        product_of_first_two_elements(&apply_ties::<256>(&self.lengths))
+        let lengths = as_list_of_numbers(&self.input)?;
+        product_of_first_two_elements(&apply_ties::<256>(lengths.into_iter()))
     }
 }
 
-fn apply_ties<const N: usize>(lengths: &[usize]) -> KnotState<N> {
-    lengths
-        .into_iter()
-        .fold(KnotState::new(), |state, &length| {
-            state.tap_mut(|s| s.tie(length))
-        })
+fn as_list_of_numbers(input: &str) -> Result<Vec<u8>, ParseIntError> {
+    input.trim().split(',').map(str::parse).try_collect()
 }
 
-fn product_of_first_two_elements<const N: usize>(state: &KnotState<N>) -> Result<usize, Error> {
+fn apply_ties<const N: usize>(lengths: impl Iterator<Item = u8>) -> KnotState<N> {
+    lengths.fold(KnotState::new(), |state, length| {
+        state.tap_mut(|s| s.tie(length as usize))
+    })
+}
+
+fn product_of_first_two_elements<const N: usize>(state: &KnotState<N>) -> Result<u16, Error> {
     match state.marks[..] {
-        [first, second, ..] => usize::checked_mul(first, second).ok_or(Error::Overflow),
+        [first, second, ..] => Ok(u16::overflowing_mul(first as u16, second as u16).0),
         _ => Err(Error::NotEnoughElements),
     }
 }
 
 struct KnotState<const N: usize> {
-    marks: [usize; N],
+    marks: [u8; N],
     skip_size: usize,
     current_pos: usize,
 }
@@ -58,7 +62,7 @@ struct KnotState<const N: usize> {
 impl<const N: usize> KnotState<N> {
     fn new() -> Self {
         KnotState {
-            marks: std::array::from_fn(|i| i),
+            marks: std::array::from_fn(|i| i as u8),
             skip_size: 0,
             current_pos: 0,
         }
@@ -80,7 +84,7 @@ mod tests {
 
     use super::*;
 
-    const EXAMPLE_LENGTHS: &[usize] = &[3, 4, 1, 5];
+    const EXAMPLE_LENGTHS: &[u8] = &[3, 4, 1, 5];
 
     #[test]
     fn example_reproduces_intermediate_results() {
@@ -88,7 +92,7 @@ mod tests {
             EXAMPLE_LENGTHS
                 .into_iter()
                 .scan(KnotState::new(), |state, &length| {
-                    state.tie(length);
+                    state.tie(length as usize);
                     Some(state.marks.clone())
                 }),
             [
@@ -103,7 +107,8 @@ mod tests {
     #[test]
     fn example_product_of_first_two_elements() {
         assert_eq!(
-            product_of_first_two_elements(&apply_ties::<5>(EXAMPLE_LENGTHS)).unwrap(),
+            product_of_first_two_elements(&apply_ties::<5>(EXAMPLE_LENGTHS.iter().copied()))
+                .unwrap(),
             12
         );
     }
