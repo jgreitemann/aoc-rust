@@ -65,6 +65,7 @@ pub enum AnswerResponse {
     IncorrectTooLow { guess: String },
     IncorrectTooHigh { guess: String },
     IncorrectTooManyGuesses { guess: String },
+    IncorrectOther,
     GuessedTooRecently,
     Correct,
 }
@@ -90,18 +91,20 @@ impl AnswerResponse {
             Ok(Self::GuessedTooRecently)
         } else {
             if contains_text("not the right answer") {
-                let guess = paragraph
+                if let Some(guess) = paragraph
                     .select(&code_selector)
                     .next()
-                    .ok_or(ResponseParsingError::SelectorDoesNotApply { selector: "code" })?
-                    .inner_html();
-
-                if contains_text("too low") {
-                    Ok(Self::IncorrectTooLow { guess })
-                } else if contains_text("too high") {
-                    Ok(Self::IncorrectTooHigh { guess })
+                    .map(|elem| elem.inner_html())
+                {
+                    if contains_text("too low") {
+                        Ok(Self::IncorrectTooLow { guess })
+                    } else if contains_text("too high") {
+                        Ok(Self::IncorrectTooHigh { guess })
+                    } else {
+                        Ok(Self::IncorrectTooManyGuesses { guess })
+                    }
                 } else {
-                    Ok(Self::IncorrectTooManyGuesses { guess })
+                    Ok(Self::IncorrectOther)
                 }
             } else if contains_text("That's the right answer") {
                 Ok(Self::Correct)
@@ -229,6 +232,7 @@ mod tests {
     const ANSWER_TOO_HIGH: &str = include_str!("data/answer/incorrect_too_high.html");
     const ANSWER_INCORRECT_AFTER_MANY_GUESSES: &str =
         include_str!("data/answer/incorrect_too_many_guesses.html");
+    const ANSWER_INCORRECT_NON_NUMBER: &str = include_str!("data/answer/incorrect_non_number.html");
     const ANSWER_GUESSED_TOO_RECENTLY: &str = include_str!("data/answer/guessed_too_recently.html");
     const ANSWER_FICTITIOUS_MESSAGE: &str = include_str!("data/answer/fictitious_message.html");
 
@@ -270,6 +274,10 @@ mod tests {
         assert_matches!(
             AnswerResponse::parse(&ANSWER_INCORRECT_AFTER_MANY_GUESSES),
             Ok(AnswerResponse::IncorrectTooManyGuesses { .. })
+        );
+        assert_matches!(
+            AnswerResponse::parse(&ANSWER_INCORRECT_NON_NUMBER),
+            Ok(AnswerResponse::IncorrectOther)
         );
         assert_matches!(
             AnswerResponse::parse(&ANSWER_GUESSED_TOO_RECENTLY),

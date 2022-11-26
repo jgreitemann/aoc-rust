@@ -76,6 +76,10 @@ fn write_answer(
             validity: GuessSubmitted(IncorrectTooManyGuesses { guess }),
             ..
         }) => (format!("{guess} is incorrect; too many guesses"), '❌'),
+        Ok(PartValidation {
+            guess: DoorPartResult::Computed { answer, .. },
+            validity: GuessSubmitted(IncorrectOther),
+        }) => (format!("{answer} is incorrect"), '❌'),
         Err(err) => (err.to_string(), '⛔'),
     };
 
