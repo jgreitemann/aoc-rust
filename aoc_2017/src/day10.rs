@@ -14,7 +14,7 @@ impl<'input> ParseInput<'input> for Door<'input> {
     type Error = std::convert::Infallible;
 
     fn parse(input: &'input str) -> Result<Self, Self::Error> {
-        Ok(Self { input: input.trim() })
+        Ok(Self { input })
     }
 }
 

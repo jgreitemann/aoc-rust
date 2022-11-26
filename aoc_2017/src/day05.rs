@@ -18,7 +18,7 @@ impl ParseInput<'_> for Door {
     fn parse(input: &str) -> Result<Self, Self::Error> {
         input
             .lines()
-            .map(|s| s.trim().parse())
+            .map(|s| s.parse())
             .collect::<Result<Vec<_>, _>>()
             .map(|jumps| Self { jumps })
     }

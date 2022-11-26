@@ -7,7 +7,7 @@ pub struct Door {
 
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
-    #[error("Encounter an input character which is not a digit: {0:?}")]
+    #[error("Encountered an input character which is not a digit: {0:?}")]
     CharacterIsNotDigit(char),
 }
 
@@ -41,7 +41,6 @@ impl Part2 for Door {
 
 fn digits(input: &str) -> Result<Vec<u32>, Error> {
     input
-        .trim()
         .chars()
         .map(|c| c.to_digit(10).ok_or(Error::CharacterIsNotDigit(c)))
         .collect()
@@ -77,7 +76,6 @@ mod tests {
         assert_eq!(digits(""), Ok(vec![]));
         assert_eq!(digits("7"), Ok(vec![7]));
         assert_eq!(digits("1234"), Ok(vec![1, 2, 3, 4]));
-        assert_eq!(digits("1234\n"), Ok(vec![1, 2, 3, 4]));
         assert_eq!(digits("12E4"), Err(Error::CharacterIsNotDigit('E')));
     }
 

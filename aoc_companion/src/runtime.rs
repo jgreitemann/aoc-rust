@@ -52,7 +52,7 @@ where
     } else {
         0
     };
-    let answer = door_fn(&input, parts_considered_solved);
+    let answer = door_fn(input.trim_end(), parts_considered_solved);
     progress_sender
         .send(DoorProgress(*date, Progress::ValidatingAnswer))
         .await?;

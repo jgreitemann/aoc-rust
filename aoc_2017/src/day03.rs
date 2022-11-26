@@ -11,7 +11,7 @@ impl ParseInput<'_> for Door {
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
         Ok(Self {
-            input: input.trim_end().parse()?,
+            input: input.parse()?,
         })
     }
 }
