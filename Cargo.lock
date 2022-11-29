@@ -22,6 +22,7 @@ name = "aoc_2017"
 version = "0.1.0"
 dependencies = [
  "aoc_companion",
+ "aoc_utils",
  "assert_matches",
  "itertools",
  "regex",
@@ -48,6 +49,13 @@ dependencies = [
  "termion",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "aoc_utils"
+version = "0.1.0"
+dependencies = [
+ "paste",
 ]
 
 [[package]]
@@ -905,6 +913,12 @@ dependencies = [
  "smallvec",
  "windows-sys 0.42.0",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1de2e551fb905ac83f73f7aedf2f0cb4a0da7e35efa24a202a936269f1f18e1"
 
 [[package]]
 name = "percent-encoding"

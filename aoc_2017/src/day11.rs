@@ -1,4 +1,5 @@
 use aoc_companion::prelude::*;
+use aoc_utils::linalg::*;
 
 use itertools::Itertools;
 use thiserror::Error;
@@ -46,15 +47,15 @@ enum HexBasis {
 }
 
 impl HexBasis {
-    fn to_coords(&self) -> [i32; 3] {
+    fn to_coords(&self) -> Vector<i32, 3> {
         use HexBasis::*;
         match self {
-            North => [1, 0, 0],
-            NorthWest => [0, 0, -1],
-            SouthWest => [0, -1, 0],
-            South => [-1, 0, 0],
-            SouthEast => [0, 0, 1],
-            NorthEast => [0, 1, 0],
+            North => Vector([1, 0, 0]),
+            NorthWest => Vector([0, 0, -1]),
+            SouthWest => Vector([0, -1, 0]),
+            South => Vector([-1, 0, 0]),
+            SouthEast => Vector([0, 0, 1]),
+            NorthEast => Vector([0, 1, 0]),
         }
     }
 }
@@ -83,42 +84,35 @@ fn parse_input(input: &str) -> Result<Vec<HexBasis>, ParseError> {
         .collect()
 }
 
-fn destination(steps: &[HexBasis]) -> [i32; 3] {
+fn destination(steps: &[HexBasis]) -> Vector<i32, 3> {
     steps
         .iter()
         .map(HexBasis::to_coords)
-        .fold(Default::default(), vec_add)
+        .fold(Default::default(), std::ops::Add::add)
 }
 
-fn vec_add<T, const N: usize>(lhs: [T; N], rhs: [T; N]) -> [T; N]
-where
-    T: std::ops::Add<T, Output = T> + Copy,
-{
-    std::array::from_fn(|i| lhs[i] + rhs[i])
+fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
+    vec.0.iter().copied().map(i32::abs).sum()
 }
 
-fn vec_norm_l1<const N: usize>(vec: &[i32; N]) -> i32 {
-    vec.iter().copied().map(i32::abs).sum()
-}
-
-fn optimal_route(destination: [i32; 3]) -> [i32; 3] {
-    let (&lambda_min, &lambda_max) = [destination[0], -destination[1], destination[2]]
+fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
+    let (&lambda_min, &lambda_max) = [destination.0[0], -destination.0[1], destination.0[2]]
         .iter()
         .minmax()
         .into_option()
         .unwrap();
     (lambda_min..=lambda_max)
-        .map(|lambda| vec_add(destination, [-lambda, lambda, -lambda]))
+        .map(|lambda| destination + Vector([-lambda, lambda, -lambda]))
         .min_by_key(vec_norm_l1)
         .unwrap()
 }
 
-fn furthest_point_along_path(steps: &[HexBasis]) -> [i32; 3] {
+fn furthest_point_along_path(steps: &[HexBasis]) -> Vector<i32, 3> {
     steps
         .iter()
         .map(HexBasis::to_coords)
         .scan(Default::default(), |pos, v| {
-            *pos = vec_add(*pos, v);
+            *pos = *pos + v;
             Some(*pos)
         })
         .map(optimal_route)
@@ -137,10 +131,10 @@ mod tests {
     const EXAMPLE_STEPS_3: &[HexBasis] = &[NorthEast, NorthEast, South, South];
     const EXAMPLE_STEPS_4: &[HexBasis] = &[SouthEast, SouthWest, SouthEast, SouthWest, SouthWest];
 
-    const DESTINATION_1: [i32; 3] = [0, 3, 0];
-    const DESTINATION_2: [i32; 3] = [0, 0, 0];
-    const DESTINATION_3: [i32; 3] = [-2, 2, 0];
-    const DESTINATION_4: [i32; 3] = [0, -3, 2];
+    const DESTINATION_1: Vector<i32, 3> = Vector([0, 3, 0]);
+    const DESTINATION_2: Vector<i32, 3> = Vector([0, 0, 0]);
+    const DESTINATION_3: Vector<i32, 3> = Vector([-2, 2, 0]);
+    const DESTINATION_4: Vector<i32, 3> = Vector([0, -3, 2]);
 
     #[test]
     fn input_sequence_is_parsed() {
@@ -161,20 +155,29 @@ mod tests {
 
     #[test]
     fn optimal_routes_are_found() {
-        assert_eq!(optimal_route(DESTINATION_1), [0, 3, 0]);
-        assert_eq!(optimal_route(DESTINATION_2), [0, 0, 0]);
-        assert_eq!(optimal_route(DESTINATION_3), [0, 0, 2]);
-        assert_eq!(optimal_route(DESTINATION_4), [-2, -1, 0]);
+        assert_eq!(optimal_route(DESTINATION_1), Vector([0, 3, 0]));
+        assert_eq!(optimal_route(DESTINATION_2), Vector([0, 0, 0]));
+        assert_eq!(optimal_route(DESTINATION_3), Vector([0, 0, 2]));
+        assert_eq!(optimal_route(DESTINATION_4), Vector([-2, -1, 0]));
     }
 
     #[test]
     fn furthest_points_along_path_are_found() {
-        assert_eq!(furthest_point_along_path(EXAMPLE_STEPS_1), [0, 3, 0]);
-        assert_eq!(furthest_point_along_path(EXAMPLE_STEPS_2), [0, 2, 0]);
+        assert_eq!(
+            furthest_point_along_path(EXAMPLE_STEPS_1),
+            Vector([0, 3, 0])
+        );
+        assert_eq!(
+            furthest_point_along_path(EXAMPLE_STEPS_2),
+            Vector([0, 2, 0])
+        );
         assert_matches!(
             furthest_point_along_path(EXAMPLE_STEPS_3),
-            [0, 2, 0] | [0, 1, 1] | [0, 0, 2]
+            Vector([0, 2, 0]) | Vector([0, 1, 1]) | Vector([0, 0, 2])
         );
-        assert_eq!(furthest_point_along_path(EXAMPLE_STEPS_4), [-2, -1, 0]);
+        assert_eq!(
+            furthest_point_along_path(EXAMPLE_STEPS_4),
+            Vector([-2, -1, 0])
+        );
     }
 }
