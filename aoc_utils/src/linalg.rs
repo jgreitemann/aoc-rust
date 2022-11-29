@@ -42,9 +42,27 @@ macro_rules! impl_vector_op {
 impl_vector_op!(Add, add);
 impl_vector_op!(Sub, sub);
 
+impl<T, const N: usize> std::ops::Index<usize> for Vector<T, N> {
+    type Output = T;
+
+    fn index(&self, idx: usize) -> &T {
+        &self.0[idx]
+    }
+}
+
+impl<T, const N: usize> std::ops::IndexMut<usize> for Vector<T, N> {
+    fn index_mut(&mut self, idx: usize) -> &mut T {
+        &mut self.0[idx]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const V1: Vector<i32, 3> = Vector([1, 2, 3]);
+    const V2: Vector<i32, 3> = Vector([4, 5, 6]);
+    const V3: Vector<i32, 3> = Vector([5, 7, 9]);
 
     #[test]
     fn zero_vector_is_default() {
@@ -54,17 +72,34 @@ mod tests {
 
     #[test]
     fn vector_addition() {
-        assert_eq!(Vector([1, 2, 3]) + Vector([4, 5, 6]), Vector([5, 7, 9]));
-        let mut x = Vector([1, 2, 3]);
-        x += Vector([4, 5, 6]);
-        assert_eq!(x, Vector([5, 7, 9]));
+        assert_eq!(V1 + V2, V3);
+        let mut x = V1;
+        x += V2;
+        assert_eq!(x, V3);
     }
 
     #[test]
     fn vector_subtraction() {
-        assert_eq!(Vector([5, 7, 9]) - Vector([4, 5, 6]), Vector([1, 2, 3]));
-        let mut x = Vector([5, 7, 9]);
-        x -= Vector([4, 5, 6]);
-        assert_eq!(x, Vector([1, 2, 3]));
+        assert_eq!(V3 - V2, V1);
+        let mut x = V3;
+        x -= V2;
+        assert_eq!(x, V1);
+    }
+
+    #[test]
+    fn vector_can_be_indexed() {
+        assert_eq!(V1[0], 1);
+        assert_eq!(V1[1], 2);
+        assert_eq!(V1[2], 3);
+
+        let mut x = V2;
+        x[1] *= -1;
+        assert_eq!(x, Vector([4, -5, 6]));
+    }
+
+    #[test]
+    #[should_panic]
+    fn indexing_out_of_bounds_panics() {
+        V1[42];
     }
 }

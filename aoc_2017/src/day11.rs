@@ -96,7 +96,7 @@ fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
 }
 
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
-    let (&lambda_min, &lambda_max) = [destination.0[0], -destination.0[1], destination.0[2]]
+    let (&lambda_min, &lambda_max) = [destination[0], -destination[1], destination[2]]
         .iter()
         .minmax()
         .into_option()
