@@ -2,11 +2,15 @@
 members = [
     "aoc_companion",
     "aoc_2017",
+    "aoc_2022",
 ]
 
 [workspace.dependencies]
 aoc_companion = { path = "aoc_companion" }
 assert_matches = "1.5.0"
 itertools = "0.10.3"
+regex = "1.6.0"
+rstest = "0.15.0"
+tap = "1.0.1"
 thiserror = "1.0.37"
 tokio = "1.21.1"
