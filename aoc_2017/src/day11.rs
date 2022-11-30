@@ -96,13 +96,14 @@ fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
 }
 
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
-    let (&lambda_min, &lambda_max) = [destination[0], -destination[1], destination[2]]
+    const NULL_SPACE: Vector<i32, 3> = Vector([1, -1, 1]);
+    let (&lambda_min, &lambda_max) = (destination * NULL_SPACE).0
         .iter()
         .minmax()
         .into_option()
         .unwrap();
     (lambda_min..=lambda_max)
-        .map(|lambda| destination + Vector([-lambda, lambda, -lambda]))
+        .map(|lambda| destination - NULL_SPACE * lambda)
         .min_by_key(vec_norm_l1)
         .unwrap()
 }
@@ -112,7 +113,7 @@ fn furthest_point_along_path(steps: &[HexBasis]) -> Vector<i32, 3> {
         .iter()
         .map(HexBasis::to_coords)
         .scan(Default::default(), |pos, v| {
-            *pos = *pos + v;
+            *pos += v;
             Some(*pos)
         })
         .map(optimal_route)
