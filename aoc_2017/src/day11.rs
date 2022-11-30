@@ -85,10 +85,7 @@ fn parse_input(input: &str) -> Result<Vec<HexBasis>, ParseError> {
 }
 
 fn destination(steps: &[HexBasis]) -> Vector<i32, 3> {
-    steps
-        .iter()
-        .map(HexBasis::to_coords)
-        .fold(Default::default(), std::ops::Add::add)
+    steps.iter().map(HexBasis::to_coords).sum()
 }
 
 fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
@@ -97,7 +94,8 @@ fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
 
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
     const NULL_SPACE: Vector<i32, 3> = Vector([1, -1, 1]);
-    let (&lambda_min, &lambda_max) = (destination * NULL_SPACE).0
+    let (&lambda_min, &lambda_max) = (destination * NULL_SPACE)
+        .0
         .iter()
         .minmax()
         .into_option()

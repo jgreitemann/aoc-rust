@@ -118,6 +118,16 @@ impl<T: Num, const N: usize> std::ops::IndexMut<usize> for Vector<T, N> {
     }
 }
 
+impl<T, const N: usize> std::iter::Sum for Vector<T, N>
+where
+    T: Copy + Num,
+    [T; N]: Default,
+{
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Default::default(), std::ops::Add::add)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,6 +137,7 @@ mod tests {
     const V3: Vector<i32, 3> = Vector([5, 7, 9]);
     const V4: Vector<i32, 3> = Vector([4, 10, 18]);
     const V5: Vector<i32, 3> = Vector([2, 4, 6]);
+    const V6: Vector<i32, 3> = Vector([10, 14, 18]);
 
     #[test]
     fn zero_vector_is_default() {
@@ -170,6 +181,11 @@ mod tests {
     #[should_panic]
     fn vector_division_by_zero_panics() {
         let _ = V1 / Vector([1, 0, 1]);
+    }
+
+    #[test]
+    fn vector_summation() {
+        assert_eq!([V1, V2, V3].into_iter().sum::<Vector<i32, 3>>(), V6);
     }
 
     #[test]
