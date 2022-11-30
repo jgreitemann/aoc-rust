@@ -89,13 +89,12 @@ fn destination(steps: &[HexBasis]) -> Vector<i32, 3> {
 }
 
 fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
-    vec.0.iter().copied().map(i32::abs).sum()
+    vec.iter().copied().map(i32::abs).sum()
 }
 
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
     const NULL_SPACE: Vector<i32, 3> = Vector([1, -1, 1]);
     let (&lambda_min, &lambda_max) = (destination * NULL_SPACE)
-        .0
         .iter()
         .minmax()
         .into_option()

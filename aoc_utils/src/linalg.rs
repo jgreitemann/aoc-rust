@@ -2,9 +2,7 @@ use num_traits::Num;
 use paste::paste;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Scalar<T>(T)
-where
-    T: Num;
+pub struct Scalar<T: Num>(T);
 
 impl<T: Num> From<T> for Scalar<T> {
     fn from(num: T) -> Self {
@@ -14,6 +12,20 @@ impl<T: Num> From<T> for Scalar<T> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Vector<T: Num, const N: usize>(pub [T; N]);
+
+impl<T: Num, const N: usize> Vector<T, N> {
+    pub fn new() -> Self {
+        Vector(std::array::from_fn(|_| T::zero()))
+    }
+
+    /*pub fn iter<'a>(&'a self) -> std::slice::Iter<'a, T> {
+        self.0.iter()
+    }
+
+    pub fn iter_mut<'a>(&'a mut self) -> std::slice::IterMut<'a, T> {
+        self.0.iter_mut()
+    }*/
+}
 
 impl<T, const N: usize> Default for Vector<T, N>
 where
@@ -104,19 +116,19 @@ impl_vector_op!(Div, div);
 impl_scalar_op!(Mul, mul);
 impl_scalar_op!(Div, div);
 
-impl<T: Num, const N: usize> std::ops::Index<usize> for Vector<T, N> {
-    type Output = T;
-
-    fn index(&self, idx: usize) -> &T {
-        &self.0[idx]
-    }
-}
-
-impl<T: Num, const N: usize> std::ops::IndexMut<usize> for Vector<T, N> {
-    fn index_mut(&mut self, idx: usize) -> &mut T {
-        &mut self.0[idx]
-    }
-}
+//impl<T: Num, const N: usize> std::ops::Index<usize> for Vector<T, N> {
+//    type Output = T;
+//
+//    fn index(&self, idx: usize) -> &T {
+//        &self.0[idx]
+//    }
+//}
+//
+//impl<T: Num, const N: usize> std::ops::IndexMut<usize> for Vector<T, N> {
+//    fn index_mut(&mut self, idx: usize) -> &mut T {
+//        &mut self.0[idx]
+//    }
+//}
 
 impl<T, const N: usize> std::iter::Sum for Vector<T, N>
 where
@@ -128,9 +140,50 @@ where
     }
 }
 
+impl<T: Num, const N: usize> std::ops::Deref for Vector<T, N> {
+    type Target = [T];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: Num, const N: usize> std::ops::DerefMut for Vector<T, N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<T: Num, const N: usize> IntoIterator for Vector<T, N> {
+    type Item = T;
+    type IntoIter = std::array::IntoIter<T, N>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a, T: Num, const N: usize> IntoIterator for &'a Vector<T, N> {
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.0).into_iter()
+    }
+}
+
+impl<'a, T: Num, const N: usize> IntoIterator for &'a mut Vector<T, N> {
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.0).into_iter()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use itertools::assert_equal;
 
     const V1: Vector<i32, 3> = Vector([1, 2, 3]);
     const V2: Vector<i32, 3> = Vector([4, 5, 6]);
@@ -226,5 +279,21 @@ mod tests {
     #[should_panic]
     fn indexing_out_of_bounds_panics() {
         V1[42];
+    }
+
+    #[test]
+    fn vector_can_be_iterated() {
+        assert_equal(V1.iter(), [&1, &2, &3]);
+        assert_equal(V1.into_iter(), [1, 2, 3]);
+        assert_equal((&V1).into_iter(), [&1, &2, &3]);
+    }
+
+    #[test]
+    fn vector_can_be_iterated_mutably() {
+        let mut x = V1;
+        x.iter_mut().for_each(|e| *e = 1);
+        assert_eq!(x, Vector([1; 3]));
+        (&mut x).into_iter().for_each(|e| *e = 2);
+        assert_eq!(x, Vector([2; 3]));
     }
 }
