@@ -1,13 +1,16 @@
 use aoc_companion::prelude::*;
 
+use itertools::Itertools;
 use thiserror::Error;
 
+use std::str::FromStr;
+
 pub struct Door {
-    rules: Vec<Rule>,
+    records: Vec<Record>,
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub enum ParseError {
     #[error("The symbol '{0}' is invalid in this context")]
     InvalidSymbol(String),
     #[error("No space on line")]
@@ -15,10 +18,10 @@ pub enum Error {
 }
 
 impl ParseInput<'_> for Door {
-    type Error = Error;
+    type Error = ParseError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        parse_input(input).map(|rules| Self { rules })
+        parse_input(input).map(|records| Self { records })
     }
 }
 
@@ -27,16 +30,18 @@ impl Part1 for Door {
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(as_guide(self.rules.iter()).map(|strat| strat.score()).sum())
+        Ok(as_strategy(self.records.iter())
+            .map(|strat| strat.score())
+            .sum())
     }
 }
 
 impl Part2 for Door {
     type Output = u32;
-    type Error = Error;
+    type Error = ParseError;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(target_strategies(self.rules.iter())
+        Ok(target_strategies(self.records.iter())
             .map(|strat| strat.score())
             .sum())
     }
@@ -56,34 +61,40 @@ enum AmbiguousValue {
     Z,
 }
 
-impl AmbiguousValue {
-    fn from_str(c: &str) -> Result<Self, Error> {
+impl FromStr for AmbiguousValue {
+    type Err = ParseError;
+
+    fn from_str(c: &str) -> Result<Self, ParseError> {
         use AmbiguousValue::*;
         match c {
             "X" => Ok(X),
             "Y" => Ok(Y),
             "Z" => Ok(Z),
-            _ => Err(Error::InvalidSymbol(c.to_owned())),
+            _ => Err(ParseError::InvalidSymbol(c.to_owned())),
         }
     }
 }
 
 impl Hand {
-    fn from_str(c: &str) -> Result<Self, Error> {
-        use Hand::*;
-        match c {
-            "A" => Ok(Rock),
-            "B" => Ok(Paper),
-            "C" => Ok(Scissors),
-            _ => Err(Error::InvalidSymbol(c.to_owned())),
-        }
-    }
-
     fn score(&self) -> u32 {
         match self {
             Hand::Rock => 1,
             Hand::Paper => 2,
             Hand::Scissors => 3,
+        }
+    }
+}
+
+impl FromStr for Hand {
+    type Err = ParseError;
+
+    fn from_str(c: &str) -> Result<Self, ParseError> {
+        use Hand::*;
+        match c {
+            "A" => Ok(Rock),
+            "B" => Ok(Paper),
+            "C" => Ok(Scissors),
+            _ => Err(ParseError::InvalidSymbol(c.to_owned())),
         }
     }
 }
@@ -130,15 +141,15 @@ impl From<AmbiguousValue> for Outcome {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Rule {
-    opponent_will_play: Hand,
+struct Record {
+    theirs: Hand,
     ambigous: AmbiguousValue,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Strategy {
-    opponent_will_play: Hand,
-    i_should_play: Hand,
+    theirs: Hand,
+    ours: Hand,
 }
 
 impl Strategy {
@@ -146,100 +157,75 @@ impl Strategy {
         use Hand::*;
         match self {
             Strategy {
-                opponent_will_play: Rock,
-                i_should_play: Paper,
+                theirs: Rock,
+                ours: Paper,
             } => Outcome::Win,
             Strategy {
-                opponent_will_play: Rock,
-                i_should_play: Scissors,
+                theirs: Rock,
+                ours: Scissors,
             } => Outcome::Lose,
             Strategy {
-                opponent_will_play: Paper,
-                i_should_play: Rock,
+                theirs: Paper,
+                ours: Rock,
             } => Outcome::Lose,
             Strategy {
-                opponent_will_play: Paper,
-                i_should_play: Scissors,
+                theirs: Paper,
+                ours: Scissors,
             } => Outcome::Win,
             Strategy {
-                opponent_will_play: Scissors,
-                i_should_play: Rock,
+                theirs: Scissors,
+                ours: Rock,
             } => Outcome::Win,
             Strategy {
-                opponent_will_play: Scissors,
-                i_should_play: Paper,
+                theirs: Scissors,
+                ours: Paper,
             } => Outcome::Lose,
-            Strategy {
-                opponent_will_play,
-                i_should_play,
-            } if opponent_will_play == i_should_play => Outcome::Draw,
+            Strategy { theirs, ours } if ours == theirs => Outcome::Draw,
             _ => unreachable!(),
         }
     }
 
-    fn to_achieve_outcome(opponent_will_play: Hand, desired: Outcome) -> Strategy {
-        let i_should_play = [Hand::Rock, Hand::Paper, Hand::Scissors]
+    fn to_achieve_outcome(theirs: Hand, desired: Outcome) -> Strategy {
+        let ours = [Hand::Rock, Hand::Paper, Hand::Scissors]
             .into_iter()
-            .find(|i_should_play| {
-                Strategy {
-                    opponent_will_play,
-                    i_should_play: *i_should_play,
-                }
-                .outcome()
-                    == desired
-            })
+            .find(|&ours| Strategy { theirs, ours }.outcome() == desired)
             .unwrap();
-        Strategy {
-            opponent_will_play,
-            i_should_play,
-        }
+        Strategy { theirs, ours }
     }
 
     fn score(&self) -> u32 {
-        self.i_should_play.score() + self.outcome().score()
+        self.ours.score() + self.outcome().score()
     }
 }
 
-fn parse_input(input: &str) -> Result<Vec<Rule>, Error> {
+fn parse_input(input: &str) -> Result<Vec<Record>, ParseError> {
     input
         .lines()
-        .map(|line| line.split_once(' ').ok_or(Error::NoSpaceOnLine))
-        .map(|res| {
-            let (op_str, other) = res?;
-            Ok(Rule {
-                opponent_will_play: Hand::from_str(op_str)?,
-                ambigous: AmbiguousValue::from_str(other)?,
+        .map(|line| line.split_once(' ').ok_or(ParseError::NoSpaceOnLine))
+        .map_ok(|(theirs_str, ambiguous_str)| {
+            Ok(Record {
+                theirs: theirs_str.parse()?,
+                ambigous: ambiguous_str.parse()?,
             })
         })
+        .flatten()
         .collect()
 }
 
-fn as_guide<'r>(rules: impl Iterator<Item = &'r Rule> + 'r) -> impl Iterator<Item = Strategy> + 'r {
-    rules.map(
-        |&Rule {
-             opponent_will_play,
-             ambigous,
-         }| {
-            Strategy {
-                opponent_will_play,
-                i_should_play: ambigous.into(),
-            }
-        },
-    )
+fn as_strategy<'r>(
+    records: impl Iterator<Item = &'r Record> + 'r,
+) -> impl Iterator<Item = Strategy> + 'r {
+    records.map(|&Record { theirs, ambigous }| Strategy {
+        theirs,
+        ours: ambigous.into(),
+    })
 }
 
 fn target_strategies<'r>(
-    rules: impl Iterator<Item = &'r Rule> + 'r,
+    records: impl Iterator<Item = &'r Record> + 'r,
 ) -> impl Iterator<Item = Strategy> + 'r {
-    rules.into_iter().map(
-        |&Rule {
-             opponent_will_play,
-             ambigous,
-         }| {
-            let desired: Outcome = ambigous.into();
-            Strategy::to_achieve_outcome(opponent_will_play, desired)
-        },
-    )
+    records
+        .map(|&Record { theirs, ambigous }| Strategy::to_achieve_outcome(theirs, ambigous.into()))
 }
 
 #[cfg(test)]
@@ -253,38 +239,38 @@ C Z";
 
     const EXAMPLE_GUIDE: &[Strategy] = &[
         Strategy {
-            opponent_will_play: Hand::Rock,
-            i_should_play: Hand::Paper,
+            theirs: Hand::Rock,
+            ours: Hand::Paper,
         },
         Strategy {
-            opponent_will_play: Hand::Paper,
-            i_should_play: Hand::Rock,
+            theirs: Hand::Paper,
+            ours: Hand::Rock,
         },
         Strategy {
-            opponent_will_play: Hand::Scissors,
-            i_should_play: Hand::Scissors,
+            theirs: Hand::Scissors,
+            ours: Hand::Scissors,
         },
     ];
 
     const TARGET_STRATS: &[Strategy] = &[
         Strategy {
-            opponent_will_play: Hand::Rock,
-            i_should_play: Hand::Rock,
+            theirs: Hand::Rock,
+            ours: Hand::Rock,
         },
         Strategy {
-            opponent_will_play: Hand::Paper,
-            i_should_play: Hand::Rock,
+            theirs: Hand::Paper,
+            ours: Hand::Rock,
         },
         Strategy {
-            opponent_will_play: Hand::Scissors,
-            i_should_play: Hand::Rock,
+            theirs: Hand::Scissors,
+            ours: Hand::Rock,
         },
     ];
 
     #[test]
     fn strategy_guide_is_parsed() {
         assert_equal(
-            as_guide(parse_input(EXAMPLE_INPUT).unwrap().iter()),
+            as_strategy(parse_input(EXAMPLE_INPUT).unwrap().iter()),
             EXAMPLE_GUIDE.iter().copied(),
         );
     }
