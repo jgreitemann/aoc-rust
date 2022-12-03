@@ -1,4 +1,4 @@
-use num_traits::Num;
+use num_traits::{Num, NumCast, Pow, Signed};
 use paste::paste;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,14 +17,6 @@ impl<T: Num, const N: usize> Vector<T, N> {
     pub fn new() -> Self {
         Vector(std::array::from_fn(|_| T::zero()))
     }
-
-    /*pub fn iter<'a>(&'a self) -> std::slice::Iter<'a, T> {
-        self.0.iter()
-    }
-
-    pub fn iter_mut<'a>(&'a mut self) -> std::slice::IterMut<'a, T> {
-        self.0.iter_mut()
-    }*/
 }
 
 impl<T, const N: usize> Default for Vector<T, N>
@@ -116,20 +108,6 @@ impl_vector_op!(Div, div);
 impl_scalar_op!(Mul, mul);
 impl_scalar_op!(Div, div);
 
-//impl<T: Num, const N: usize> std::ops::Index<usize> for Vector<T, N> {
-//    type Output = T;
-//
-//    fn index(&self, idx: usize) -> &T {
-//        &self.0[idx]
-//    }
-//}
-//
-//impl<T: Num, const N: usize> std::ops::IndexMut<usize> for Vector<T, N> {
-//    fn index_mut(&mut self, idx: usize) -> &mut T {
-//        &mut self.0[idx]
-//    }
-//}
-
 impl<T, const N: usize> std::iter::Sum for Vector<T, N>
 where
     T: Copy + Num,
@@ -180,6 +158,71 @@ impl<'a, T: Num, const N: usize> IntoIterator for &'a mut Vector<T, N> {
     }
 }
 
+impl<T, const N: usize> Vector<T, N>
+where
+    T: Num + Copy + Signed,
+{
+    pub fn norm_l1(&self) -> T {
+        self.0
+            .into_iter()
+            .map(num_traits::sign::abs)
+            .fold(T::zero(), std::ops::Add::add)
+    }
+}
+
+impl<T, const N: usize> Vector<T, N>
+where
+    T: Num + NumCast + Copy,
+{
+    pub fn norm_l2(&self) -> f64 {
+        f64::sqrt(NumCast::from(self.norm_l2_sq()).unwrap())
+    }
+
+    pub fn norm_l2_sq(&self) -> T {
+        self.0
+            .into_iter()
+            .map(|x| x * x)
+            .fold(T::zero(), std::ops::Add::add)
+    }
+}
+
+impl<T, const N: usize> Vector<T, N>
+where
+    T: Num + NumCast + Signed + Copy,
+{
+    pub fn norm_l3(&self) -> f64 {
+        f64::cbrt(NumCast::from(self.norm_l3_cb()).unwrap())
+    }
+
+    pub fn norm_l3_cb(&self) -> T {
+        self.0
+            .into_iter()
+            .map(|x| x * x * x)
+            .map(num_traits::sign::abs)
+            .fold(T::zero(), std::ops::Add::add)
+    }
+}
+
+impl<T, const N: usize> Vector<T, N>
+where
+    T: Num + Pow<u8, Output = T> + NumCast + Signed + Copy,
+{
+    pub fn norm_lp<const P: u8>(&self) -> f64 {
+        f64::powf(
+            NumCast::from(self.norm_lp_pow::<P>()).unwrap(),
+            1. / P as f64,
+        )
+    }
+
+    pub fn norm_lp_pow<const P: u8>(&self) -> T {
+        self.0
+            .into_iter()
+            .map(|x| x.pow(P))
+            .map(num_traits::sign::abs)
+            .fold(T::zero(), std::ops::Add::add)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -191,6 +234,8 @@ mod tests {
     const V4: Vector<i32, 3> = Vector([4, 10, 18]);
     const V5: Vector<i32, 3> = Vector([2, 4, 6]);
     const V6: Vector<i32, 3> = Vector([10, 14, 18]);
+    const VU1: Vector<u32, 3> = Vector([1, 2, 3]);
+    const VF1: Vector<f32, 3> = Vector([1., 2., 3.]);
 
     #[test]
     fn zero_vector_is_default() {
@@ -295,5 +340,35 @@ mod tests {
         assert_eq!(x, Vector([1; 3]));
         (&mut x).into_iter().for_each(|e| *e = 2);
         assert_eq!(x, Vector([2; 3]));
+    }
+
+    #[test]
+    fn vector_integral_lp_norms() {
+        assert_eq!(V1.norm_l1(), 6);
+
+        assert_eq!(V1.norm_l2_sq(), 14);
+        assert_eq!(V1.norm_l2(), f64::sqrt(14.));
+        assert_eq!(VU1.norm_l2_sq(), 14);
+        assert_eq!(VU1.norm_l2(), f64::sqrt(14.));
+
+        assert_eq!(V1.norm_l3_cb(), 36);
+        assert_eq!(V1.norm_l3(), f64::cbrt(36.));
+
+        assert_eq!(V1.norm_lp_pow::<4>(), 98);
+        assert_eq!(V1.norm_lp::<4>(), f64::powf(98., 0.25));
+    }
+
+    #[test]
+    fn vector_floating_point_lp_norms() {
+        assert_eq!(VF1.norm_l1(), 6f32);
+
+        assert_eq!(VF1.norm_l2_sq(), 14f32);
+        assert_eq!(VF1.norm_l2(), f64::sqrt(14.));
+
+        assert_eq!(VF1.norm_l3_cb(), 36f32);
+        assert_eq!(VF1.norm_l3(), f64::cbrt(36.));
+
+        assert_eq!(VF1.norm_lp_pow::<4>(), 98f32);
+        assert_eq!(VF1.norm_lp::<4>(), f64::powf(98., 0.25));
     }
 }

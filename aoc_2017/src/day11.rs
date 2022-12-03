@@ -22,7 +22,7 @@ impl Part1 for Door {
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
         let route = optimal_route(destination(&self.steps));
-        Ok(vec_norm_l1(&route))
+        Ok(route.norm_l1())
     }
 }
 
@@ -32,7 +32,7 @@ impl Part2 for Door {
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
         let furthest = furthest_point_along_path(&self.steps);
-        Ok(vec_norm_l1(&furthest))
+        Ok(furthest.norm_l1())
     }
 }
 
@@ -88,10 +88,6 @@ fn destination(steps: &[HexBasis]) -> Vector<i32, 3> {
     steps.iter().map(HexBasis::to_coords).sum()
 }
 
-fn vec_norm_l1<const N: usize>(vec: &Vector<i32, N>) -> i32 {
-    vec.iter().copied().map(i32::abs).sum()
-}
-
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
     const NULL_SPACE: Vector<i32, 3> = Vector([1, -1, 1]);
     let (&lambda_min, &lambda_max) = (destination * NULL_SPACE)
@@ -101,7 +97,7 @@ fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
         .unwrap();
     (lambda_min..=lambda_max)
         .map(|lambda| destination - NULL_SPACE * lambda)
-        .min_by_key(vec_norm_l1)
+        .min_by_key(Vector::<i32, 3>::norm_l1)
         .unwrap()
 }
 
@@ -114,7 +110,7 @@ fn furthest_point_along_path(steps: &[HexBasis]) -> Vector<i32, 3> {
             Some(*pos)
         })
         .map(optimal_route)
-        .max_by_key(vec_norm_l1)
+        .max_by_key(Vector::<i32, 3>::norm_l1)
         .unwrap_or_default()
 }
 
