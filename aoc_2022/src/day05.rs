@@ -127,9 +127,9 @@ impl FromStr for Stacks {
 
         let n_cols = rows.first().ok_or(ParseError::NoLines)?.len();
 
-        let mut cols: Result<Vec<Vec<char>>, ParseError> =
+        let cols: Result<Vec<Vec<char>>, ParseError> =
             rows[..rows.len() - 1]
-                .into_iter()
+                .into_iter().rev()
                 .fold(Ok(vec![Vec::new(); n_cols]), |res, row| {
                     res.and_then(|mut cols| {
                         for (i, &c) in row.into_iter().enumerate().filter(|&(_, &c)| c != ' ') {
@@ -138,12 +138,6 @@ impl FromStr for Stacks {
                         Ok(cols)
                     })
                 });
-
-        if let Ok(cols) = &mut cols {
-            for col in cols {
-                col.reverse();
-            }
-        }
 
         Ok(Self(cols?))
     }
