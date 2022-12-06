@@ -29,7 +29,7 @@ impl Part2 for Door<'_> {
     type Error = Error;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        disjoint_subseq_index(&self.signal, 14).ok_or(Error::NoPacket)
+        disjoint_subseq_index(&self.signal, 14).ok_or(Error::NoMessage)
     }
 }
 
@@ -37,21 +37,16 @@ impl Part2 for Door<'_> {
 pub enum Error {
     #[error("No start of packet marker found")]
     NoPacket,
+    #[error("No start of message marker found")]
+    NoMessage,
 }
 
 fn disjoint_subseq_index(signal: &str, n: usize) -> Option<usize> {
     signal
         .as_bytes()
         .windows(n)
-        .enumerate()
-        .find_map(|(i, window)| {
-            if window.iter().all_unique() {
-                Some(i + n)
-            } else {
-                None
-            }
-        })
-        .clone()
+        .position(|window| window.iter().all_unique())
+        .map(|i| i + n)
 }
 
 #[cfg(test)]
