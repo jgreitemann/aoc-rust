@@ -82,10 +82,7 @@ impl Stacks {
             .get(from - 1)
             .ok_or(Error::StackIndexOutOfBounds)?
             .len();
-        if len < amount {
-            return Err(Error::NotEnoughCratesToMove);
-        }
-        let idx = len - amount;
+        let idx = len.checked_sub(amount).ok_or(Error::NotEnoughCratesToMove)?;
         let top = self.0[from - 1].split_off(idx);
         let to_stack = self.0.get_mut(to - 1).ok_or(Error::StackIndexOutOfBounds)?;
         if rev {
@@ -97,9 +94,9 @@ impl Stacks {
     }
 
     fn apply_all(self, instructions: &[Instruction], rev: bool) -> Result<Stacks, Error> {
-        instructions.iter().fold(Ok(self), |res, instr| {
-            res.and_then(|stacks| stacks.apply(instr, rev))
-        })
+        instructions
+            .iter()
+            .try_fold(self, |stacks, instr| stacks.apply(instr, rev))
     }
 
     fn solution(&self) -> Result<String, Error> {
@@ -127,17 +124,15 @@ impl FromStr for Stacks {
 
         let n_cols = rows.first().ok_or(ParseError::NoLines)?.len();
 
-        let cols: Result<Vec<Vec<char>>, ParseError> =
-            rows[..rows.len() - 1]
-                .into_iter().rev()
-                .fold(Ok(vec![Vec::new(); n_cols]), |res, row| {
-                    res.and_then(|mut cols| {
-                        for (i, &c) in row.into_iter().enumerate().filter(|&(_, &c)| c != ' ') {
-                            cols.get_mut(i).ok_or(ParseError::UnequalRows)?.push(c);
-                        }
-                        Ok(cols)
-                    })
-                });
+        let cols: Result<Vec<Vec<char>>, ParseError> = rows[..rows.len() - 1]
+            .into_iter()
+            .rev()
+            .try_fold(vec![Vec::new(); n_cols], |mut cols, row| {
+                for (i, &c) in row.into_iter().enumerate().filter(|&(_, &c)| c != ' ') {
+                    cols.get_mut(i).ok_or(ParseError::UnequalRows)?.push(c);
+                }
+                Ok(cols)
+            });
 
         Ok(Self(cols?))
     }
