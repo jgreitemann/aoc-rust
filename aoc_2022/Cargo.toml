@@ -9,6 +9,7 @@ edition = "2021"
 aoc_companion = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
+ndarray = "0.15.6"
 regex = { workspace = true }
 rstest = { workspace = true }
 tap = { workspace = true }
