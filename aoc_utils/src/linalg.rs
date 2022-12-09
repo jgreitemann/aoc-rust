@@ -1,7 +1,7 @@
 use num_traits::{Num, NumCast, Pow, Signed};
 use paste::paste;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Scalar<T: Num>(T);
 
 impl<T: Num> From<T> for Scalar<T> {
@@ -10,7 +10,7 @@ impl<T: Num> From<T> for Scalar<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vector<T: Num, const N: usize>(pub [T; N]);
 
 impl<T: Num, const N: usize> Vector<T, N> {

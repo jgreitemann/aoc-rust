@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 aoc_companion = { workspace = true }
+aoc_utils = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
 ndarray = "0.15.6"
