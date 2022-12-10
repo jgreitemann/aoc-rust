@@ -1,7 +1,6 @@
 use aoc_companion::prelude::*;
-use aoc_utils::linalg::*;
+use aoc_utils::{linalg::*, geometry::Point};
 
-use itertools::Itertools;
 use thiserror::Error;
 
 use std::str::FromStr;
@@ -153,10 +152,7 @@ where
         if let Some(p) = self.pos {
             self.pos = next_head.map(|h| {
                 if (h - p).norm_l2() > 1.5 {
-                    (-1..=1)
-                        .cartesian_product(-1..=1)
-                        .map(|(x, y)| Vector([x, y]))
-                        .map(|d| p + d)
+                    p.neighbors()
                         .min_by_key(|&v| (h - v).norm_l2_sq())
                         .unwrap()
                 } else {

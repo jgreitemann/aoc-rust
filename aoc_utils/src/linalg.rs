@@ -1,3 +1,5 @@
+use crate::geometry::{Neighbors, Point};
+
 use num_traits::{Num, NumCast, Pow, Signed};
 use paste::paste;
 
@@ -223,6 +225,54 @@ where
     }
 }
 
+impl<T: Num, const N: usize> From<[T; N]> for Vector<T, N> {
+    fn from(array: [T; N]) -> Self {
+        Self(array)
+    }
+}
+
+macro_rules! impl_point_2d {
+    ($num:ty) => {
+        impl Point for Vector<$num, 2> {
+            fn neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 2>] = &[
+                    Vector([1, 0]),
+                    Vector([1, 1]),
+                    Vector([0, 1]),
+                    Vector([-1, 1]),
+                    Vector([-1, 0]),
+                    Vector([-1, -1]),
+                    Vector([0, -1]),
+                    Vector([1, -1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+
+            fn nearest_neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 2>] = &[
+                    Vector([1, 0]),
+                    Vector([0, 1]),
+                    Vector([-1, 0]),
+                    Vector([0, -1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+        }
+    };
+}
+
+impl_point_2d!(i8);
+impl_point_2d!(i16);
+impl_point_2d!(i32);
+impl_point_2d!(i64);
+impl_point_2d!(i128);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -370,5 +420,35 @@ mod tests {
 
         assert_eq!(VF1.norm_lp_pow::<4>(), 98f32);
         assert_eq!(VF1.norm_lp::<4>(), f64::powf(98., 0.25));
+    }
+
+    #[test]
+    fn vector_2d_neighbors() {
+        assert_equal(
+            Vector([3, -4]).neighbors(),
+            [
+                Vector([4, -4]),
+                Vector([4, -3]),
+                Vector([3, -3]),
+                Vector([2, -3]),
+                Vector([2, -4]),
+                Vector([2, -5]),
+                Vector([3, -5]),
+                Vector([4, -5]),
+            ],
+        );
+    }
+
+    #[test]
+    fn vector_2d_nearest_neighbors() {
+        assert_equal(
+            Vector([3, -4]).nearest_neighbors(),
+            [
+                Vector([4, -4]),
+                Vector([3, -3]),
+                Vector([2, -4]),
+                Vector([3, -5]),
+            ],
+        );
     }
 }
