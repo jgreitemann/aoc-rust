@@ -273,6 +273,23 @@ impl_point_2d!(i32);
 impl_point_2d!(i64);
 impl_point_2d!(i128);
 
+unsafe impl<const N: usize> ndarray::NdIndex<ndarray::Dim<[usize; N]>> for Vector<usize, N>
+where
+    [usize; N]: ndarray::NdIndex<ndarray::Dim<[usize; N]>>,
+{
+    fn index_checked(
+        &self,
+        dim: &ndarray::Dim<[usize; N]>,
+        strides: &ndarray::Dim<[usize; N]>,
+    ) -> Option<isize> {
+        self.0.index_checked(dim, strides)
+    }
+
+    fn index_unchecked(&self, strides: &ndarray::Dim<[usize; N]>) -> isize {
+        self.0.index_unchecked(strides)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
