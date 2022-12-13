@@ -40,6 +40,8 @@ impl Part2 for Door {
 pub enum ParseError {
     #[error(transparent)]
     ParseInt(#[from] std::num::ParseIntError),
+    #[error("Did not find a pair of packets")]
+    NoPair,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,12 +85,12 @@ impl std::cmp::Ord for PacketData {
             (Integer(x), Integer(y)) => std::cmp::Ord::cmp(x, y),
             (List(xs), List(ys)) => {
                 match xs
-                .iter()
-                .zip(ys.iter())
-                .fold(Ordering::Equal, |acc, (x, y)| match acc {
-                    Ordering::Equal => std::cmp::Ord::cmp(x, y),
-                    _ => acc,
-                }) {
+                    .iter()
+                    .zip(ys.iter())
+                    .fold(Ordering::Equal, |acc, (x, y)| match acc {
+                        Ordering::Equal => std::cmp::Ord::cmp(x, y),
+                        _ => acc,
+                    }) {
                     Ordering::Equal => std::cmp::Ord::cmp(&xs.len(), &ys.len()),
                     ord => ord,
                 }
@@ -108,8 +110,11 @@ impl std::cmp::PartialOrd for PacketData {
 fn parse_input(input: &str) -> Result<Vec<(PacketData, PacketData)>, ParseError> {
     input
         .split("\n\n")
-        .map(|pair_str| pair_str.split_once("\n").expect("TODO"))
-        .map(|(lhs, rhs)| Ok((lhs.parse()?, rhs.parse()?)))
+        .map(|pair_str| pair_str.split_once("\n").ok_or(ParseError::NoPair))
+        .map(|res| {
+            let (lhs, rhs) = res?;
+            Ok((lhs.parse()?, rhs.parse()?))
+        })
         .try_collect()
 }
 
@@ -133,8 +138,9 @@ fn decoder_key(pairs: &[(PacketData, PacketData)]) -> usize {
         .chain(dividers.iter())
         .sorted()
         .collect();
-    (sorted_packets.iter().position(|p| *p == &dividers[0]).unwrap() + 1)*
-    (sorted_packets.iter().position(|p| *p == &dividers[1]).unwrap() + 1)
+    let index_of = |div: &PacketData| sorted_packets.iter().position(|p| *p == div).unwrap() + 1;
+
+    index_of(&dividers[0]) * index_of(&dividers[1])
 }
 
 #[cfg(test)]
@@ -151,7 +157,9 @@ mod tests {
     fn compare_works_as_specified() {
         use Ordering::*;
         assert_equal(
-            example_pairs().iter().map(|(lhs, rhs)| std::cmp::Ord::cmp(lhs, rhs)),
+            example_pairs()
+                .iter()
+                .map(|(lhs, rhs)| std::cmp::Ord::cmp(lhs, rhs)),
             [Less, Less, Greater, Less, Greater, Less, Greater, Greater],
         );
     }
