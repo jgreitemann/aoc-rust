@@ -76,6 +76,35 @@ impl FromStr for PacketData {
     }
 }
 
+impl std::cmp::Ord for PacketData {
+    fn cmp(&self, other: &Self) -> Ordering {
+        use PacketData::*;
+        match (self, other) {
+            (Integer(x), Integer(y)) => std::cmp::Ord::cmp(x, y),
+            (List(xs), List(ys)) => {
+                match xs
+                .iter()
+                .zip(ys.iter())
+                .fold(Ordering::Equal, |acc, (x, y)| match acc {
+                    Ordering::Equal => std::cmp::Ord::cmp(x, y),
+                    _ => acc,
+                }) {
+                    Ordering::Equal => std::cmp::Ord::cmp(&xs.len(), &ys.len()),
+                    ord => ord,
+                }
+            }
+            (list, Integer(y)) => std::cmp::Ord::cmp(list, &List(vec![Integer(*y)])),
+            (Integer(x), list) => std::cmp::Ord::cmp(&List(vec![Integer(*x)]), list),
+        }
+    }
+}
+
+impl std::cmp::PartialOrd for PacketData {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 fn parse_input(input: &str) -> Result<Vec<(PacketData, PacketData)>, ParseError> {
     input
         .split("\n\n")
@@ -84,31 +113,10 @@ fn parse_input(input: &str) -> Result<Vec<(PacketData, PacketData)>, ParseError>
         .try_collect()
 }
 
-fn compare(lhs: &PacketData, rhs: &PacketData) -> Ordering {
-    use PacketData::*;
-    match (lhs, rhs) {
-        (Integer(x), Integer(y)) => std::cmp::Ord::cmp(x, y),
-        (List(xs), List(ys)) => {
-            match xs
-                .iter()
-                .zip(ys.iter())
-                .fold(Ordering::Equal, |acc, (x, y)| match acc {
-                    Ordering::Equal => compare(x, y),
-                    _ => acc,
-                }) {
-                Ordering::Equal => std::cmp::Ord::cmp(&xs.len(), &ys.len()),
-                ord => ord,
-            }
-        }
-        (list, Integer(y)) => compare(list, &List(vec![Integer(*y)])),
-        (Integer(x), list) => compare(&List(vec![Integer(*x)]), list),
-    }
-}
-
 fn correctly_ordered_index_sum(pairs: &[(PacketData, PacketData)]) -> usize {
     pairs
         .iter()
-        .positions(|(lhs, rhs)| compare(lhs, rhs) == Ordering::Less)
+        .positions(|(lhs, rhs)| lhs < rhs)
         .map(|pos| pos + 1)
         .sum()
 }
@@ -123,7 +131,7 @@ fn decoder_key(pairs: &[(PacketData, PacketData)]) -> usize {
         .iter()
         .flat_map(|(x, y)| [x, y])
         .chain(dividers.iter())
-        .sorted_by(|lhs, rhs| compare(lhs, rhs))
+        .sorted()
         .collect();
     (sorted_packets.iter().position(|p| *p == &dividers[0]).unwrap() + 1)*
     (sorted_packets.iter().position(|p| *p == &dividers[1]).unwrap() + 1)
@@ -143,7 +151,7 @@ mod tests {
     fn compare_works_as_specified() {
         use Ordering::*;
         assert_equal(
-            example_pairs().iter().map(|(lhs, rhs)| compare(lhs, rhs)),
+            example_pairs().iter().map(|(lhs, rhs)| std::cmp::Ord::cmp(lhs, rhs)),
             [Less, Less, Greater, Less, Greater, Less, Greater, Greater],
         );
     }
