@@ -3,7 +3,7 @@ use aoc_companion::prelude::*;
 use itertools::Itertools;
 use thiserror::Error;
 
-use std::cmp::Ordering;
+use std::cmp::{Ord, Ordering};
 use std::str::FromStr;
 
 pub struct Door {
@@ -78,25 +78,18 @@ impl FromStr for PacketData {
     }
 }
 
-impl std::cmp::Ord for PacketData {
+impl Ord for PacketData {
     fn cmp(&self, other: &Self) -> Ordering {
         use PacketData::*;
         match (self, other) {
-            (Integer(x), Integer(y)) => std::cmp::Ord::cmp(x, y),
-            (List(xs), List(ys)) => {
-                match xs
-                    .iter()
-                    .zip(ys.iter())
-                    .fold(Ordering::Equal, |acc, (x, y)| match acc {
-                        Ordering::Equal => std::cmp::Ord::cmp(x, y),
-                        _ => acc,
-                    }) {
-                    Ordering::Equal => std::cmp::Ord::cmp(&xs.len(), &ys.len()),
-                    ord => ord,
-                }
-            }
-            (list, Integer(y)) => std::cmp::Ord::cmp(list, &List(vec![Integer(*y)])),
-            (Integer(x), list) => std::cmp::Ord::cmp(&List(vec![Integer(*x)]), list),
+            (Integer(x), Integer(y)) => Ord::cmp(x, y),
+            (List(xs), List(ys)) => Iterator::zip(xs.iter(), ys.iter())
+                .fold(Ordering::Equal, |ord, (x, y)| {
+                    ord.then_with(|| Ord::cmp(x, y))
+                })
+                .then_with(|| Ord::cmp(&xs.len(), &ys.len())),
+            (list, Integer(y)) => Ord::cmp(list, &List(vec![Integer(*y)])),
+            (Integer(x), list) => Ord::cmp(&List(vec![Integer(*x)]), list),
         }
     }
 }
@@ -157,9 +150,7 @@ mod tests {
     fn compare_works_as_specified() {
         use Ordering::*;
         assert_equal(
-            example_pairs()
-                .iter()
-                .map(|(lhs, rhs)| std::cmp::Ord::cmp(lhs, rhs)),
+            example_pairs().iter().map(|(lhs, rhs)| Ord::cmp(lhs, rhs)),
             [Less, Less, Greater, Less, Greater, Less, Greater, Greater],
         );
     }
