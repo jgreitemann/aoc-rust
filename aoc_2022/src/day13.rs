@@ -3,7 +3,7 @@ use aoc_companion::prelude::*;
 use itertools::Itertools;
 use thiserror::Error;
 
-use std::cmp::{Ord, Ordering};
+use std::cmp::Ordering;
 use std::str::FromStr;
 
 pub struct Door {
@@ -83,18 +83,14 @@ impl Ord for PacketData {
         use PacketData::*;
         match (self, other) {
             (Integer(x), Integer(y)) => Ord::cmp(x, y),
-            (List(xs), List(ys)) => Iterator::zip(xs.iter(), ys.iter())
-                .fold(Ordering::Equal, |ord, (x, y)| {
-                    ord.then_with(|| Ord::cmp(x, y))
-                })
-                .then_with(|| Ord::cmp(&xs.len(), &ys.len())),
+            (List(xs), List(ys)) => Ord::cmp(xs, ys),
             (list, Integer(y)) => Ord::cmp(list, &List(vec![Integer(*y)])),
             (Integer(x), list) => Ord::cmp(&List(vec![Integer(*x)]), list),
         }
     }
 }
 
-impl std::cmp::PartialOrd for PacketData {
+impl PartialOrd for PacketData {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
