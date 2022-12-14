@@ -89,10 +89,13 @@ fn parse_input(input: &str) -> Result<Vec<Path>, ParseError> {
 }
 
 const SOURCE: Vector<i32, 2> = Vector([500, 0]);
+const STRAIGHT_DOWN: Vector<i32, 2> = Vector([0, 1]);
+const LEFT_DOWN: Vector<i32, 2> = Vector([-1, 1]);
+const RIGHT_DOWN: Vector<i32, 2> = Vector([1, 1]);
 
 #[derive(Debug)]
 struct Pit {
-    active_sand: Vector<i32, 2>,
+    falling_sand_stack: Vec<Vector<i32, 2>>,
     settled_sand: HashSet<Vector<i32, 2>>,
     paths: Vec<Path>,
     floor: i32,
@@ -106,7 +109,7 @@ impl Pit {
             .max()
             .unwrap_or(0);
         Pit {
-            active_sand: Vector([500, 0]),
+            falling_sand_stack: vec![SOURCE],
             settled_sand: HashSet::new(),
             paths: paths.to_vec(),
             floor,
@@ -132,7 +135,7 @@ impl Pit {
             .cloned()
             .collect();
         Pit {
-            active_sand: SOURCE,
+            falling_sand_stack: vec![SOURCE],
             settled_sand: HashSet::new(),
             paths,
             floor,
@@ -143,31 +146,29 @@ impl Pit {
         self.settled_sand.contains(q) || self.paths.iter().any(|p| p.contains(q))
     }
 
+    fn try_point(&self, q: Vector<i32, 2>) -> Option<Vector<i32, 2>> {
+        Some(q).filter(|q| !self.is_obstructed(q))
+    }
+
     fn fill_one(&mut self) -> bool {
-        const STRAIGHT_DOWN: Vector<i32, 2> = Vector([0, 1]);
-        const LEFT_DOWN: Vector<i32, 2> = Vector([-1, 1]);
-        const RIGHT_DOWN: Vector<i32, 2> = Vector([1, 1]);
-
-        let try_point = |q: Vector<i32, 2>| {
-            if !self.is_obstructed(&q) {
-                Some(q)
-            } else {
-                None
+        if let Some(mut falling_sand) = self.falling_sand_stack.pop() {
+            while let Some(q) = self
+                .try_point(falling_sand + STRAIGHT_DOWN)
+                .or_else(|| self.try_point(falling_sand + LEFT_DOWN))
+                .or_else(|| self.try_point(falling_sand + RIGHT_DOWN))
+            {
+                self.falling_sand_stack.push(falling_sand);
+                falling_sand = q;
+                if falling_sand[1] > self.floor {
+                    return false;
+                }
             }
-        };
 
-        if let Some(q) = try_point(self.active_sand + STRAIGHT_DOWN)
-            .or_else(|| try_point(self.active_sand + LEFT_DOWN))
-            .or_else(|| try_point(self.active_sand + RIGHT_DOWN))
-        {
-            self.active_sand = q;
-            self.active_sand[1] <= self.floor
-        } else {
-            let source_blocked = self.active_sand == SOURCE;
-            self.settled_sand.insert(self.active_sand);
-            self.active_sand = SOURCE;
-            !source_blocked
+            self.settled_sand.insert(falling_sand);
+            return true;
         }
+
+        false
     }
 
     fn fill_up(&mut self) {
