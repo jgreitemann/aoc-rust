@@ -6,6 +6,8 @@ use tap::Tap;
 use thiserror::Error;
 
 use std::collections::HashSet;
+use std::num::ParseIntError;
+use std::ops::RangeInclusive;
 
 const LINE_Y: isize = 2000000;
 
@@ -14,10 +16,10 @@ pub struct Door {
 }
 
 impl ParseInput<'_> for Door {
-    type Error = ParseError;
+    type Error = ParseIntError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        parse_input(input).map(|sensors| Self {sensors})
+        parse_input(input).map(|sensors| Self { sensors })
     }
 }
 
@@ -26,14 +28,27 @@ impl Part1 for Door {
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(coverage_on_line(&self.sensors, LINE_Y).size() - number_of_beacons_on_line(&self.sensors, LINE_Y))
+        Ok(coverage_on_line(&self.sensors, LINE_Y).size()
+            - number_of_beacons_on_line(&self.sensors, LINE_Y))
+    }
+}
+
+impl Part2 for Door {
+    type Output = isize;
+    type Error = RuntimeError;
+
+    fn part2(&self) -> Result<Self::Output, Self::Error> {
+        const N: isize = 4000000;
+        find_distress_beacon_in_bounds(&self.sensors, 0..=N)
+            .ok_or(RuntimeError::DistressBeaconNotFound)
+            .map(|Vector([x, y])| x * N + y)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
-    #[error(transparent)]
-    ParseIntError(#[from] std::num::ParseIntError),
+pub enum RuntimeError {
+    #[error("No distress beacon found in bounds")]
+    DistressBeaconNotFound,
 }
 
 type Position = Vector<isize, 2>;
@@ -49,14 +64,31 @@ impl SensorData {
         (self.sensor_pos - self.closest_beacon_pos).norm_l1()
     }
 
-    fn line_covering(&self, line_y: isize) -> std::ops::RangeInclusive<isize> {
+    fn line_covering(&self, line_y: isize) -> RangeInclusive<isize> {
         let range = self.range();
         let div = (self.sensor_pos[1] - line_y).abs();
         (self.sensor_pos[0] - range + div)..=(self.sensor_pos[0] + range - div)
     }
+
+    fn covers(&self, p: &Position) -> bool {
+        (self.sensor_pos - *p).norm_l1() <= self.range()
+    }
+
+    fn bordering_positions(&self) -> impl Iterator<Item = Position> {
+        let radius = self.range() + 1;
+        let north = self.sensor_pos + Vector([0, radius]);
+        let west = self.sensor_pos + Vector([-radius, 0]);
+        let south = self.sensor_pos + Vector([0, -radius]);
+        let east = self.sensor_pos + Vector([radius, 0]);
+        (0..radius)
+            .map(move |i| north + Vector([-1, -1]) * i)
+            .chain((0..radius).map(move |i| west + Vector([1, -1]) * i))
+            .chain((0..radius).map(move |i| south + Vector([1, 1]) * i))
+            .chain((0..radius).map(move |i| east + Vector([-1, 1]) * i))
+    }
 }
 
-fn parse_input(input: &str) -> Result<Vec<SensorData>, ParseError> {
+fn parse_input(input: &str) -> Result<Vec<SensorData>, ParseIntError> {
     let re = regex::Regex::new(r"Sensor at x=(?P<sx>-?\d+), y=(?P<sy>-?\d+): closest beacon is at x=(?P<bx>-?\d+), y=(?P<by>-?\d+)").unwrap();
     re.captures_iter(input)
         .map(|capt| {
@@ -109,7 +141,7 @@ trait Covering: Sized {
     fn size(&self) -> usize;
 }
 
-impl Covering for std::ops::RangeInclusive<isize> {
+impl Covering for RangeInclusive<isize> {
     fn intersect(&self, other: &Self) -> Option<Self> {
         let range = (*self.start().max(other.start()))..=(*self.end().min(other.end()));
         (!range.is_empty()).then_some(range)
@@ -124,10 +156,7 @@ impl Covering for std::ops::RangeInclusive<isize> {
     }
 }
 
-fn coverage_on_line(
-    sensors: &[SensorData],
-    line_y: isize,
-) -> Coverage<std::ops::RangeInclusive<isize>> {
+fn coverage_on_line(sensors: &[SensorData], line_y: isize) -> Coverage<RangeInclusive<isize>> {
     sensors.iter().fold(Coverage::new(), |cov, sensor| {
         cov.tap_mut(|c| c.add(sensor.line_covering(line_y)))
     })
@@ -140,6 +169,17 @@ fn number_of_beacons_on_line(sensors: &[SensorData], line_y: isize) -> usize {
         .filter(|&Vector([_, y])| y == line_y)
         .collect();
     beacons_on_line.len()
+}
+
+fn find_distress_beacon_in_bounds(
+    sensors: &[SensorData],
+    bounds: RangeInclusive<isize>,
+) -> Option<Position> {
+    sensors
+        .iter()
+        .flat_map(|s| s.bordering_positions())
+        .filter(|b| bounds.contains(&b[0]) && bounds.contains(&b[1]))
+        .find(|b| sensors.iter().all(|s| !s.covers(b)))
 }
 
 #[cfg(test)]
@@ -286,5 +326,48 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
         assert_eq!(number_of_beacons_on_line(EXAMPLE_SENSOR_DATA, 9), 0);
         assert_eq!(number_of_beacons_on_line(EXAMPLE_SENSOR_DATA, 10), 1);
         assert_eq!(number_of_beacons_on_line(EXAMPLE_SENSOR_DATA, 11), 0);
+    }
+
+    //     0123456
+    //    0   x
+    //    1  x#x
+    //    2 x###x
+    //    3x##S##x
+    //    4 xB##x
+    //    5  x#x
+    //    6   x
+
+    #[test]
+    fn bordering_points_are_found() {
+        let points = HashSet::from([
+            Vector([3, 0]),
+            Vector([2, 1]),
+            Vector([4, 1]),
+            Vector([1, 2]),
+            Vector([5, 2]),
+            Vector([0, 3]),
+            Vector([6, 3]),
+            Vector([1, 4]),
+            Vector([5, 4]),
+            Vector([2, 5]),
+            Vector([4, 5]),
+            Vector([3, 6]),
+        ]);
+        const TEST_SENSOR: SensorData = SensorData {
+            sensor_pos: Vector([3, 3]),
+            closest_beacon_pos: Vector([2, 4]),
+        };
+        assert_eq!(
+            TEST_SENSOR.bordering_positions().collect::<HashSet<_>>(),
+            points
+        );
+    }
+
+    #[test]
+    fn distress_beacon_position_is_found() {
+        assert_eq!(
+            find_distress_beacon_in_bounds(EXAMPLE_SENSOR_DATA, 0..=20),
+            Some(Vector([14, 11]))
+        );
     }
 }
