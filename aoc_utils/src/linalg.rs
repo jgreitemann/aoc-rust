@@ -19,6 +19,22 @@ impl<T: Num, const N: usize> Vector<T, N> {
     pub fn new() -> Self {
         Vector(std::array::from_fn(|_| T::zero()))
     }
+
+    pub fn cast_as<U: Num + From<T>>(self) -> Vector<U, N> {
+        Vector(self.0.map(|x| x.into()))
+    }
+
+    pub fn try_cast_as<U>(self) -> Result<Vector<U, N>, U::Error>
+    where U: Num + TryFrom<T> + std::fmt::Debug,
+    <U as TryFrom<T>>::Error: std::fmt::Debug,
+    {
+        let results: [Result<U, U::Error>; N] = self.0.map(|x| x.try_into());
+        if results.iter().any(|res| res.is_err()) {
+            Err(results.into_iter().find(|res| res.is_err()).unwrap().unwrap_err())
+        } else {
+            Ok(Vector(results.map(|res| res.unwrap())))
+        }
+    }
 }
 
 impl<T, const N: usize> Default for Vector<T, N>

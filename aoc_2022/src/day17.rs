@@ -19,7 +19,7 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
+    type Output = isize;
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
@@ -28,7 +28,7 @@ impl Part1 for Door {
 }
 
 impl Part2 for Door {
-    type Output = usize;
+    type Output = isize;
     type Error = std::convert::Infallible;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
@@ -91,20 +91,20 @@ impl Cavern {
         }
     }
 
-    fn height(&self) -> usize {
-        self.settled.shape()[0] - 8
+    fn height(&self) -> isize {
+        self.settled.shape()[0] as isize - 8
     }
 
     fn test(&self, rock: &Rock) -> bool {
-        rock.0.iter().all(|&coords| self.settled[coords] == b'.')
+        rock.0.iter().all(|coords| self.settled[coords.try_cast_as().unwrap()] == b'.')
     }
 
     fn add(&mut self, rock: &Rock) {
         for coords in &rock.0 {
-            self.settled[*coords] = b'#';
+            self.settled[coords.try_cast_as().unwrap()] = b'#';
         }
 
-        let new_height = rock.0.iter().map(|coords| coords[0]).max().unwrap();
+        let new_height = rock.0.iter().map(|coords| coords[0]).max().unwrap() as isize;
         while self.height() < new_height {
             self.settled
                 .push_row(ndarray::ArrayView::from(b"#.......#"))
@@ -121,12 +121,12 @@ impl Cavern {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Rock(Vec<Vector<usize, 2>>);
+struct Rock(Vec<Vector<isize, 2>>);
 
 impl Rock {
-    fn translate(&mut self, dim: usize, by: isize) {
+    fn translate(&mut self, by: Vector<isize, 2>) {
         for p in &mut self.0 {
-            p[dim] = (p[dim] as isize + by) as usize;
+            *p += by;
         }
     }
 }
@@ -136,23 +136,23 @@ fn drop_rock(
     mut rock: Rock,
     jet_iter: &mut dyn Iterator<Item = (usize, Jet)>,
 ) {
-    rock.translate(0, cavern.height() as isize);
+    rock.translate(Vector([cavern.height(), 0]));
     while cavern.test(&rock) {
         let (_, jet) = jet_iter.next().unwrap();
         match jet {
-            Jet::Left => rock.translate(1, -1),
-            Jet::Right => rock.translate(1, 1),
+            Jet::Left => rock.translate(Vector([0,-1])),
+            Jet::Right => rock.translate(Vector([0,1])),
         }
         if !cavern.test(&rock) {
             match jet {
-                Jet::Left => rock.translate(1, 1),
-                Jet::Right => rock.translate(1, -1),
+                Jet::Left => rock.translate(Vector([0,1])),
+                Jet::Right => rock.translate(Vector([0,-1])),
             }
         }
-        rock.translate(0, -1);
+        rock.translate(Vector([-1,0]));
     }
 
-    rock.translate(0, 1);
+    rock.translate(Vector([1,0]));
     cavern.add(&rock);
 }
 
@@ -203,7 +203,7 @@ fn cavern_after_dropping_rocks(n: usize, jets: &[Jet]) -> Cavern {
     cavern
 }
 
-fn determine_tower_height_with_matching(n: usize, jets: &[Jet]) -> usize {
+fn determine_tower_height_with_matching(n: usize, jets: &[Jet]) -> isize {
     const SEED_N: usize = 25;
 
     let mut jet_iter = jets.iter().copied().enumerate().cycle().peekable();
@@ -239,10 +239,10 @@ fn determine_tower_height_with_matching(n: usize, jets: &[Jet]) -> usize {
     drop_multiple_rocks(&mut cavern, remaining_rocks, &mut jet_iter);
     let remaining_height = cavern.height() - matching_cavern.height();
 
-    initial_cavern.height() + number_of_repeats * repeating_segment_height + remaining_height
+    initial_cavern.height() + number_of_repeats as isize * repeating_segment_height + remaining_height
 }
 
-const ROCK_SEQUENCE: [&[Vector<usize, 2>]; 5] = [
+const ROCK_SEQUENCE: [&[Vector<isize, 2>]; 5] = [
     &[
         Vector([4, 3]),
         Vector([4, 4]),
