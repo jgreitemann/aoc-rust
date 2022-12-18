@@ -1,9 +1,13 @@
 use crate::geometry::{Neighbors, Point};
 
+use itertools::Itertools;
 use num_traits::{Num, NumCast, Pow, Signed};
 use paste::paste;
+use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use std::str::FromStr;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Scalar<T: Num>(T);
 
 impl<T: Num> From<T> for Scalar<T> {
@@ -12,7 +16,7 @@ impl<T: Num> From<T> for Scalar<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Vector<T: Num, const N: usize>(pub [T; N]);
 
 impl<T: Num, const N: usize> Vector<T, N> {
@@ -25,12 +29,17 @@ impl<T: Num, const N: usize> Vector<T, N> {
     }
 
     pub fn try_cast_as<U>(self) -> Result<Vector<U, N>, U::Error>
-    where U: Num + TryFrom<T> + std::fmt::Debug,
-    <U as TryFrom<T>>::Error: std::fmt::Debug,
+    where
+        U: Num + TryFrom<T> + std::fmt::Debug,
+        <U as TryFrom<T>>::Error: std::fmt::Debug,
     {
         let results: [Result<U, U::Error>; N] = self.0.map(|x| x.try_into());
         if results.iter().any(|res| res.is_err()) {
-            Err(results.into_iter().find(|res| res.is_err()).unwrap().unwrap_err())
+            Err(results
+                .into_iter()
+                .find(|res| res.is_err())
+                .unwrap()
+                .unwrap_err())
         } else {
             Ok(Vector(results.map(|res| res.unwrap())))
         }
@@ -44,6 +53,31 @@ where
 {
     fn default() -> Self {
         Self(Default::default())
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ParseError<E> {
+    #[error(transparent)]
+    ParseElement(#[from] E),
+    #[error("Wrong amount of comma-separated tokens to parse Vector")]
+    WrongTokenCount,
+}
+
+impl<T, const N: usize> FromStr for Vector<T, N>
+where
+    T: Num + FromStr,
+{
+    type Err = ParseError<<T as FromStr>::Err>;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let vec: Vec<_> = s
+            .split_terminator(',')
+            .map(str::trim)
+            .map(str::parse)
+            .try_collect()?;
+        Ok(Vector(
+            vec.try_into().map_err(|_| ParseError::WrongTokenCount)?,
+        ))
     }
 }
 
@@ -289,6 +323,68 @@ impl_point_2d!(i32);
 impl_point_2d!(i64);
 impl_point_2d!(i128);
 
+macro_rules! impl_point_3d {
+    ($num:ty) => {
+        impl Point for Vector<$num, 3> {
+            fn neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 3>] = &[
+                    Vector([1, 0, -1]),
+                    Vector([1, 1, -1]),
+                    Vector([0, 1, -1]),
+                    Vector([-1, 1, -1]),
+                    Vector([-1, 0, -1]),
+                    Vector([-1, -1, -1]),
+                    Vector([0, -1, -1]),
+                    Vector([1, -1, -1]),
+                    Vector([0, 0, -1]),
+                    Vector([1, 0, 0]),
+                    Vector([1, 1, 0]),
+                    Vector([0, 1, 0]),
+                    Vector([-1, 1, 0]),
+                    Vector([-1, 0, 0]),
+                    Vector([-1, -1, 0]),
+                    Vector([0, -1, 0]),
+                    Vector([1, -1, 0]),
+                    Vector([1, 0, 1]),
+                    Vector([1, 1, 1]),
+                    Vector([0, 1, 1]),
+                    Vector([-1, 1, 1]),
+                    Vector([-1, 0, 1]),
+                    Vector([-1, -1, 1]),
+                    Vector([0, -1, 1]),
+                    Vector([1, -1, 1]),
+                    Vector([0, 0, 1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+
+            fn nearest_neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 3>] = &[
+                    Vector([1, 0, 0]),
+                    Vector([0, 1, 0]),
+                    Vector([0, 0, 1]),
+                    Vector([-1, 0, 0]),
+                    Vector([0, -1, 0]),
+                    Vector([0, 0, -1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+        }
+    };
+}
+
+impl_point_3d!(i8);
+impl_point_3d!(i16);
+impl_point_3d!(i32);
+impl_point_3d!(i64);
+impl_point_3d!(i128);
+
 unsafe impl<const N: usize> ndarray::NdIndex<ndarray::Dim<[usize; N]>> for Vector<usize, N>
 where
     [usize; N]: ndarray::NdIndex<ndarray::Dim<[usize; N]>>,
@@ -310,6 +406,7 @@ where
 mod tests {
     use super::*;
     use itertools::assert_equal;
+    use assert_matches::assert_matches;
 
     const V1: Vector<i32, 3> = Vector([1, 2, 3]);
     const V2: Vector<i32, 3> = Vector([4, 5, 6]);
@@ -317,8 +414,34 @@ mod tests {
     const V4: Vector<i32, 3> = Vector([4, 10, 18]);
     const V5: Vector<i32, 3> = Vector([2, 4, 6]);
     const V6: Vector<i32, 3> = Vector([10, 14, 18]);
-    const VU1: Vector<u32, 3> = Vector([1, 2, 3]);
-    const VF1: Vector<f32, 3> = Vector([1., 2., 3.]);
+    const V7: Vector<i32, 3> = Vector([100, 200, 300]);
+    const V1I8: Vector<i8, 3> = Vector([1, 2, 3]);
+    const V1I64: Vector<i64, 3> = Vector([1, 2, 3]);
+    const V1U32: Vector<u32, 3> = Vector([1, 2, 3]);
+    const V1F32: Vector<f32, 3> = Vector([1., 2., 3.]);
+
+    #[test]
+    fn vector_can_be_parsed() {
+        assert_eq!("1,2,3".parse::<Vector<i32, 3>>().unwrap(), V1);
+        assert_eq!("1, 2, 3".parse::<Vector<i32, 3>>().unwrap(), V1);
+        assert_eq!("1 , 2 , 3".parse::<Vector<i32, 3>>().unwrap(), V1);
+        assert_eq!("1, 2, 3,".parse::<Vector<i32, 3>>().unwrap(), V1);
+        assert_eq!("100, 200, 300".parse::<Vector<i32, 3>>().unwrap(), V7);
+        assert_eq!("1, 2, 3".parse::<Vector<i8, 3>>().unwrap(), V1I8);
+        assert_eq!("1, 2, 3".parse::<Vector<i64, 3>>().unwrap(), V1I64);
+        assert_eq!("1, 2, 3".parse::<Vector<u32, 3>>().unwrap(), V1U32);
+        assert_eq!("1, 2, 3".parse::<Vector<f32, 3>>().unwrap(), V1F32);
+        assert_eq!("1, 2., 3".parse::<Vector<f32, 3>>().unwrap(), V1F32);
+        assert_eq!("1., 2., 3.".parse::<Vector<f32, 3>>().unwrap(), V1F32);
+
+        assert_matches!("1, 2".parse::<Vector<i32, 3>>(), Err(ParseError::WrongTokenCount));
+        assert_matches!("1, 2, 3, 4".parse::<Vector<i32, 3>>(), Err(ParseError::WrongTokenCount));
+        assert_matches!("1, two, 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
+        assert_matches!("100, 200, 300".parse::<Vector<i8, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
+        assert_matches!("1, 2., 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
+        assert_matches!("1, 2., 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
+        assert_matches!("1., pi, 3.".parse::<Vector<f32, 3>>(), Err(ParseError::ParseElement(std::num::ParseFloatError{ .. })));
+    }
 
     #[test]
     fn zero_vector_is_default() {
@@ -431,8 +554,8 @@ mod tests {
 
         assert_eq!(V1.norm_l2_sq(), 14);
         assert_eq!(V1.norm_l2(), f64::sqrt(14.));
-        assert_eq!(VU1.norm_l2_sq(), 14);
-        assert_eq!(VU1.norm_l2(), f64::sqrt(14.));
+        assert_eq!(V1U32.norm_l2_sq(), 14);
+        assert_eq!(V1U32.norm_l2(), f64::sqrt(14.));
 
         assert_eq!(V1.norm_l3_cb(), 36);
         assert_eq!(V1.norm_l3(), f64::cbrt(36.));
@@ -443,16 +566,16 @@ mod tests {
 
     #[test]
     fn vector_floating_point_lp_norms() {
-        assert_eq!(VF1.norm_l1(), 6f32);
+        assert_eq!(V1F32.norm_l1(), 6f32);
 
-        assert_eq!(VF1.norm_l2_sq(), 14f32);
-        assert_eq!(VF1.norm_l2(), f64::sqrt(14.));
+        assert_eq!(V1F32.norm_l2_sq(), 14f32);
+        assert_eq!(V1F32.norm_l2(), f64::sqrt(14.));
 
-        assert_eq!(VF1.norm_l3_cb(), 36f32);
-        assert_eq!(VF1.norm_l3(), f64::cbrt(36.));
+        assert_eq!(V1F32.norm_l3_cb(), 36f32);
+        assert_eq!(V1F32.norm_l3(), f64::cbrt(36.));
 
-        assert_eq!(VF1.norm_lp_pow::<4>(), 98f32);
-        assert_eq!(VF1.norm_lp::<4>(), f64::powf(98., 0.25));
+        assert_eq!(V1F32.norm_lp_pow::<4>(), 98f32);
+        assert_eq!(V1F32.norm_lp::<4>(), f64::powf(98., 0.25));
     }
 
     #[test]
