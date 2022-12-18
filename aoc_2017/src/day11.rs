@@ -1,5 +1,5 @@
 use aoc_companion::prelude::*;
-use aoc_utils::linalg::*;
+use aoc_utils::linalg::Vector;
 
 use itertools::Itertools;
 use thiserror::Error;

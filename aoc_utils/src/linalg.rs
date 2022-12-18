@@ -57,7 +57,7 @@ where
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError<E> {
+pub enum ParseVectorError<E> {
     #[error(transparent)]
     ParseElement(#[from] E),
     #[error("Wrong amount of comma-separated tokens to parse Vector")]
@@ -68,7 +68,7 @@ impl<T, const N: usize> FromStr for Vector<T, N>
 where
     T: Num + FromStr,
 {
-    type Err = ParseError<<T as FromStr>::Err>;
+    type Err = ParseVectorError<<T as FromStr>::Err>;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let vec: Vec<_> = s
             .split_terminator(',')
@@ -76,7 +76,8 @@ where
             .map(str::parse)
             .try_collect()?;
         Ok(Vector(
-            vec.try_into().map_err(|_| ParseError::WrongTokenCount)?,
+            vec.try_into()
+                .map_err(|_| ParseVectorError::WrongTokenCount)?,
         ))
     }
 }
@@ -405,8 +406,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::assert_equal;
     use assert_matches::assert_matches;
+    use itertools::assert_equal;
 
     const V1: Vector<i32, 3> = Vector([1, 2, 3]);
     const V2: Vector<i32, 3> = Vector([4, 5, 6]);
@@ -434,13 +435,44 @@ mod tests {
         assert_eq!("1, 2., 3".parse::<Vector<f32, 3>>().unwrap(), V1F32);
         assert_eq!("1., 2., 3.".parse::<Vector<f32, 3>>().unwrap(), V1F32);
 
-        assert_matches!("1, 2".parse::<Vector<i32, 3>>(), Err(ParseError::WrongTokenCount));
-        assert_matches!("1, 2, 3, 4".parse::<Vector<i32, 3>>(), Err(ParseError::WrongTokenCount));
-        assert_matches!("1, two, 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
-        assert_matches!("100, 200, 300".parse::<Vector<i8, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
-        assert_matches!("1, 2., 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
-        assert_matches!("1, 2., 3".parse::<Vector<i32, 3>>(), Err(ParseError::ParseElement(std::num::ParseIntError{ .. })));
-        assert_matches!("1., pi, 3.".parse::<Vector<f32, 3>>(), Err(ParseError::ParseElement(std::num::ParseFloatError{ .. })));
+        assert_matches!(
+            "1, 2".parse::<Vector<i32, 3>>(),
+            Err(ParseVectorError::WrongTokenCount)
+        );
+        assert_matches!(
+            "1, 2, 3, 4".parse::<Vector<i32, 3>>(),
+            Err(ParseVectorError::WrongTokenCount)
+        );
+        assert_matches!(
+            "1, two, 3".parse::<Vector<i32, 3>>(),
+            Err(ParseVectorError::ParseElement(
+                std::num::ParseIntError { .. }
+            ))
+        );
+        assert_matches!(
+            "100, 200, 300".parse::<Vector<i8, 3>>(),
+            Err(ParseVectorError::ParseElement(
+                std::num::ParseIntError { .. }
+            ))
+        );
+        assert_matches!(
+            "1, 2., 3".parse::<Vector<i32, 3>>(),
+            Err(ParseVectorError::ParseElement(
+                std::num::ParseIntError { .. }
+            ))
+        );
+        assert_matches!(
+            "1, 2., 3".parse::<Vector<i32, 3>>(),
+            Err(ParseVectorError::ParseElement(
+                std::num::ParseIntError { .. }
+            ))
+        );
+        assert_matches!(
+            "1., pi, 3.".parse::<Vector<f32, 3>>(),
+            Err(ParseVectorError::ParseElement(
+                std::num::ParseFloatError { .. }
+            ))
+        );
     }
 
     #[test]

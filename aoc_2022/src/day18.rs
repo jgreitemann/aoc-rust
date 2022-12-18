@@ -1,6 +1,6 @@
 use aoc_companion::prelude::*;
 use aoc_utils::geometry::Point;
-use aoc_utils::linalg::{ParseError, Vector};
+use aoc_utils::linalg::{ParseVectorError, Vector};
 
 use itertools::Itertools;
 
@@ -14,7 +14,7 @@ pub struct Door {
 }
 
 impl ParseInput<'_> for Door {
-    type Error = ParseError<ParseIntError>;
+    type Error = ParseVectorError<ParseIntError>;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
         parse_input(input).map(|voxels| Door { voxels })
@@ -39,7 +39,7 @@ impl Part2 for Door {
     }
 }
 
-fn parse_input(input: &str) -> Result<HashSet<Voxel>, ParseError<ParseIntError>> {
+fn parse_input(input: &str) -> Result<HashSet<Voxel>, ParseVectorError<ParseIntError>> {
     input.lines().map(str::parse).try_collect()
 }
 
@@ -55,11 +55,7 @@ fn exterior_surface_area(voxels: &HashSet<Voxel>) -> usize {
 fn surface_area(voxels: &HashSet<Voxel>, is_outside: impl Fn(&Voxel) -> bool) -> usize {
     voxels
         .iter()
-        .map(|v| {
-            v.nearest_neighbors()
-                .filter(&is_outside)
-                .count()
-        })
+        .map(|v| v.nearest_neighbors().filter(&is_outside).count())
         .sum()
 }
 
