@@ -46,7 +46,7 @@ impl From<&str> for ValveId {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Valve {
     flow_rate: u32,
-    connections: Vec<ValveId>,
+    connections: Vec<(ValveId, u32)>,
 }
 
 type Cave = HashMap<ValveId, Valve>;
@@ -54,7 +54,7 @@ type Cave = HashMap<ValveId, Valve>;
 #[derive(Debug, Clone)]
 enum Action {
     OpenValve(ValveId),
-    MoveToTunnel(ValveId),
+    MoveToTunnel { valve: ValveId, distance: u32 },
 }
 
 #[derive(Debug, Clone)]
@@ -92,17 +92,24 @@ impl Strategy {
     }
 
     fn take(&mut self, action: Action, cave: &Cave) {
-        self.time += 1;
-        self.flow += self.flow_rate;
         match &action {
             Action::OpenValve(valve) => {
+                self.time += 1;
+                self.flow += self.flow_rate;
                 self.flow_rate += cave[valve].flow_rate;
                 self.open_valves.insert(*valve);
                 self.previous = ValveId(0);
             }
-            Action::MoveToTunnel(to) => {
+            Action::MoveToTunnel { valve, distance } => {
+                let delta_t = if self.time + distance >= MINUTES {
+                    MINUTES - self.time
+                } else {
+                    *distance
+                };
+                self.time += delta_t;
+                self.flow += self.flow_rate * delta_t;
                 self.previous = self.current;
-                self.current = *to;
+                self.current = *valve;
             }
         }
     }
@@ -139,12 +146,12 @@ fn possible_actions(strat: Strategy, cave: &Cave) -> impl Iterator<Item = Action
         if current_valve.flow_rate > 0 && !strat.open_valves.contains(&strat.current) {
             co.yield_(Action::OpenValve(strat.current)).await;
         }
-        for connected in current_valve
+        for &(valve, distance) in current_valve
             .connections
             .iter()
-            .filter(|&&connected| strat.previous != connected)
+            .filter(|&&(connected, _)| strat.previous != connected)
         {
-            co.yield_(Action::MoveToTunnel(*connected)).await;
+            co.yield_(Action::MoveToTunnel { valve, distance }).await;
         }
     })
     .into_iter()
@@ -154,7 +161,10 @@ fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
     let re = regex::Regex::new(r"Valve (?P<tunnel>[A-Z]+) has flow rate=(?P<rate>\d+); tunnels? leads? to valves? (?P<connections>[A-Z]+(, [A-Z]+)*)").unwrap();
     re.captures_iter(input)
         .map(|capt| {
-            let connections = capt["connections"].split(", ").map(ValveId::from).collect();
+            let connections = capt["connections"]
+                .split(", ")
+                .map(|id| (id.into(), 1))
+                .collect();
             Ok((
                 capt["tunnel"].into(),
                 Valve {
@@ -166,13 +176,21 @@ fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
         .try_collect()
 }
 
+fn reduce_cave(cave: Cave) -> Cave {
+    cave
+}
+
+macro_rules! connect {
+    ($($x:literal),+ $(,)?) => (vec![$(($x.into(), 1),)+]);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn input_is_parsed() {
-        assert_eq!(parse_input(EXAMPLE_INPUT).unwrap(), example_valves());
+        assert_eq!(parse_input(EXAMPLE_INPUT).unwrap(), example_cave());
     }
 
     #[test]
@@ -182,7 +200,7 @@ mod tests {
 
     #[test]
     fn maximum_flow_rate() {
-        assert_eq!(find_optimal_strategy(&example_valves()).flow, 1651);
+        assert_eq!(find_optimal_strategy(&example_cave()).flow, 1651);
     }
 
     const EXAMPLE_INPUT: &str = "\
@@ -197,76 +215,130 @@ Valve HH has flow rate=22; tunnel leads to valve GG
 Valve II has flow rate=0; tunnels lead to valves AA, JJ
 Valve JJ has flow rate=21; tunnel leads to valve II";
 
-    fn example_valves() -> Cave {
+    fn example_cave() -> Cave {
         HashMap::from([
             (
                 "AA".into(),
                 Valve {
                     flow_rate: 0,
-                    connections: vec!["DD".into(), "II".into(), "BB".into()],
+                    connections: connect!["DD", "II", "BB"],
                 },
             ),
             (
                 "BB".into(),
                 Valve {
                     flow_rate: 13,
-                    connections: vec!["CC".into(), "AA".into()],
+                    connections: connect!["CC", "AA"],
                 },
             ),
             (
                 "CC".into(),
                 Valve {
                     flow_rate: 2,
-                    connections: vec!["DD".into(), "BB".into()],
+                    connections: connect!["DD", "BB"],
                 },
             ),
             (
                 "DD".into(),
                 Valve {
                     flow_rate: 20,
-                    connections: vec!["CC".into(), "AA".into(), "EE".into()],
+                    connections: connect!["CC", "AA", "EE"],
                 },
             ),
             (
                 "EE".into(),
                 Valve {
                     flow_rate: 3,
-                    connections: vec!["FF".into(), "DD".into()],
+                    connections: connect!["FF", "DD"],
                 },
             ),
             (
                 "FF".into(),
                 Valve {
                     flow_rate: 0,
-                    connections: vec!["EE".into(), "GG".into()],
+                    connections: connect!["EE", "GG"],
                 },
             ),
             (
                 "GG".into(),
                 Valve {
                     flow_rate: 0,
-                    connections: vec!["FF".into(), "HH".into()],
+                    connections: connect!["FF", "HH"],
                 },
             ),
             (
                 "HH".into(),
                 Valve {
                     flow_rate: 22,
-                    connections: vec!["GG".into()],
+                    connections: connect!["GG"],
                 },
             ),
             (
                 "II".into(),
                 Valve {
                     flow_rate: 0,
-                    connections: vec!["AA".into(), "JJ".into()],
+                    connections: connect!["AA", "JJ"],
                 },
             ),
             (
                 "JJ".into(),
                 Valve {
                     flow_rate: 21,
-                    connections: vec!["II".into()],
+                    connections: connect!["II"],
+                },
+            ),
+        ])
+    }
+
+    fn reduced_example_cave() -> Cave {
+        HashMap::from([
+            (
+                "AA".into(),
+                Valve {
+                    flow_rate: 0,
+                    connections: vec![("BB".into(), 1), ("DD".into(), 1), ("JJ".into(), 2)],
+                },
+            ),
+            (
+                "BB".into(),
+                Valve {
+                    flow_rate: 13,
+                    connections: vec![("AA".into(), 1), ("CC".into(), 1)],
+                },
+            ),
+            (
+                "CC".into(),
+                Valve {
+                    flow_rate: 2,
+                    connections: vec![("BB".into(), 1), ("DD".into(), 1)],
+                },
+            ),
+            (
+                "DD".into(),
+                Valve {
+                    flow_rate: 20,
+                    connections: vec![("AA".into(), 1), ("CC".into(), 1), ("EE".into(), 1)],
+                },
+            ),
+            (
+                "EE".into(),
+                Valve {
+                    flow_rate: 3,
+                    connections: vec![("DD".into(), 1), ("HH".into(), 3)],
+                },
+            ),
+            (
+                "HH".into(),
+                Valve {
+                    flow_rate: 22,
+                    connections: vec![("EE".into(), 3)],
+                },
+            ),
+            (
+                "JJ".into(),
+                Valve {
+                    flow_rate: 21,
+                    connections: vec![("AA".into(), 2)],
                 },
             ),
         ])
