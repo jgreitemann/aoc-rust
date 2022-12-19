@@ -165,10 +165,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn input_is_parsed() {
+        assert_eq!(parse_blueprints(EXAMPLE_INPUT).unwrap(), example_blueprints());
+    }
+
+    #[test]
     fn find_max_geode_yield() {
         let strat = strategy_maximizing_geode_yield(&example_blueprints()[0]);
         assert_eq!(strat.geode_yield(), 9);
     }
+
+    const EXAMPLE_INPUT: &str = "\
+        Blueprint 1: \
+          Each ore robot costs 4 ore. \
+          Each clay robot costs 2 ore. \
+          Each obsidian robot costs 3 ore and 14 clay. \
+          Each geode robot costs 2 ore and 7 obsidian.\n\
+        Blueprint 2: \
+          Each ore robot costs 2 ore. \
+          Each clay robot costs 3 ore. \
+          Each obsidian robot costs 3 ore and 8 clay. \
+          Each geode robot costs 3 ore and 12 obsidian.";
 
     fn example_blueprints() -> Vec<Blueprint> {
         use Resource::*;
