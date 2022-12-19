@@ -9,6 +9,7 @@ edition = "2021"
 aoc_companion = { workspace = true }
 aoc_utils = { workspace = true }
 assert_matches = { workspace = true }
+enum-map = "2.4.2"
 genawaiter = "0.99.1"
 itertools = { workspace = true }
 ndarray = { workspace = true }

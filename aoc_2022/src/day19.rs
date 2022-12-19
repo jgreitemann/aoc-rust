@@ -1,14 +1,13 @@
 use aoc_companion::prelude::*;
 
+use enum_map::{enum_map, Enum, EnumMap};
 use genawaiter::sync::GenBoxed;
 use itertools::Itertools;
-use thiserror::Error;
 
-use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Enum)]
 enum Resource {
     Ore,
     Clay,
@@ -24,11 +23,11 @@ const RESOURCES: &[Resource] = &[
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Costs(HashMap<Resource, u32>);
+struct Costs(EnumMap<Resource, u32>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Blueprint {
-    robot_costs: HashMap<Resource, Costs>,
+    robot_costs: EnumMap<Resource, Costs>,
 }
 
 fn parse_blueprints(input: &str) -> Result<Vec<Blueprint>, ParseIntError> {
@@ -37,48 +36,44 @@ fn parse_blueprints(input: &str) -> Result<Vec<Blueprint>, ParseIntError> {
     re.captures_iter(input)
         .map(|capt| {
             Ok(Blueprint {
-                robot_costs: HashMap::from([
-                    (Ore, Costs(HashMap::from([(Ore, capt["ore_ore"].parse()?)]))),
-                    (
-                        Clay,
-                        Costs(HashMap::from([(Ore, capt["clay_ore"].parse()?)])),
-                    ),
-                    (
-                        Obsidian,
-                        Costs(HashMap::from([
-                            (Ore, capt["obs_ore"].parse()?),
-                            (Clay, capt["obs_clay"].parse()?),
-                        ])),
-                    ),
-                    (
-                        Geode,
-                        Costs(HashMap::from([
-                            (Ore, capt["geode_ore"].parse()?),
-                            (Obsidian, capt["geode_obs"].parse()?),
-                        ])),
-                    ),
-                ]),
+                robot_costs: enum_map! {
+                       Ore => Costs(enum_map!{
+                           Ore => capt["ore_ore"].parse()?,
+                           _ => 0
+                       }),
+                       Clay => Costs(enum_map!{
+                           Ore => capt["clay_ore"].parse()?,
+                           _ => 0
+                       }),
+                       Obsidian => Costs(enum_map!{
+                           Ore => capt["obs_ore"].parse()?,
+                           Clay => capt["obs_clay"].parse()?,
+                           _ => 0
+                       }),
+                       Geode => Costs(enum_map!{
+                           Ore => capt["geode_ore"].parse()?,
+                           Obsidian => capt["geode_obs"].parse()?,
+                           _ => 0
+                       }),
+                },
             })
         })
         .try_collect()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Inventory(HashMap<Resource, u32>);
+struct Inventory(EnumMap<Resource, u32>);
 
 impl Inventory {
     fn can_afford_robot(&self, robot: Resource, blueprint: &Blueprint) -> bool {
-        let costs = &blueprint.robot_costs[&robot];
-        costs
-            .0
-            .iter()
-            .all(|(res, cost)| cost <= self.0.get(res).unwrap_or(&0))
+        let costs = &blueprint.robot_costs[robot];
+        costs.0.iter().all(|(res, cost)| *cost <= self.0[res])
     }
 
     fn spend(&mut self, robot: Resource, blueprint: &Blueprint) {
-        let costs = &blueprint.robot_costs[&robot];
+        let costs = &blueprint.robot_costs[robot];
         for (res, cost) in &costs.0 {
-            *self.0.get_mut(res).unwrap() -= cost;
+            self.0[res] -= cost;
         }
     }
 }
@@ -93,18 +88,18 @@ struct Strategy {
 impl Strategy {
     fn new() -> Self {
         Strategy {
-            resource_inventory: Inventory(HashMap::new()),
-            robot_inventory: Inventory(HashMap::from([(Resource::Ore, 1)])),
-            time_left: 19,
+            resource_inventory: Inventory(EnumMap::default()),
+            robot_inventory: Inventory(enum_map! {
+                Resource::Ore => 1,
+                _ => 0,
+            }),
+            time_left: 20,
         }
     }
 
     fn produce(&mut self) {
         for (robot_res, count) in &self.robot_inventory.0 {
-            let existing = self.resource_inventory.0.get(robot_res).unwrap_or(&0);
-            self.resource_inventory
-                .0
-                .insert(*robot_res, existing + count);
+            self.resource_inventory.0[robot_res] += count;
         }
     }
 
@@ -117,16 +112,11 @@ impl Strategy {
 
     fn spend_on_robot(&mut self, robot: Resource, blueprint: &Blueprint) {
         self.resource_inventory.spend(robot, blueprint);
-        let existing_robots = self.robot_inventory.0.get(&robot).copied().unwrap_or(0);
-        self.robot_inventory.0.insert(robot, existing_robots + 1);
+        self.robot_inventory.0[robot] += 1;
     }
 
     fn geode_yield(&self) -> u32 {
-        self.resource_inventory
-            .0
-            .get(&Resource::Geode)
-            .copied()
-            .unwrap_or(0)
+        self.resource_inventory.0[Resource::Geode]
     }
 }
 
@@ -181,34 +171,51 @@ mod tests {
     }
 
     fn example_blueprints() -> Vec<Blueprint> {
-        // Blueprint 1:
-        //  Each ore robot costs 4 ore.
-        //  Each clay robot costs 2 ore.
-        //  Each obsidian robot costs 3 ore and 14 clay.
-        //  Each geode robot costs 2 ore and 7 obsidian.
-        //
-        // Blueprint 2:
-        //  Each ore robot costs 2 ore.
-        //  Each clay robot costs 3 ore.
-        //  Each obsidian robot costs 3 ore and 8 clay.
-        //  Each geode robot costs 3 ore and 12 obsidian.
         use Resource::*;
         vec![
             Blueprint {
-                robot_costs: HashMap::from([
-                    (Ore, Costs(HashMap::from([(Ore, 4)]))),
-                    (Clay, Costs(HashMap::from([(Ore, 2)]))),
-                    (Obsidian, Costs(HashMap::from([(Ore, 3), (Clay, 14)]))),
-                    (Geode, Costs(HashMap::from([(Ore, 2), (Obsidian, 7)]))),
-                ]),
+                robot_costs: enum_map! {
+                    Ore => Costs(enum_map!{
+                        Ore => 4,
+                        _ => 0
+                    }),
+                   Clay => Costs(enum_map!{
+                       Ore => 2,
+                       _ => 0
+                   }),
+                   Obsidian => Costs(enum_map!{
+                       Ore => 3,
+                       Clay => 14,
+                       _ => 0
+                   }),
+                   Geode => Costs(enum_map!{
+                       Ore => 2,
+                       Obsidian => 7,
+                       _ => 0
+                   }),
+                },
             },
             Blueprint {
-                robot_costs: HashMap::from([
-                    (Ore, Costs(HashMap::from([(Ore, 2)]))),
-                    (Clay, Costs(HashMap::from([(Ore, 3)]))),
-                    (Obsidian, Costs(HashMap::from([(Ore, 3), (Clay, 8)]))),
-                    (Geode, Costs(HashMap::from([(Ore, 3), (Obsidian, 12)]))),
-                ]),
+                robot_costs: enum_map! {
+                   Ore => Costs(enum_map!{
+                        Ore => 2,
+                        _ => 0
+                   }),
+                   Clay => Costs(enum_map!{
+                       Ore => 3,
+                       _ => 0
+                   }),
+                   Obsidian => Costs(enum_map!{
+                       Ore => 3,
+                       Clay => 8,
+                       _ => 0
+                   }),
+                   Geode => Costs(enum_map!{
+                       Ore => 3,
+                       Obsidian => 12,
+                       _ => 0
+                   }),
+                },
             },
         ]
     }
