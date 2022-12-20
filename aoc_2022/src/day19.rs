@@ -4,7 +4,6 @@ use enum_map::{enum_map, Enum, EnumMap};
 use itertools::Itertools;
 
 use std::num::ParseIntError;
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Enum)]
 enum Resource {
@@ -102,11 +101,12 @@ impl Strategy {
         }
     }
 
-    fn robot_options(&self, blueprint: Arc<Blueprint>) -> impl Iterator<Item = Resource> + '_ {
+    fn robot_options(&self, blueprint: &Blueprint) -> Vec<Resource> {
         RESOURCES
             .iter()
             .copied()
-            .filter(move |robot| self.resource_inventory.can_afford_robot(*robot, &blueprint))
+            .filter(move |robot| self.resource_inventory.can_afford_robot(*robot, blueprint))
+            .collect_vec()
     }
 
     fn spend_on_robot(&mut self, robot: Resource, blueprint: &Blueprint) {
@@ -119,20 +119,20 @@ impl Strategy {
     }
 }
 
-fn strategy_dfs(mut strat: Strategy, blueprint: Arc<Blueprint>) -> Strategy {
+fn strategy_maximizing_geode_yield(mut strat: Strategy, blueprint: &Blueprint) -> Strategy {
     strat.time_left -= 1;
 
     strat
-        .robot_options(blueprint.clone())
+        .robot_options(blueprint).into_iter()
         .map(|robot| {
             let mut new_strat = strat.clone();
             new_strat.produce();
-            new_strat.spend_on_robot(robot, &blueprint);
+            new_strat.spend_on_robot(robot, blueprint);
 
             if new_strat.time_left == 0 {
                 new_strat
             } else {
-                strategy_dfs(new_strat, blueprint.clone())
+                strategy_maximizing_geode_yield(new_strat, blueprint)
             }
         })
         .chain(std::iter::once_with(|| {
@@ -142,15 +142,11 @@ fn strategy_dfs(mut strat: Strategy, blueprint: Arc<Blueprint>) -> Strategy {
             if new_strat.time_left == 0 {
                 new_strat
             } else {
-                strategy_dfs(new_strat, blueprint.clone())
+                strategy_maximizing_geode_yield(new_strat, blueprint)
             }
         }))
         .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
         .unwrap()
-}
-
-fn strategy_maximizing_geode_yield(blueprint: &Blueprint) -> Strategy {
-    strategy_dfs(Strategy::new(), Arc::new(blueprint.clone()))
 }
 
 #[cfg(test)]
@@ -167,7 +163,7 @@ mod tests {
 
     #[test]
     fn find_max_geode_yield() {
-        let strat = strategy_maximizing_geode_yield(&example_blueprints()[0]);
+        let strat = strategy_maximizing_geode_yield(Strategy::new(), &example_blueprints()[0]);
         assert_eq!(strat.geode_yield(), 9);
     }
 
