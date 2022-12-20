@@ -1,7 +1,6 @@
 use aoc_companion::prelude::*;
 
 use enum_map::{enum_map, Enum, EnumMap};
-use genawaiter::sync::GenBoxed;
 use itertools::Itertools;
 
 use std::num::ParseIntError;
@@ -120,44 +119,38 @@ impl Strategy {
     }
 }
 
-fn strategy_dfs(
-    mut strat: Strategy,
-    blueprint: Arc<Blueprint>,
-) -> genawaiter::sync::GenBoxed<Strategy> {
+fn strategy_dfs(mut strat: Strategy, blueprint: Arc<Blueprint>) -> Strategy {
     strat.time_left -= 1;
 
-    GenBoxed::new_boxed(|co| async move {
-        for robot in strat.robot_options(blueprint.clone()) {
+    strat
+        .robot_options(blueprint.clone())
+        .map(|robot| {
             let mut new_strat = strat.clone();
             new_strat.produce();
             new_strat.spend_on_robot(robot, &blueprint);
 
             if new_strat.time_left == 0 {
-                co.yield_(new_strat).await;
+                new_strat
             } else {
-                for s in strategy_dfs(new_strat, blueprint.clone()) {
-                    co.yield_(s).await;
-                }
+                strategy_dfs(new_strat, blueprint.clone())
             }
-        }
+        })
+        .chain(std::iter::once_with(|| {
+            let mut new_strat = strat.clone();
+            new_strat.produce();
 
-        // do nothing
-        strat.produce();
-        if strat.time_left == 0 {
-            co.yield_(strat).await;
-        } else {
-            for s in strategy_dfs(strat, blueprint.clone()) {
-                co.yield_(s).await;
+            if new_strat.time_left == 0 {
+                new_strat
+            } else {
+                strategy_dfs(new_strat, blueprint.clone())
             }
-        }
-    })
+        }))
+        .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
+        .unwrap()
 }
 
 fn strategy_maximizing_geode_yield(blueprint: &Blueprint) -> Strategy {
     strategy_dfs(Strategy::new(), Arc::new(blueprint.clone()))
-        .into_iter()
-        .max_by_key(|strat| strat.geode_yield())
-        .unwrap()
 }
 
 #[cfg(test)]
@@ -166,7 +159,10 @@ mod tests {
 
     #[test]
     fn input_is_parsed() {
-        assert_eq!(parse_blueprints(EXAMPLE_INPUT).unwrap(), example_blueprints());
+        assert_eq!(
+            parse_blueprints(EXAMPLE_INPUT).unwrap(),
+            example_blueprints()
+        );
     }
 
     #[test]
