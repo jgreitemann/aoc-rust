@@ -101,17 +101,14 @@ impl Strategy {
         }
     }
 
-    fn feasible_actions(&self, blueprint: &Blueprint) -> [Option<Action>; 5] {
-        std::array::from_fn(|i| match i {
-            0..=3 => {
-                let robot = Resource::from_usize(i);
-                self.resource_inventory
-                    .can_afford_robot(robot, blueprint)
-                    .then_some(Action::SpendOnRobot(robot))
-            }
-            4 => Some(Action::NoOp),
-            _ => unreachable!(),
-        })
+    fn feasible_actions(&self, blueprint: &Blueprint) -> Vec<Action> {
+        let mut actions: Vec<_> = (0..Resource::LENGTH)
+            .map(|i| Resource::from_usize(i))
+            .filter(|&robot| self.resource_inventory.can_afford_robot(robot, blueprint))
+            .map(|robot| Action::SpendOnRobot(robot))
+            .collect();
+        actions.push(Action::NoOp);
+        actions
     }
 
     fn spend_on_robot(&mut self, robot: Resource, blueprint: &Blueprint) {
@@ -124,26 +121,24 @@ impl Strategy {
     }
 
     fn maximize_geode_yield(self, final_time: u32, blueprint: &Blueprint) -> Strategy {
-        self
-        .feasible_actions(blueprint)
-        .into_iter()
-        .filter_map(|action_opt| action_opt)
-        .map(|action| {
-            let mut new_strat = self.clone();
-            new_strat.produce();
-            match action {
-                Action::NoOp => {}
-                Action::SpendOnRobot(robot) => new_strat.spend_on_robot(robot, blueprint),
-            }
+        self.feasible_actions(blueprint)
+            .into_iter()
+            .map(|action| {
+                let mut new_strat = self.clone();
+                new_strat.produce();
+                match action {
+                    Action::NoOp => {}
+                    Action::SpendOnRobot(robot) => new_strat.spend_on_robot(robot, blueprint),
+                }
 
-            if new_strat.time == final_time {
-                new_strat
-            } else {
-                new_strat.maximize_geode_yield(final_time, blueprint)
-            }
-        })
-        .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
-        .unwrap()
+                if new_strat.time == final_time {
+                    new_strat
+                } else {
+                    new_strat.maximize_geode_yield(final_time, blueprint)
+                }
+            })
+            .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
+            .unwrap()
     }
 }
 
@@ -161,7 +156,12 @@ mod tests {
 
     #[test]
     fn find_max_geode_yield() {
-        assert_eq!(Strategy::new().maximize_geode_yield(24, &example_blueprints()[0]).geode_yield(), 9);
+        assert_eq!(
+            Strategy::new()
+                .maximize_geode_yield(24, &example_blueprints()[0])
+                .geode_yield(),
+            9
+        );
     }
 
     const EXAMPLE_INPUT: &str = "\
