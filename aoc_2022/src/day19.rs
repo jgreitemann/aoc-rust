@@ -13,6 +13,12 @@ enum Resource {
     Geode,
 }
 
+impl Resource {
+    fn iter() -> impl Iterator<Item = Self> {
+        (0..Resource::LENGTH).map(|i| Resource::from_usize(i))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Action {
     NoOp,
@@ -102,13 +108,20 @@ impl Strategy {
     }
 
     fn feasible_actions(&self, blueprint: &Blueprint) -> Vec<Action> {
-        let mut actions: Vec<_> = (0..Resource::LENGTH)
-            .map(|i| Resource::from_usize(i))
-            .filter(|&robot| self.resource_inventory.can_afford_robot(robot, blueprint))
-            .map(|robot| Action::SpendOnRobot(robot))
-            .collect();
-        actions.push(Action::NoOp);
-        actions
+        if self
+            .resource_inventory
+            .can_afford_robot(Resource::Geode, blueprint)
+        {
+            // If we can afford it, buying a geode robot will be our only course of action
+            vec![Action::SpendOnRobot(Resource::Geode)]
+        } else {
+            Resource::iter()
+                .take(3)
+                .filter(|&robot| self.resource_inventory.can_afford_robot(robot, blueprint))
+                .map(|robot| Action::SpendOnRobot(robot))
+                .chain(std::iter::once(Action::NoOp))
+                .collect()
+        }
     }
 
     fn spend_on_robot(&mut self, robot: Resource, blueprint: &Blueprint) {
