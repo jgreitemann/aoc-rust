@@ -144,7 +144,17 @@ impl Strategy {
         self.resource_inventory.0[Resource::Geode]
     }
 
-    fn maximize_geode_yield(self, final_time: u32, blueprint: &Blueprint) -> Strategy {
+    fn evolve_reduce<I, F, R>(
+        self,
+        final_time: u32,
+        blueprint: &Blueprint,
+        init_fn: &I,
+        reduction_fn: &F,
+    ) -> R
+    where
+        I: Fn(Strategy) -> R,
+        F: Fn(R, R) -> R,
+    {
         self.feasible_actions(blueprint)
             .into_iter()
             .map(|action| {
@@ -156,14 +166,65 @@ impl Strategy {
                 }
 
                 if new_strat.time == final_time {
-                    new_strat
+                    init_fn(new_strat)
                 } else {
-                    new_strat.maximize_geode_yield(final_time, blueprint)
+                    new_strat.evolve_reduce(final_time, blueprint, init_fn, reduction_fn)
                 }
             })
-            .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
+            .reduce(reduction_fn)
             .unwrap()
     }
+
+    fn evolve_top_n(self, n: usize, final_time: u32, blueprint: &Blueprint) -> Vec<Strategy> {
+        self.evolve_reduce(final_time, blueprint, &|s| vec![s], &|lhs, rhs| {
+            lhs.into_iter()
+                .merge_by(rhs.into_iter(), |l, r| l.geode_yield() > r.geode_yield())
+                .take(n)
+                .collect()
+        })
+    }
+
+    fn maximize_geode_yield(self, final_time: u32, blueprint: &Blueprint) -> Strategy {
+        self.evolve_reduce(final_time, blueprint, &|s| s, &|lhs, rhs| {
+            std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield)
+        })
+    }
+
+    fn top_n(self, n: usize, final_time: u32, blueprint: &Blueprint) -> Vec<Strategy> {
+        let start_time = time_to_first_geode(blueprint) + 2;
+        (start_time..=final_time).fold(vec![self], |state, time| {
+            state
+                .into_iter()
+                .map(|strat| {
+                    strat
+                        .evolve_top_n(n, time, blueprint)
+                        .into_iter()
+                        .filter(|s| s.geode_yield() > 0)
+                })
+                .kmerge_by(|l, r| l.geode_yield() > r.geode_yield())
+                .take(n)
+                .collect()
+        })
+    }
+}
+
+fn time_to_first_geode(blueprint: &Blueprint) -> u32 {
+    (10..)
+        .find(|&time| {
+            Strategy::new()
+                .maximize_geode_yield(time, blueprint)
+                .geode_yield()
+                > 0
+        })
+        .unwrap()
+}
+
+fn maximum_geode_yield(final_time: u32, blueprint: &Blueprint) -> u32 {
+    Strategy::new()
+        .top_n(1000, final_time, blueprint)
+        .first()
+        .unwrap()
+        .geode_yield()
 }
 
 #[cfg(test)]
@@ -179,13 +240,15 @@ mod tests {
     }
 
     #[test]
+    fn find_time_to_first_geode() {
+        assert_eq!(time_to_first_geode(&example_blueprints()[0]), 19);
+        assert_eq!(time_to_first_geode(&example_blueprints()[1]), 19);
+    }
+
+    #[test]
     fn find_max_geode_yield() {
-        assert_eq!(
-            Strategy::new()
-                .maximize_geode_yield(24, &example_blueprints()[0])
-                .geode_yield(),
-            9
-        );
+        assert_eq!(maximum_geode_yield(24, &example_blueprints()[0]), 9);
+        assert_eq!(maximum_geode_yield(24, &example_blueprints()[1]), 12);
     }
 
     const EXAMPLE_INPUT: &str = "\
