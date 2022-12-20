@@ -33,6 +33,16 @@ struct Blueprint {
     robot_costs: EnumMap<Resource, Costs>,
 }
 
+impl Blueprint {
+    fn demand(&self, resource: Resource) -> u32 {
+        self.robot_costs
+            .values()
+            .map(|costs| costs.0[resource])
+            .max()
+            .unwrap_or(0)
+    }
+}
+
 fn parse_blueprints(input: &str) -> Result<Vec<Blueprint>, ParseIntError> {
     use Resource::*;
     let re = regex::Regex::new(r"Blueprint \d+: Each ore robot costs (?P<ore_ore>\d+) ore. Each clay robot costs (?P<clay_ore>\d+) ore. Each obsidian robot costs (?P<obs_ore>\d+) ore and (?P<obs_clay>\d+) clay. Each geode robot costs (?P<geode_ore>\d+) ore and (?P<geode_obs>\d+) obsidian.").unwrap();
@@ -118,6 +128,7 @@ impl Strategy {
             Resource::iter()
                 .take(3)
                 .filter(|&robot| self.resource_inventory.can_afford_robot(robot, blueprint))
+                .filter(|&resource| self.robot_inventory.0[resource] < blueprint.demand(resource))
                 .map(|robot| Action::SpendOnRobot(robot))
                 .chain(std::iter::once(Action::NoOp))
                 .collect()
