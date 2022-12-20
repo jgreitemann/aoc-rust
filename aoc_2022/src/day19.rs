@@ -79,7 +79,7 @@ impl Inventory {
 struct Strategy {
     resource_inventory: Inventory,
     robot_inventory: Inventory,
-    time_left: u32,
+    time: u32,
 }
 
 impl Strategy {
@@ -90,12 +90,12 @@ impl Strategy {
                 Resource::Ore => 1,
                 _ => 0,
             }),
-            time_left: 20,
+            time: 0,
         }
     }
 
     fn produce(&mut self) {
-        self.time_left -= 1;
+        self.time += 1;
         for (robot_res, count) in &self.robot_inventory.0 {
             self.resource_inventory.0[robot_res] += count;
         }
@@ -122,29 +122,29 @@ impl Strategy {
     fn geode_yield(&self) -> u32 {
         self.resource_inventory.0[Resource::Geode]
     }
-}
 
-fn strategy_maximizing_geode_yield(strat: Strategy, blueprint: &Blueprint) -> Strategy {
-    strat
+    fn maximize_geode_yield(self, final_time: u32, blueprint: &Blueprint) -> Strategy {
+        self
         .feasible_actions(blueprint)
         .into_iter()
         .filter_map(|action_opt| action_opt)
         .map(|action| {
-            let mut new_strat = strat.clone();
+            let mut new_strat = self.clone();
             new_strat.produce();
             match action {
                 Action::NoOp => {}
                 Action::SpendOnRobot(robot) => new_strat.spend_on_robot(robot, blueprint),
             }
 
-            if new_strat.time_left == 0 {
+            if new_strat.time == final_time {
                 new_strat
             } else {
-                strategy_maximizing_geode_yield(new_strat, blueprint)
+                new_strat.maximize_geode_yield(final_time, blueprint)
             }
         })
         .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
         .unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -161,8 +161,7 @@ mod tests {
 
     #[test]
     fn find_max_geode_yield() {
-        let strat = strategy_maximizing_geode_yield(Strategy::new(), &example_blueprints()[0]);
-        assert_eq!(strat.geode_yield(), 9);
+        assert_eq!(Strategy::new().maximize_geode_yield(24, &example_blueprints()[0]).geode_yield(), 9);
     }
 
     const EXAMPLE_INPUT: &str = "\
