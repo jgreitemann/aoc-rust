@@ -13,12 +13,11 @@ enum Resource {
     Geode,
 }
 
-const RESOURCES: &[Resource] = &[
-    Resource::Ore,
-    Resource::Clay,
-    Resource::Obsidian,
-    Resource::Geode,
-];
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Action {
+    NoOp,
+    SpendOnRobot(Resource),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Costs(EnumMap<Resource, u32>);
@@ -96,17 +95,23 @@ impl Strategy {
     }
 
     fn produce(&mut self) {
+        self.time_left -= 1;
         for (robot_res, count) in &self.robot_inventory.0 {
             self.resource_inventory.0[robot_res] += count;
         }
     }
 
-    fn robot_options(&self, blueprint: &Blueprint) -> Vec<Resource> {
-        RESOURCES
-            .iter()
-            .copied()
-            .filter(move |robot| self.resource_inventory.can_afford_robot(*robot, blueprint))
-            .collect_vec()
+    fn feasible_actions(&self, blueprint: &Blueprint) -> [Option<Action>; 5] {
+        std::array::from_fn(|i| match i {
+            0..=3 => {
+                let robot = Resource::from_usize(i);
+                self.resource_inventory
+                    .can_afford_robot(robot, blueprint)
+                    .then_some(Action::SpendOnRobot(robot))
+            }
+            4 => Some(Action::NoOp),
+            _ => unreachable!(),
+        })
     }
 
     fn spend_on_robot(&mut self, robot: Resource, blueprint: &Blueprint) {
@@ -119,15 +124,18 @@ impl Strategy {
     }
 }
 
-fn strategy_maximizing_geode_yield(mut strat: Strategy, blueprint: &Blueprint) -> Strategy {
-    strat.time_left -= 1;
-
+fn strategy_maximizing_geode_yield(strat: Strategy, blueprint: &Blueprint) -> Strategy {
     strat
-        .robot_options(blueprint).into_iter()
-        .map(|robot| {
+        .feasible_actions(blueprint)
+        .into_iter()
+        .filter_map(|action_opt| action_opt)
+        .map(|action| {
             let mut new_strat = strat.clone();
             new_strat.produce();
-            new_strat.spend_on_robot(robot, blueprint);
+            match action {
+                Action::NoOp => {}
+                Action::SpendOnRobot(robot) => new_strat.spend_on_robot(robot, blueprint),
+            }
 
             if new_strat.time_left == 0 {
                 new_strat
@@ -135,16 +143,6 @@ fn strategy_maximizing_geode_yield(mut strat: Strategy, blueprint: &Blueprint) -
                 strategy_maximizing_geode_yield(new_strat, blueprint)
             }
         })
-        .chain(std::iter::once_with(|| {
-            let mut new_strat = strat.clone();
-            new_strat.produce();
-
-            if new_strat.time_left == 0 {
-                new_strat
-            } else {
-                strategy_maximizing_geode_yield(new_strat, blueprint)
-            }
-        }))
         .reduce(|lhs, rhs| std::cmp::max_by_key(lhs, rhs, Strategy::geode_yield))
         .unwrap()
 }
