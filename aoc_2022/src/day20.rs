@@ -53,7 +53,7 @@ fn decrypted_sequence(numbers: &[isize], times: usize) -> Vec<isize> {
         let to_move = (x % n + n) % n;
         let k = (j + to_move as usize) % numbers.len();
 
-        numbers.insert(if j < k {k} else {k}, x);
+        numbers.insert(k, x);
 
         if j < k {
             indices.iter_mut().filter(|l| (j+1..=k).contains(l)).for_each(|l| *l -= 1);
@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn sequence_with_key_applied_si_decrypted_ten_times() {
+    fn sequence_with_key_applied_is_decrypted_ten_times() {
         assert_eq!(
             decrypted_sequence(&apply_key(EXAMPLE_SEQUENCE), 10),
             EXAMPLE_PART2_SEQ
