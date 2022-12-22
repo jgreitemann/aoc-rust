@@ -1,9 +1,11 @@
 use aoc_companion::prelude::*;
+use aoc_utils::geometry::Point;
 use aoc_utils::linalg::Vector;
 
 use itertools::Itertools;
 use thiserror::Error;
 
+use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -35,6 +37,19 @@ impl Part1 for Door {
             .map
             .player_start()
             .end::<PlainWrapping>(&self.instructions, &self.map)
+            .password())
+    }
+}
+
+impl Part2 for Door {
+    type Output = usize;
+    type Error = std::convert::Infallible;
+
+    fn part2(&self) -> Result<Self::Output, Self::Error> {
+        Ok(self
+            .map
+            .player_start()
+            .end::<CubicWrapping<50>>(&self.instructions, &self.map)
             .password())
     }
 }
@@ -138,26 +153,38 @@ enum Direction {
 }
 
 impl Direction {
-    fn turn(&mut self, dir: Direction) {
+    fn rotate_by(&self, dir: Direction) -> Direction {
         use Direction::*;
         match dir {
-            Right => {
-                *self = match self {
-                    Right => Down,
-                    Down => Left,
-                    Left => Up,
-                    Up => Right,
-                }
-            }
-            Left => {
-                *self = match self {
-                    Right => Up,
-                    Down => Right,
-                    Left => Down,
-                    Up => Left,
-                }
-            }
-            _ => {}
+            Right => match self {
+                Right => Down,
+                Down => Left,
+                Left => Up,
+                Up => Right,
+            },
+            Left => match self {
+                Right => Up,
+                Down => Right,
+                Left => Down,
+                Up => Left,
+            },
+            Down => match self {
+                Right => Left,
+                Down => Up,
+                Left => Right,
+                Up => Down,
+            },
+            Up => *self,
+        }
+    }
+
+    fn inv(&self) -> Direction {
+        use Direction::*;
+        match self {
+            Right => Left,
+            Down => Down,
+            Left => Right,
+            Up => Up,
         }
     }
 
@@ -230,6 +257,156 @@ impl Wrapping for PlainWrapping {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct ChunkCoord(Vector<usize, 2>);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Side {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+}
+
+struct CubicWrapping<const N: usize> {
+    chunks: HashMap<ChunkCoord, (Side, Direction)>,
+    sides: HashMap<Side, (ChunkCoord, Direction)>,
+}
+
+impl<const N: usize> Wrapping for CubicWrapping<N> {
+    fn from_map(map: &Map) -> Self {
+        let sides = designate_chunks(&chunk_coords(map, N));
+        let chunks = invert_side_mapping(&sides);
+        Self { chunks, sides }
+    }
+
+    fn advance(&self, mut player: Player) -> Player {
+        let new_pos = player.pos.try_cast_as::<isize>().unwrap() + player.facing.unit_vector();
+        let current_chunk = ChunkCoord(player.pos / N);
+        if new_pos.try_cast_as::<usize>().map(|p| ChunkCoord(p / N)) == Ok(current_chunk) {
+            // new position is within the same side of the cube
+            player.pos = new_pos.try_cast_as::<usize>().unwrap();
+            player
+        } else {
+            // jumping between sides of the cube
+            let (current_side, current_chunk_orientation) = self.chunks[&current_chunk];
+
+            let mut new_coords_in_chunk = ((player.pos + Vector([N, N]))
+                .try_cast_as::<isize>()
+                .unwrap()
+                + player.facing.unit_vector())
+            .try_cast_as::<usize>()
+            .unwrap();
+            new_coords_in_chunk[0] %= N;
+            new_coords_in_chunk[1] %= N;
+
+            let leaving_chunk_in_direction =
+                player.facing.rotate_by(current_chunk_orientation.inv());
+
+            let (next_side, relative_orientation) = side_neighbors(current_side)
+                [match leaving_chunk_in_direction {
+                    Direction::Right => 1,
+                    Direction::Down => 0,
+                    Direction::Left => 3,
+                    Direction::Up => 2,
+                }];
+
+            let (next_chunk, next_chunk_orientation) = self.sides[&next_side];
+
+            let next_facing = leaving_chunk_in_direction
+                .rotate_by(next_chunk_orientation)
+                .rotate_by(relative_orientation.inv());
+
+            new_coords_in_chunk =
+                transform_coords_in_chunk(new_coords_in_chunk, player.facing.inv(), N);
+            new_coords_in_chunk = transform_coords_in_chunk(new_coords_in_chunk, next_facing, N);
+
+            player.pos = new_coords_in_chunk + next_chunk.0 * N;
+            player.facing = next_facing;
+
+            player
+        }
+    }
+}
+
+fn chunk_coords(map: &Map, n: usize) -> Vec<ChunkCoord> {
+    let &[height, width] = map.data.shape() else { panic!() };
+    (0..height / n)
+        .cartesian_product(0..width / n)
+        .map(|(y, x)| ChunkCoord(Vector([y, x])))
+        .filter(|&ChunkCoord(c)| map.data[c * n] != Tile::Nothing)
+        .collect()
+}
+
+fn designate_chunks(chunk_coords: &[ChunkCoord]) -> HashMap<Side, (ChunkCoord, Direction)> {
+    let mut raw_sides = vec![(Side::A, (chunk_coords[0], Direction::Up))];
+    let mut sides = HashMap::from_iter(raw_sides.iter().cloned());
+    while let Some((side, (coords, orientation))) = raw_sides.pop() {
+        let icoords = coords.0.try_cast_as::<i64>().unwrap();
+
+        let skip_amount = match orientation {
+            Direction::Right => 1,
+            Direction::Down => 2,
+            Direction::Left => 3,
+            Direction::Up => 0,
+        };
+
+        for (neighbor_chunk, (side, neighbor_orientation)) in icoords
+            .nearest_neighbors()
+            .zip(
+                side_neighbors(side)
+                    .into_iter()
+                    .cycle()
+                    .skip(skip_amount)
+                    .map(|(s, o)| (s, o.rotate_by(orientation))),
+            )
+            .filter_map(|(ic, n)| ic.try_cast_as::<usize>().ok().map(|v| (ChunkCoord(v), n)))
+            .filter(|(c, _)| chunk_coords.contains(c))
+        {
+            if !sides.contains_key(side) {
+                sides.insert(*side, (neighbor_chunk, neighbor_orientation));
+                raw_sides.push((*side, (neighbor_chunk, neighbor_orientation)));
+            }
+        }
+    }
+
+    sides
+}
+
+fn side_neighbors(side: Side) -> &'static [(Side, Direction)] {
+    use Direction::*;
+    use Side::*;
+    match side {
+        A => &[(F, Up), (B, Up), (E, Up), (D, Up)],
+        B => &[(F, Left), (C, Up), (E, Right), (A, Up)],
+        C => &[(F, Down), (D, Up), (E, Down), (B, Up)],
+        D => &[(F, Right), (A, Up), (E, Left), (C, Up)],
+        E => &[(A, Up), (B, Left), (C, Down), (D, Right)],
+        F => &[(C, Down), (B, Right), (A, Up), (D, Left)],
+    }
+}
+
+fn transform_coords_in_chunk(
+    Vector([y, x]): Vector<usize, 2>,
+    dir: Direction,
+    size: usize,
+) -> Vector<usize, 2> {
+    match dir {
+        Direction::Right => Vector([x, size - 1 - y]),
+        Direction::Down => Vector([size - 1 - y, size - 1 - x]),
+        Direction::Left => Vector([size - 1 - x, y]),
+        Direction::Up => Vector([y, x]),
+    }
+}
+
+fn invert_side_mapping(
+    sides: &HashMap<Side, (ChunkCoord, Direction)>,
+) -> HashMap<ChunkCoord, (Side, Direction)> {
+    sides.iter().map(|(&s, &(c, o))| (c, (s, o))).collect()
+}
+
 impl Player {
     fn execute<W>(&mut self, instruction: Instruction, map: &Map, wrapping: &W)
     where
@@ -246,7 +423,7 @@ impl Player {
                     }
                 }
             }
-            Instruction::Turn(dir) => self.facing.turn(dir),
+            Instruction::Turn(dir) => self.facing = self.facing.rotate_by(dir),
         }
     }
 
@@ -373,6 +550,104 @@ mod tests {
     }
 
     #[test]
+    fn chunk_coords_are_identified() {
+        let Door { map, .. } = Door::parse(EXAMPLE_INPUT).unwrap();
+        assert_eq!(chunk_coords(&map, 4), EXAMPLE_CHUNK_COORDS);
+    }
+
+    #[test]
+    fn sides_are_designed_to_chunks() {
+        assert_eq!(
+            designate_chunks(&EXAMPLE_CHUNK_COORDS),
+            HashMap::from(EXAMPLE_SIDES)
+        );
+    }
+
+    #[test]
+    fn side_mapping_can_be_inverted() {
+        assert_eq!(
+            invert_side_mapping(&HashMap::from(EXAMPLE_SIDES)),
+            HashMap::from(EXAMPLE_CHUNKS)
+        );
+    }
+
+    #[test]
+    fn player_moves_within_the_same_side_of_the_cube() {
+        let wrapping = CubicWrapping::<4> {
+            chunks: HashMap::from(EXAMPLE_CHUNKS),
+            sides: HashMap::from(EXAMPLE_SIDES),
+        };
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([2, 9]),
+                facing: Direction::Right
+            }),
+            Player {
+                pos: Vector([2, 10]),
+                facing: Direction::Right
+            }
+        );
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([9, 14]),
+                facing: Direction::Up
+            }),
+            Player {
+                pos: Vector([8, 14]),
+                facing: Direction::Up
+            }
+        );
+    }
+
+    #[test]
+    fn player_moves_between_different_sides_of_the_cube() {
+        let wrapping = CubicWrapping::<4> {
+            chunks: HashMap::from(EXAMPLE_CHUNKS),
+            sides: HashMap::from(EXAMPLE_SIDES),
+        };
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([1, 11]),
+                facing: Direction::Right
+            }),
+            Player {
+                pos: Vector([10, 15]),
+                facing: Direction::Left
+            }
+        );
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([4, 7]),
+                facing: Direction::Right
+            }),
+            Player {
+                pos: Vector([4, 8]),
+                facing: Direction::Right
+            }
+        );
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([11, 10]),
+                facing: Direction::Down
+            }),
+            Player {
+                pos: Vector([7, 1]),
+                facing: Direction::Up
+            }
+        );
+        assert_eq!(
+            wrapping.advance(Player {
+                pos: Vector([7, 0]),
+                facing: Direction::Left
+            }),
+            Player {
+                pos: Vector([11, 12]),
+                facing: Direction::Up
+            }
+        );
+    }
+
+    #[test]
     fn final_player_position_for_plain_wrapping() {
         let Door { map, .. } = Door::parse(EXAMPLE_INPUT).unwrap();
         let player = map
@@ -384,6 +659,15 @@ mod tests {
     #[test]
     fn final_password_is_found_for_plain_wrapping() {
         assert_eq!(EXAMPLE_FINAL_PLAYER.password(), 6032);
+    }
+
+    #[test]
+    fn final_password_is_found_for_cubic_wrapping() {
+        let Door { map, .. } = Door::parse(EXAMPLE_INPUT).unwrap();
+        let player = map
+            .player_start()
+            .end::<CubicWrapping<4>>(EXAMPLE_INSTRUCTIONS, &map);
+        assert_eq!(player.password(), 5031);
     }
 
     const EXAMPLE_INPUT: &str = r"        ...#
@@ -421,4 +705,31 @@ mod tests {
         pos: Vector([5, 7]),
         facing: Direction::Right,
     };
+
+    const EXAMPLE_CHUNK_COORDS: [ChunkCoord; 6] = [
+        ChunkCoord(Vector([0, 2])),
+        ChunkCoord(Vector([1, 0])),
+        ChunkCoord(Vector([1, 1])),
+        ChunkCoord(Vector([1, 2])),
+        ChunkCoord(Vector([2, 2])),
+        ChunkCoord(Vector([2, 3])),
+    ];
+
+    const EXAMPLE_CHUNKS: [(ChunkCoord, (Side, Direction)); 6] = [
+        (ChunkCoord(Vector([0, 2])), (Side::A, Direction::Up)),
+        (ChunkCoord(Vector([2, 3])), (Side::B, Direction::Down)),
+        (ChunkCoord(Vector([2, 2])), (Side::C, Direction::Down)),
+        (ChunkCoord(Vector([1, 1])), (Side::D, Direction::Left)),
+        (ChunkCoord(Vector([1, 0])), (Side::E, Direction::Down)),
+        (ChunkCoord(Vector([1, 2])), (Side::F, Direction::Up)),
+    ];
+
+    const EXAMPLE_SIDES: [(Side, (ChunkCoord, Direction)); 6] = [
+        (Side::A, (ChunkCoord(Vector([0, 2])), Direction::Up)),
+        (Side::B, (ChunkCoord(Vector([2, 3])), Direction::Down)),
+        (Side::C, (ChunkCoord(Vector([2, 2])), Direction::Down)),
+        (Side::D, (ChunkCoord(Vector([1, 1])), Direction::Left)),
+        (Side::E, (ChunkCoord(Vector([1, 0])), Direction::Down)),
+        (Side::F, (ChunkCoord(Vector([1, 2])), Direction::Up)),
+    ];
 }
