@@ -291,18 +291,21 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "slow"]
     fn find_max_geode_yield_after_24_mins() {
         assert_eq!(maximum_geode_yield(24, &example_blueprints()[0]), 9);
         assert_eq!(maximum_geode_yield(24, &example_blueprints()[1]), 12);
     }
 
     #[test]
+    #[ignore = "slow"]
     fn find_max_geode_yield_after_32_mins() {
         assert_eq!(maximum_geode_yield(32, &example_blueprints()[0]), 56);
         assert_eq!(maximum_geode_yield(32, &example_blueprints()[1]), 62);
     }
 
     #[test]
+    #[ignore = "slow"]
     fn find_total_quality_level() {
         assert_eq!(total_quality_level(24, &example_blueprints()), 33);
     }
