@@ -16,6 +16,7 @@ mod day15;
 mod day16;
 mod day17;
 mod day18;
+mod day19;
 mod day20;
 mod day21;
 mod day22;
@@ -44,6 +45,7 @@ async fn main() -> Result<()> {
         // door!(DoorDate { day: 16, year: 2022 }, day16::Door),
         door!(DoorDate { day: 17, year: 2022 }, day17::Door),
         door!(DoorDate { day: 18, year: 2022 }, day18::Door),
+        door!(DoorDate { day: 19, year: 2022 }, day19::Door),
         door!(DoorDate { day: 20, year: 2022 }, day20::Door),
         door!(DoorDate { day: 21, year: 2022 }, day21::Door),
         door!(DoorDate { day: 22, year: 2022 }, day22::Door),

@@ -87,14 +87,14 @@ impl AoCClient for WebClient {
         if resp.status() == reqwest::StatusCode::from_u16(302).unwrap() {
             // Redirect in case of authentication failure
             return Err(SessionError::AuthenticationInvalidOrExpired).context(format!(
-                "Failed to authenticate when posting the answer for day {day}, {year}"
+                    "Failed to authenticate when posting the answer {guess:?} for part {part} of day {day}, {year}"
             ));
         }
 
         let text = resp.text().await?;
         AnswerResponse::parse(&text).with_context(|| {
             format!(
-                "Failed to parse server response after posting the answer for day {day}, {year}"
+                    "Failed to parse server response after posting the answer {guess:?} for part {part} of day {day}, {year}"
             )
         })
     }
