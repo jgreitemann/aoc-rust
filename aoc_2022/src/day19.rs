@@ -5,6 +5,42 @@ use itertools::Itertools;
 
 use std::num::ParseIntError;
 
+pub struct Door {
+    blueprints: Vec<Blueprint>,
+}
+
+impl ParseInput<'_> for Door {
+    type Error = ParseIntError;
+
+    fn parse(input: &str) -> Result<Self, Self::Error> {
+        parse_blueprints(input).map(|blueprints| Self { blueprints })
+    }
+}
+
+impl Part1 for Door {
+    type Output = u32;
+    type Error = std::convert::Infallible;
+
+    fn part1(&self) -> Result<Self::Output, Self::Error> {
+        Ok(total_quality_level(24, &self.blueprints))
+    }
+}
+
+impl Part2 for Door {
+    type Output = u32;
+    type Error = std::convert::Infallible;
+
+    fn part2(&self) -> Result<Self::Output, Self::Error> {
+        Ok(self
+            .blueprints
+            .iter()
+            .take(3)
+            .map(|blueprint| maximum_geode_yield(32, blueprint))
+            .reduce(std::ops::Mul::mul)
+            .unwrap())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Enum)]
 enum Resource {
     Ore,
@@ -15,7 +51,7 @@ enum Resource {
 
 impl Resource {
     fn iter() -> impl Iterator<Item = Self> {
-        (0..Resource::LENGTH).map(|i| Resource::from_usize(i))
+        (0..Resource::LENGTH).map(Resource::from_usize)
     }
 }
 
@@ -191,7 +227,7 @@ impl Strategy {
     }
 
     fn top_n(self, n: usize, final_time: u32, blueprint: &Blueprint) -> Vec<Strategy> {
-        let start_time = time_to_first_geode(blueprint) + 2;
+        let start_time = final_time.min(final_time.min(time_to_first_geode(blueprint)) + 4);
         (start_time..=final_time).fold(vec![self], |state, time| {
             state
                 .into_iter()
@@ -221,10 +257,19 @@ fn time_to_first_geode(blueprint: &Blueprint) -> u32 {
 
 fn maximum_geode_yield(final_time: u32, blueprint: &Blueprint) -> u32 {
     Strategy::new()
-        .top_n(1000, final_time, blueprint)
+        .top_n(100000, final_time, blueprint)
         .first()
-        .unwrap()
-        .geode_yield()
+        .map(Strategy::geode_yield)
+        .unwrap_or(0)
+}
+
+fn total_quality_level(final_time: u32, blueprints: &[Blueprint]) -> u32 {
+    blueprints
+        .iter()
+        .map(|blueprint| maximum_geode_yield(final_time, blueprint))
+        .enumerate()
+        .map(|(index, quality)| (index as u32 + 1) * quality)
+        .sum()
 }
 
 #[cfg(test)]
@@ -246,9 +291,20 @@ mod tests {
     }
 
     #[test]
-    fn find_max_geode_yield() {
+    fn find_max_geode_yield_after_24_mins() {
         assert_eq!(maximum_geode_yield(24, &example_blueprints()[0]), 9);
         assert_eq!(maximum_geode_yield(24, &example_blueprints()[1]), 12);
+    }
+
+    #[test]
+    fn find_max_geode_yield_after_32_mins() {
+        assert_eq!(maximum_geode_yield(32, &example_blueprints()[0]), 56);
+        assert_eq!(maximum_geode_yield(32, &example_blueprints()[1]), 62);
+    }
+
+    #[test]
+    fn find_total_quality_level() {
+        assert_eq!(total_quality_level(24, &example_blueprints()), 33);
     }
 
     const EXAMPLE_INPUT: &str = "\
