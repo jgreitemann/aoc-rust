@@ -1,12 +1,9 @@
 use aoc_companion::prelude::*;
 
-use genawaiter::sync::{Gen, GenBoxed};
 use itertools::Itertools;
-use tap::Tap;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::num::ParseIntError;
-use std::sync::Arc;
 
 const MINUTES: u32 = 30;
 
@@ -62,109 +59,57 @@ struct Valve {
 type Cave = HashMap<ValveId, Valve>;
 
 #[derive(Debug, Clone)]
-enum Action {
-    OpenValve(ValveId),
-    MoveToTunnel { valve: ValveId, distance: u32 },
-}
-
-#[derive(Debug, Clone)]
 struct Strategy {
-    open_valves: Vec<ValveId>,
     current: ValveId,
-    previous: ValveId,
     flow: u32,
     flow_rate: u32,
     time: u32,
 }
 
 impl Strategy {
-    fn new(cave: &Cave) -> Self {
+    fn new() -> Self {
         Self {
-            open_valves: cave
-                .iter()
-                .filter(|(_, valve)| valve.flow_rate == 0)
-                .map(|(id, _)| *id)
-                .collect(),
             current: "AA".into(),
-            previous: ValveId(0),
             flow: 0,
             flow_rate: 0,
             time: 0,
         }
     }
 
-    fn time_is_up(&self) -> bool {
-        self.time >= MINUTES
-    }
+    fn traverse_fully_connected_graph(mut self, final_time: u32, fc_cave: Cave) -> Strategy {
+        let Valve {
+            flow_rate,
+            connections,
+        } = &fc_cave[&self.current];
 
-    fn all_valves_open(&self, cave: &Cave) -> bool {
-        self.open_valves.len() == cave.len()
-    }
+        self.flow_rate += flow_rate;
 
-    fn take(&mut self, action: Action, cave: &Cave) {
-        match &action {
-            Action::OpenValve(valve) => {
-                self.time += 1;
-                self.flow += self.flow_rate;
-                self.flow_rate += cave[valve].flow_rate;
-                self.open_valves.push(*valve);
-                self.previous = ValveId(0);
-            }
-            Action::MoveToTunnel { valve, distance } => {
-                let delta_t = if self.time + distance >= MINUTES {
-                    MINUTES - self.time
-                } else {
-                    *distance
-                };
-                self.time += delta_t;
-                self.flow += self.flow_rate * delta_t;
-                self.previous = self.current;
-                self.current = *valve;
-            }
-        }
+        connections
+            .iter()
+            .filter(|&(_, dist)| self.time + dist < final_time)
+            .map(|(target, dist)| {
+                let mut new_strat = self.clone();
+                new_strat.time += dist;
+                new_strat.flow += dist * new_strat.flow_rate;
+                new_strat.current = *target;
+                let mut new_cave = fc_cave.clone();
+                for valve in new_cave.values_mut() {
+                    valve.connections.remove(target);
+                }
+                new_strat.traverse_fully_connected_graph(final_time, new_cave)
+            })
+            .reduce(|lhs_strat, rhs_strat| std::cmp::max_by_key(lhs_strat, rhs_strat, |s| s.flow))
+            .unwrap_or_else(|| {
+                self.flow += (final_time - self.time) * self.flow_rate;
+                self.time = final_time;
+                self
+            })
     }
 }
 
 fn find_optimal_strategy(cave: &Cave) -> Strategy {
-    strategy_dfs(Strategy::new(cave), Arc::new(cave.clone()))
-        .into_iter()
-        .max_by_key(|s| s.flow)
-        .unwrap()
-}
-
-fn strategy_dfs(strat: Strategy, cave: Arc<Cave>) -> genawaiter::sync::GenBoxed<Strategy> {
-    GenBoxed::new_boxed(|co| async move {
-        for action in possible_actions(strat.clone(), &cave) {
-            let mut new_strat = strat.clone().tap_mut(|s| s.take(action, &cave));
-            if new_strat.time_is_up() {
-                co.yield_(new_strat).await;
-            } else if new_strat.all_valves_open(&cave) {
-                new_strat.flow += (MINUTES - new_strat.time) * new_strat.flow_rate;
-                co.yield_(new_strat).await;
-            } else {
-                for s in strategy_dfs(new_strat, cave.clone()) {
-                    co.yield_(s).await;
-                }
-            }
-        }
-    })
-}
-
-fn possible_actions(strat: Strategy, cave: &Cave) -> impl Iterator<Item = Action> + Send + '_ {
-    Gen::new(|co| async move {
-        let current_valve = &cave[&strat.current];
-        if current_valve.flow_rate > 0 && !strat.open_valves.contains(&strat.current) {
-            co.yield_(Action::OpenValve(strat.current)).await;
-        }
-        for (&valve, &distance) in current_valve
-            .connections
-            .iter()
-            .filter(|&(&connected, _)| strat.previous != connected)
-        {
-            co.yield_(Action::MoveToTunnel { valve, distance }).await;
-        }
-    })
-    .into_iter()
+    Strategy::new()
+        .traverse_fully_connected_graph(MINUTES, fully_connect_cave(&reduce_cave(cave.clone())))
 }
 
 fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
@@ -219,9 +164,42 @@ fn reduce_cave(mut cave: Cave) -> Cave {
     cave
 }
 
+fn fully_connect_cave(cave: &Cave) -> Cave {
+    cave.iter()
+        .map(|(start, &Valve { flow_rate, .. })| {
+            let mut connections = HashMap::new();
+            let mut queue = VecDeque::from([(*start, 1)]);
+            while let Some((id, dist)) = queue.pop_front() {
+                let Valve {
+                    connections: id_connections,
+                    ..
+                } = &cave[&id];
+                for (other, dist_from_id) in id_connections {
+                    let prev = connections.get(other).copied().unwrap_or(u32::MAX);
+                    let other_dist = dist + dist_from_id;
+                    if other_dist < prev {
+                        connections.insert(*other, other_dist);
+                        queue.push_back((*other, other_dist));
+                    }
+                }
+            }
+            connections.remove(&"AA".into());
+            connections.remove(start);
+            (
+                *start,
+                Valve {
+                    flow_rate,
+                    connections,
+                },
+            )
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     macro_rules! connect {
         ($($x:literal),+ $(,)?) => (HashMap::from([$(($x.into(), 1),)+]));
@@ -239,7 +217,6 @@ mod tests {
     }
 
     #[test]
-    //#[ignore = "slow"]
     fn maximum_flow_rate() {
         assert_eq!(find_optimal_strategy(&reduced_example_cave()).flow, 1651);
     }
@@ -247,6 +224,14 @@ mod tests {
     #[test]
     fn cave_graph_is_reduced() {
         assert_eq!(reduce_cave(example_cave()), reduced_example_cave());
+    }
+
+    #[test]
+    fn cave_graph_is_fully_connected() {
+        assert_eq!(
+            fully_connect_cave(&reduced_example_cave()),
+            fully_connected_example_cave()
+        );
     }
 
     const EXAMPLE_INPUT: &str = "\
@@ -385,6 +370,67 @@ Valve JJ has flow rate=21; tunnel leads to valve II";
                 Valve {
                     flow_rate: 21,
                     connections: connect![("AA", 2)],
+                },
+            ),
+        ])
+    }
+
+    fn fully_connected_example_cave() -> Cave {
+        HashMap::from([
+            (
+                "AA".into(),
+                Valve {
+                    flow_rate: 0,
+                    connections: connect![
+                        ("BB", 2),
+                        ("CC", 3),
+                        ("DD", 2),
+                        ("EE", 3),
+                        ("HH", 6),
+                        ("JJ", 3)
+                    ],
+                },
+            ),
+            (
+                "BB".into(),
+                Valve {
+                    flow_rate: 13,
+                    connections: connect![("CC", 2), ("DD", 3), ("EE", 4), ("HH", 7), ("JJ", 4)],
+                },
+            ),
+            (
+                "CC".into(),
+                Valve {
+                    flow_rate: 2,
+                    connections: connect![("BB", 2), ("DD", 2), ("EE", 3), ("HH", 6), ("JJ", 5)],
+                },
+            ),
+            (
+                "DD".into(),
+                Valve {
+                    flow_rate: 20,
+                    connections: connect![("BB", 3), ("CC", 2), ("EE", 2), ("HH", 5), ("JJ", 4)],
+                },
+            ),
+            (
+                "EE".into(),
+                Valve {
+                    flow_rate: 3,
+                    connections: connect![("BB", 4), ("CC", 3), ("DD", 2), ("HH", 4), ("JJ", 5)],
+                },
+            ),
+            (
+                "HH".into(),
+                Valve {
+                    flow_rate: 22,
+                    connections: connect![("BB", 7), ("CC", 6), ("DD", 5), ("EE", 4), ("JJ", 8)],
+                },
+            ),
+            (
+                "JJ".into(),
+                Valve {
+                    flow_rate: 21,
+                    connections: connect![("BB", 4), ("CC", 5), ("DD", 4), ("EE", 5), ("HH", 8)],
                 },
             ),
         ])
