@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
         door!(DoorDate { day: 13, year: 2022 }, day13::Door),
         door!(DoorDate { day: 14, year: 2022 }, day14::Door),
         door!(DoorDate { day: 15, year: 2022 }, day15::Door),
-        // door!(DoorDate { day: 16, year: 2022 }, day16::Door),
+        door!(DoorDate { day: 16, year: 2022 }, day16::Door),
         door!(DoorDate { day: 17, year: 2022 }, day17::Door),
         door!(DoorDate { day: 18, year: 2022 }, day18::Door),
         door!(DoorDate { day: 19, year: 2022 }, day19::Door),
