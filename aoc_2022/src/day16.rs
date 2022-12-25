@@ -86,7 +86,15 @@ impl Strategy {
         }
     }
 
-    fn traverse_fully_connected_graph(mut self, final_time: u32, fc_cave: Cave) -> Strategy {
+    fn traverse_fully_connected_graph<F>(
+        mut self,
+        final_time: u32,
+        fc_cave: Cave,
+        finish: &F,
+    ) -> u32
+    where
+        F: Fn(Cave) -> u32,
+    {
         let Valve {
             flow_rate,
             connections,
@@ -107,45 +115,32 @@ impl Strategy {
                 for valve in new_cave.values_mut() {
                     valve.connections.remove(target);
                 }
-                new_strat.traverse_fully_connected_graph(final_time, new_cave)
+                new_strat.traverse_fully_connected_graph(final_time, new_cave, finish)
             })
-            .reduce(|lhs_strat, rhs_strat| std::cmp::max_by_key(lhs_strat, rhs_strat, |s| s.flow))
-            .unwrap_or_else(|| {
-                self.flow += (final_time - self.time) * self.flow_rate;
-                self.time = final_time;
-                self
-            })
+            .chain(std::iter::once_with(|| {
+                self.flow + (final_time - self.time) * self.flow_rate + finish(fc_cave.clone())
+            }))
+            .max()
+            .unwrap()
     }
 }
 
 fn find_optimal_flow_alone(cave: &Cave) -> u32 {
-    Strategy::new()
-        .traverse_fully_connected_graph(MINUTES, fully_connect_cave(&reduce_cave(cave.clone())))
-        .flow
+    Strategy::new().traverse_fully_connected_graph(
+        MINUTES,
+        fully_connect_cave(&reduce_cave(cave.clone())),
+        &|_| 0,
+    )
 }
 
 fn find_optimal_flow_with_elephant(cave: &Cave) -> u32 {
-    let fc_cave = fully_connect_cave(&reduce_cave(cave.clone()));
-    cave.keys()
-        .filter(|&&id| id != "AA".into())
-        .powerset()
-        .filter(|ids| ids.len() <= fc_cave.len() / 2)
-        .map(|human_ids| {
-            let mut human_cave: Cave = fc_cave.clone();
-            human_cave.retain(|id, _| human_ids.contains(&id) || id == &"AA".into());
-            let mut elephant_cave: Cave = fc_cave.clone();
-            elephant_cave.retain(|id, _| !human_ids.contains(&id) || id == &"AA".into());
-
-            let human_flow = Strategy::new()
-                .traverse_fully_connected_graph(MINUTES - TRAINING_TIME, human_cave)
-                .flow;
-            let elephant_flow = Strategy::new()
-                .traverse_fully_connected_graph(MINUTES - TRAINING_TIME, elephant_cave)
-                .flow;
-            human_flow + elephant_flow
-        })
-        .max()
-        .unwrap()
+    Strategy::new().traverse_fully_connected_graph(
+        MINUTES - TRAINING_TIME,
+        fully_connect_cave(&reduce_cave(cave.clone())),
+        &|fc_cave| {
+            Strategy::new().traverse_fully_connected_graph(MINUTES - TRAINING_TIME, fc_cave, &|_| 0)
+        },
+    )
 }
 
 fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
