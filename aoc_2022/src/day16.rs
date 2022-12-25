@@ -6,6 +6,7 @@ use std::collections::{HashMap, VecDeque};
 use std::num::ParseIntError;
 
 const MINUTES: u32 = 30;
+const TRAINING_TIME: u32 = 4;
 
 pub struct Door {
     cave: Cave,
@@ -24,7 +25,16 @@ impl Part1 for Door {
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(find_optimal_strategy(&self.cave).flow)
+        Ok(find_optimal_flow_alone(&self.cave))
+    }
+}
+
+impl Part2 for Door {
+    type Output = u32;
+    type Error = std::convert::Infallible;
+
+    fn part2(&self) -> Result<Self::Output, Self::Error> {
+        Ok(find_optimal_flow_with_elephant(&self.cave))
     }
 }
 
@@ -87,6 +97,7 @@ impl Strategy {
         connections
             .iter()
             .filter(|&(_, dist)| self.time + dist < final_time)
+            .filter(|(id, _)| fc_cave.contains_key(id))
             .map(|(target, dist)| {
                 let mut new_strat = self.clone();
                 new_strat.time += dist;
@@ -107,9 +118,34 @@ impl Strategy {
     }
 }
 
-fn find_optimal_strategy(cave: &Cave) -> Strategy {
+fn find_optimal_flow_alone(cave: &Cave) -> u32 {
     Strategy::new()
         .traverse_fully_connected_graph(MINUTES, fully_connect_cave(&reduce_cave(cave.clone())))
+        .flow
+}
+
+fn find_optimal_flow_with_elephant(cave: &Cave) -> u32 {
+    let fc_cave = fully_connect_cave(&reduce_cave(cave.clone()));
+    cave.keys()
+        .filter(|&&id| id != "AA".into())
+        .powerset()
+        .filter(|ids| ids.len() <= fc_cave.len() / 2)
+        .map(|human_ids| {
+            let mut human_cave: Cave = fc_cave.clone();
+            human_cave.retain(|id, _| human_ids.contains(&id) || id == &"AA".into());
+            let mut elephant_cave: Cave = fc_cave.clone();
+            elephant_cave.retain(|id, _| !human_ids.contains(&id) || id == &"AA".into());
+
+            let human_flow = Strategy::new()
+                .traverse_fully_connected_graph(MINUTES - TRAINING_TIME, human_cave)
+                .flow;
+            let elephant_flow = Strategy::new()
+                .traverse_fully_connected_graph(MINUTES - TRAINING_TIME, elephant_cave)
+                .flow;
+            human_flow + elephant_flow
+        })
+        .max()
+        .unwrap()
 }
 
 fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
@@ -217,8 +253,13 @@ mod tests {
     }
 
     #[test]
-    fn maximum_flow_rate() {
-        assert_eq!(find_optimal_strategy(&reduced_example_cave()).flow, 1651);
+    fn maximum_flow_rate_alone() {
+        assert_eq!(find_optimal_flow_alone(&example_cave()), 1651);
+    }
+
+    #[test]
+    fn maximum_flow_rate_with_elephant() {
+        assert_eq!(find_optimal_flow_with_elephant(&example_cave()), 1707);
     }
 
     #[test]
