@@ -198,7 +198,7 @@ impl<'a, T: Num, const N: usize> IntoIterator for &'a Vector<T, N> {
     type IntoIter = std::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).into_iter()
+        self.0.iter()
     }
 }
 
@@ -207,7 +207,7 @@ impl<'a, T: Num, const N: usize> IntoIterator for &'a mut Vector<T, N> {
     type IntoIter = std::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).into_iter()
+        self.0.iter_mut()
     }
 }
 
@@ -567,8 +567,8 @@ mod tests {
     #[test]
     fn vector_can_be_iterated() {
         assert_equal(V1.iter(), [&1, &2, &3]);
-        assert_equal(V1.into_iter(), [1, 2, 3]);
-        assert_equal((&V1).into_iter(), [&1, &2, &3]);
+        assert_equal(V1, [1, 2, 3]);
+        assert_equal(&V1, [&1, &2, &3]);
     }
 
     #[test]

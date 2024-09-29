@@ -116,7 +116,7 @@ pub fn prefilled_screen() -> Result<impl std::io::Write + Send> {
 
     let (_, term_height) = termion::terminal_size()?;
     for _ in 0..term_height {
-        write!(screen, "\n")?;
+        writeln!(screen)?;
     }
 
     Ok(screen)

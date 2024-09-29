@@ -128,7 +128,13 @@ fn render(values: impl Iterator<Item = isize>) -> String {
             }
         })
         .collect();
-    let bytes: Vec<_> = continuous.as_bytes().chunks(WIDTH).into_iter().intersperse(&[b'\n']).flatten().copied().collect();
+    let bytes: Vec<_> = continuous
+        .as_bytes()
+        .chunks(WIDTH)
+        .intersperse(b"\n")
+        .flatten()
+        .copied()
+        .collect();
     String::from_utf8(bytes).unwrap()
 }
 

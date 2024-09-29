@@ -114,8 +114,7 @@ fn partial_sums_along_spiral() -> impl Iterator<Item = i32> {
 
 fn first_partial_sum_along_spiral_exceeding(threshold: i32) -> i32 {
     partial_sums_along_spiral()
-        .skip_while(|&x| x <= threshold)
-        .next()
+        .find(|&x| x > threshold)
         .unwrap()
 }
 
@@ -161,7 +160,7 @@ mod tests {
 
     #[test]
     fn manhattan_distance_is_correct_for_known_spiral_points() {
-        assert_eq!(manhattan_distance(SpiralIter::new().nth(0).unwrap()), 0);
+        assert_eq!(manhattan_distance(SpiralIter::new().next().unwrap()), 0);
         assert_eq!(manhattan_distance(SpiralIter::new().nth(11).unwrap()), 3);
         assert_eq!(manhattan_distance(SpiralIter::new().nth(22).unwrap()), 2);
         assert_eq!(manhattan_distance(SpiralIter::new().nth(1023).unwrap()), 31);

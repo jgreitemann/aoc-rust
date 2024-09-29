@@ -1,7 +1,5 @@
 use aoc_companion::prelude::*;
 
-use core::iter::FilterMap;
-
 pub struct Door<'input> {
     stream: &'input str,
 }
@@ -19,7 +17,7 @@ impl Part1 for Door<'_> {
     type Error = std::convert::Infallible;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(stream_group_scores(&self.stream).sum())
+        Ok(stream_group_scores(self.stream).sum())
     }
 }
 
@@ -37,7 +35,7 @@ trait StreamIterator: Iterator<Item = char> + Sized {
         IgnoreBangs { iter: self }
     }
 
-    fn skip_garbage(self) -> FilterMap<IdentifyGarbage<Self>, fn(StreamElement) -> Option<char>> {
+    fn skip_garbage(self) -> impl Iterator<Item = char> {
         IdentifyGarbage { iter: self }.filter_map(|elem| match elem {
             StreamElement::ValidChar(c) => Some(c),
             StreamElement::GarbageRun { .. } => None,
@@ -79,7 +77,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut ignore_next = false;
-        while let Some(c) = self.iter.next() {
+        for c in self.iter.by_ref() {
             if std::mem::replace(&mut ignore_next, false) {
                 continue;
             }
@@ -112,7 +110,7 @@ where
         let mut garbage_run = false;
         let mut length = 0;
 
-        while let Some(c) = self.iter.next() {
+        for c in self.iter.by_ref() {
             if garbage_run {
                 match c {
                     '>' => return Some(StreamElement::GarbageRun { length }),
@@ -141,7 +139,7 @@ where
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(c) = self.iter.next() {
+        for c in self.iter.by_ref() {
             match c {
                 '{' => {
                     self.nesting_level += 1;

@@ -47,7 +47,7 @@ enum HexBasis {
 }
 
 impl HexBasis {
-    fn to_coords(&self) -> Vector<i32, 3> {
+    fn as_coords(&self) -> Vector<i32, 3> {
         use HexBasis::*;
         match self {
             North => Vector([1, 0, 0]),
@@ -85,7 +85,7 @@ fn parse_input(input: &str) -> Result<Vec<HexBasis>, ParseError> {
 }
 
 fn destination(steps: &[HexBasis]) -> Vector<i32, 3> {
-    steps.iter().map(HexBasis::to_coords).sum()
+    steps.iter().map(HexBasis::as_coords).sum()
 }
 
 fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
@@ -104,7 +104,7 @@ fn optimal_route(destination: Vector<i32, 3>) -> Vector<i32, 3> {
 fn furthest_point_along_path(steps: &[HexBasis]) -> Vector<i32, 3> {
     steps
         .iter()
-        .map(HexBasis::to_coords)
+        .map(HexBasis::as_coords)
         .scan(Default::default(), |pos, v| {
             *pos += v;
             Some(*pos)

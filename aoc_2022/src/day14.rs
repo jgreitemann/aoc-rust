@@ -15,7 +15,7 @@ impl ParseInput<'_> for Door {
     type Error = ParseError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        parse_input(&input).map(|paths| Self { paths })
+        parse_input(input).map(|paths| Self { paths })
     }
 }
 
@@ -80,7 +80,7 @@ impl FromStr for Path {
             })
             .map(|res| res.and_then(|(x_str, y_str)| Ok(Vector([x_str.parse()?, y_str.parse()?]))))
             .try_collect()
-            .map(|vec| Path(vec))
+            .map(Path)
     }
 }
 

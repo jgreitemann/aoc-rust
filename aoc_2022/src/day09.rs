@@ -348,7 +348,7 @@ U 20";
     #[test]
     fn number_of_unique_tail_positions() {
         assert_eq!(
-            count_unique_positions(EXAMPLE_TAIL_POSITIONS.into_iter().cloned()),
+            count_unique_positions(EXAMPLE_TAIL_POSITIONS.iter().cloned()),
             13
         );
     }

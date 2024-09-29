@@ -64,14 +64,13 @@ impl Rucksack {
     fn new(prios: &[u32]) -> Self {
         let (first, second) = prios.split_at(prios.len() / 2);
         Self {
-            first_compartment: HashSet::from_iter(first.into_iter().copied()),
-            second_compartment: HashSet::from_iter(second.into_iter().copied()),
+            first_compartment: HashSet::from_iter(first.iter().copied()),
+            second_compartment: HashSet::from_iter(second.iter().copied()),
         }
     }
 
     fn common_item_priority(&self) -> Result<u32, Error> {
         HashSet::intersection(&self.first_compartment, &self.second_compartment)
-            .into_iter()
             .copied()
             .exactly_one()
             .map_err(|_| Error::NoUniqueCommonItem)
@@ -92,7 +91,7 @@ fn priority(c: char) -> Result<u32, ParseError> {
 
 fn batch_priority<'a>(group: impl Iterator<Item = &'a [u32]>) -> Result<u32, Error> {
     group
-        .map(|slice| HashSet::from_iter(slice.into_iter().copied()))
+        .map(|slice| HashSet::from_iter(slice.iter().copied()))
         .reduce(|lhs: HashSet<u32>, rhs| HashSet::intersection(&lhs, &rhs).copied().collect())
         .ok_or(Error::EmptyGroup)?
         .into_iter()

@@ -20,7 +20,7 @@ impl Part1 for Door<'_> {
     type Error = Error;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        disjoint_subseq_index(&self.signal, 4).ok_or(Error::NoPacket)
+        disjoint_subseq_index(self.signal, 4).ok_or(Error::NoPacket)
     }
 }
 
@@ -29,7 +29,7 @@ impl Part2 for Door<'_> {
     type Error = Error;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        disjoint_subseq_index(&self.signal, 14).ok_or(Error::NoMessage)
+        disjoint_subseq_index(self.signal, 14).ok_or(Error::NoMessage)
     }
 }
 

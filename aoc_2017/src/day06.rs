@@ -92,8 +92,7 @@ fn redistribution_cycle_loop_length(bank: Vec<i32>) -> usize {
                 Some(0)
             }
         })
-        .skip_while(|&x| x == 0)
-        .next()
+        .find(|&x| x > 0)
         .unwrap()
 }
 

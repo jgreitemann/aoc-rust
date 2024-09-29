@@ -111,7 +111,7 @@ impl Map {
             pos: self
                 .data
                 .indexed_iter()
-                .find_map(|((x, y), &d)| (d == Tile::Open).then(|| Vector([x, y])))
+                .find_map(|((x, y), &d)| (d == Tile::Open).then_some(Vector([x, y])))
                 .unwrap(),
             facing: Direction::Right,
         }
@@ -332,7 +332,9 @@ impl<const N: usize> Wrapping for CubicWrapping<N> {
 }
 
 fn chunk_coords(map: &Map, n: usize) -> Vec<ChunkCoord> {
-    let &[height, width] = map.data.shape() else { panic!() };
+    let &[height, width] = map.data.shape() else {
+        panic!()
+    };
     (0..height / n)
         .cartesian_product(0..width / n)
         .map(|(y, x)| ChunkCoord(Vector([y, x])))
@@ -357,7 +359,7 @@ fn designate_chunks(chunk_coords: &[ChunkCoord]) -> HashMap<Side, (ChunkCoord, D
             .nearest_neighbors()
             .zip(
                 side_neighbors(side)
-                    .into_iter()
+                    .iter()
                     .cycle()
                     .skip(skip_amount)
                     .map(|(s, o)| (s, o.rotate_by(orientation))),
@@ -455,7 +457,6 @@ enum Instruction {
 
 fn parse_instructions(s: &str) -> Result<Vec<Instruction>, ParseError> {
     s.chars()
-        .into_iter()
         .chunk_by(|&b| b == 'L' || b == 'R')
         .into_iter()
         .flat_map(|(is_turn, group)| {
@@ -471,8 +472,8 @@ fn parse_instructions(s: &str) -> Result<Vec<Instruction>, ParseError> {
                 let str = String::from_iter(group);
                 vec![str
                     .parse()
-                    .map(|by| Instruction::Move(by))
-                    .map_err(|e| ParseError::ParseIntError(e))]
+                    .map(Instruction::Move)
+                    .map_err(ParseError::ParseIntError)]
             }
         })
         .try_collect()

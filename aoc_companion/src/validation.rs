@@ -32,7 +32,7 @@ pub async fn validate_answer(
 ) -> Result<ValidationResult> {
     use Part::*;
     Ok(ValidationResult {
-        date: date.clone(),
+        date: *date,
         part1: validate_part(
             date,
             Part1,
@@ -68,7 +68,7 @@ async fn validate_part(
                 Some(correct) => DisparateAnswer {
                     correct: correct.to_owned(),
                 },
-                None => GuessSubmitted(client.post_answer(date, part, &answer).await?),
+                None => GuessSubmitted(client.post_answer(date, part, answer).await?),
             };
 
             // sanity check

@@ -71,7 +71,7 @@ impl FromStr for PacketData {
                 })
                 .map(str::parse)
                 .try_collect()
-                .map(|list| PacketData::List(list))
+                .map(PacketData::List)
         } else {
             Ok(PacketData::Integer(s.parse()?))
         }

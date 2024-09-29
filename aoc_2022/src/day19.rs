@@ -165,7 +165,7 @@ impl Strategy {
                 .take(3)
                 .filter(|&robot| self.resource_inventory.can_afford_robot(robot, blueprint))
                 .filter(|&resource| self.robot_inventory.0[resource] < blueprint.demand(resource))
-                .map(|robot| Action::SpendOnRobot(robot))
+                .map(Action::SpendOnRobot)
                 .chain(std::iter::once(Action::NoOp))
                 .collect()
         }
@@ -214,7 +214,7 @@ impl Strategy {
     fn evolve_top_n(self, n: usize, final_time: u32, blueprint: &Blueprint) -> Vec<Strategy> {
         self.evolve_reduce(final_time, blueprint, &|s| vec![s], &|lhs, rhs| {
             lhs.into_iter()
-                .merge_by(rhs.into_iter(), |l, r| l.geode_yield() > r.geode_yield())
+                .merge_by(rhs, |l, r| l.geode_yield() > r.geode_yield())
                 .take(n)
                 .collect()
         })

@@ -125,10 +125,10 @@ impl FromStr for Stacks {
         let n_cols = rows.first().ok_or(ParseError::NoLines)?.len();
 
         let cols: Result<Vec<Vec<char>>, ParseError> = rows[..rows.len() - 1]
-            .into_iter()
+            .iter()
             .rev()
             .try_fold(vec![Vec::new(); n_cols], |mut cols, row| {
-                for (i, &c) in row.into_iter().enumerate().filter(|&(_, &c)| c != ' ') {
+                for (i, &c) in row.iter().enumerate().filter(|&(_, &c)| c != ' ') {
                     cols.get_mut(i).ok_or(ParseError::UnequalRows)?.push(c);
                 }
                 Ok(cols)
@@ -210,7 +210,7 @@ move 1 from 1 to 2";
             stacks.0.iter().cloned(),
             expected
                 .iter()
-                .map(|col| col.iter().copied().collect::<Vec<_>>()),
+                .map(|col| col.to_vec()),
         );
     }
 

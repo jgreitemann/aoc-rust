@@ -31,7 +31,7 @@ impl Part1 for Door<'_> {
     type Error = Error;
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
-        let lengths = as_list_of_numbers(&self.input)?;
+        let lengths = as_list_of_numbers(self.input)?;
         product_of_first_two_elements(&apply_ties::<256>(lengths.into_iter()))
     }
 }
@@ -41,7 +41,7 @@ impl Part2 for Door<'_> {
     type Error = std::convert::Infallible;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(knot_hash(&self.input))
+        Ok(knot_hash(self.input))
     }
 }
 
@@ -66,9 +66,9 @@ fn sparse_hash<const N: usize>(input: &str) -> [u8; N] {
     let lengths = itertools::repeat_n(
         input
             .as_bytes()
-            .into_iter()
+            .iter()
             .copied()
-            .chain([17u8, 31u8, 73u8, 47u8, 23u8].into_iter()),
+            .chain([17u8, 31u8, 73u8, 47u8, 23u8]),
         64,
     )
     .flatten();
@@ -127,10 +127,10 @@ mod tests {
     fn example_reproduces_intermediate_results() {
         assert_equal(
             EXAMPLE_LENGTHS
-                .into_iter()
+                .iter()
                 .scan(KnotState::new(), |state, &length| {
                     state.tie(length as usize);
-                    Some(state.marks.clone())
+                    Some(state.marks)
                 }),
             [
                 [2, 1, 0, 3, 4],

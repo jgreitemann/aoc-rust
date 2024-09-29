@@ -72,38 +72,31 @@ mod tests {
 
     #[test]
     fn duplicates_in_passphrases_are_detected() {
-        assert_eq!(
-            passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "ee"]),
-            true
+        assert!(
+            passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "ee"])
         );
-        assert_eq!(
-            passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "aa"]),
-            false
+        assert!(
+            !passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "aa"])
         );
-        assert_eq!(
-            passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "aaa"]),
-            true
+        assert!(
+            passphrase_has_no_duplicates(&["aa", "bb", "cc", "dd", "aaa"])
         );
     }
 
     #[test]
     fn anagrams_in_passphrases_are_detected() {
-        assert_eq!(passphrase_has_no_anagrams(&["abcde", "fghij"]), true);
-        assert_eq!(
-            passphrase_has_no_anagrams(&["abcde", "xyz", "ecdab"]),
-            false
+        assert!(passphrase_has_no_anagrams(&["abcde", "fghij"]));
+        assert!(
+            !passphrase_has_no_anagrams(&["abcde", "xyz", "ecdab"])
         );
-        assert_eq!(
-            passphrase_has_no_anagrams(&["a", "ab", "abc", "abd", "abf", "abj"]),
-            true
+        assert!(
+            passphrase_has_no_anagrams(&["a", "ab", "abc", "abd", "abf", "abj"])
         );
-        assert_eq!(
-            passphrase_has_no_anagrams(&["iiii", "oiii", "ooii", "oooi", "oooo"]),
-            true
+        assert!(
+            passphrase_has_no_anagrams(&["iiii", "oiii", "ooii", "oooi", "oooo"])
         );
-        assert_eq!(
-            passphrase_has_no_anagrams(&["oiii", "ioii", "iioi", "iiio"]),
-            false
+        assert!(
+            !passphrase_has_no_anagrams(&["oiii", "ioii", "iioi", "iiio"])
         );
     }
 }

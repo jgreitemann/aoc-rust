@@ -74,9 +74,9 @@ struct Relation<'input> {
     decendents: HashSet<ProgramName<'input>>,
 }
 
-fn parse_input<'input>(
-    input: &'input str,
-) -> Result<HashMap<ProgramName<'input>, Relation<'input>>, ParseError> {
+fn parse_input(
+    input: &str,
+) -> Result<HashMap<ProgramName<'_>, Relation<'_>>, ParseError> {
     let re = regex::Regex::new(
         r"^(?P<prog>\w+) \((?P<weight>\d+)\)(?: -> (?P<decendents>(?:\w+)(?:, (?:\w+))*))?$",
     )
@@ -101,7 +101,7 @@ fn parse_input<'input>(
                             decendents
                                 .as_str()
                                 .split(", ")
-                                .map(|m| ProgramName(m))
+                                .map(ProgramName)
                                 .collect()
                         })
                         .unwrap_or_default(),
@@ -204,8 +204,7 @@ impl<'input> Iterator for SubtowerIter<'input, '_> {
                     self.relations[&self.current]
                         .decendents
                         .iter()
-                        .map(|desc| SubtowerIter::new(self.relations, *desc))
-                        .flatten(),
+                        .flat_map(|desc| SubtowerIter::new(self.relations, *desc)),
                 ));
                 self.next()
             }),
@@ -302,7 +301,7 @@ cntj (57)
         #[case] names: &[&str],
     ) {
         let matches = |d: &HashSet<ProgramName>, names: &[&str]| {
-            names.len() == d.len() && names.into_iter().all(|name| d.contains(&ProgramName(name)))
+            names.len() == d.len() && names.iter().all(|name| d.contains(&ProgramName(name)))
         };
         assert_matches!(
                 relations.get(&ProgramName(prog)),

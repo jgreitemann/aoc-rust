@@ -21,7 +21,7 @@ fn solution_after_article(article: ElementRef) -> Option<String> {
     let code_selector = Selector::parse("code").unwrap();
     let after_article = article
         .next_siblings()
-        .filter_map(|node| ElementRef::wrap(node))
+        .filter_map(ElementRef::wrap)
         .next()
         .unwrap();
     if after_article.inner_html().contains("puzzle answer") {
@@ -89,30 +89,28 @@ impl AnswerResponse {
 
         if contains_text("You gave an answer too recently") {
             Ok(Self::GuessedTooRecently)
-        } else {
-            if contains_text("not the right answer") {
-                if let Some(guess) = paragraph
-                    .select(&code_selector)
-                    .next()
-                    .map(|elem| elem.inner_html())
-                {
-                    if contains_text("too low") {
-                        Ok(Self::IncorrectTooLow { guess })
-                    } else if contains_text("too high") {
-                        Ok(Self::IncorrectTooHigh { guess })
-                    } else {
-                        Ok(Self::IncorrectTooManyGuesses { guess })
-                    }
+        } else if contains_text("not the right answer") {
+            if let Some(guess) = paragraph
+                .select(&code_selector)
+                .next()
+                .map(|elem| elem.inner_html())
+            {
+                if contains_text("too low") {
+                    Ok(Self::IncorrectTooLow { guess })
+                } else if contains_text("too high") {
+                    Ok(Self::IncorrectTooHigh { guess })
                 } else {
-                    Ok(Self::IncorrectOther)
+                    Ok(Self::IncorrectTooManyGuesses { guess })
                 }
-            } else if contains_text("That's the right answer") {
-                Ok(Self::Correct)
             } else {
-                Err(ResponseParsingError::UnexpectedResponse {
-                    msg: paragraph.text().collect(),
-                })
+                Ok(Self::IncorrectOther)
             }
+        } else if contains_text("That's the right answer") {
+            Ok(Self::Correct)
+        } else {
+            Err(ResponseParsingError::UnexpectedResponse {
+                msg: paragraph.text().collect(),
+            })
         }
     }
 }
@@ -256,31 +254,31 @@ mod tests {
     #[test]
     fn answer_response_determines_solution_correctness() {
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_CORRECT_PART_1),
+            AnswerResponse::parse(ANSWER_CORRECT_PART_1),
             Ok(AnswerResponse::Correct)
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_CORRECT_PART_2),
+            AnswerResponse::parse(ANSWER_CORRECT_PART_2),
             Ok(AnswerResponse::Correct)
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_TOO_LOW),
+            AnswerResponse::parse(ANSWER_TOO_LOW),
             Ok(AnswerResponse::IncorrectTooLow { .. })
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_TOO_HIGH),
+            AnswerResponse::parse(ANSWER_TOO_HIGH),
             Ok(AnswerResponse::IncorrectTooHigh { .. })
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_INCORRECT_AFTER_MANY_GUESSES),
+            AnswerResponse::parse(ANSWER_INCORRECT_AFTER_MANY_GUESSES),
             Ok(AnswerResponse::IncorrectTooManyGuesses { .. })
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_INCORRECT_NON_NUMBER),
+            AnswerResponse::parse(ANSWER_INCORRECT_NON_NUMBER),
             Ok(AnswerResponse::IncorrectOther)
         );
         assert_matches!(
-            AnswerResponse::parse(&ANSWER_GUESSED_TOO_RECENTLY),
+            AnswerResponse::parse(ANSWER_GUESSED_TOO_RECENTLY),
             Ok(AnswerResponse::GuessedTooRecently)
         );
     }
@@ -288,19 +286,19 @@ mod tests {
     #[test]
     fn answer_response_determines_guess() {
         assert_eq!(
-            AnswerResponse::parse(&ANSWER_TOO_LOW).unwrap(),
+            AnswerResponse::parse(ANSWER_TOO_LOW).unwrap(),
             AnswerResponse::IncorrectTooLow {
                 guess: "234234".to_string()
             }
         );
         assert_eq!(
-            AnswerResponse::parse(&ANSWER_TOO_HIGH).unwrap(),
+            AnswerResponse::parse(ANSWER_TOO_HIGH).unwrap(),
             AnswerResponse::IncorrectTooHigh {
                 guess: "985639847539754389578395".to_string()
             }
         );
         assert_eq!(
-            AnswerResponse::parse(&ANSWER_INCORRECT_AFTER_MANY_GUESSES).unwrap(),
+            AnswerResponse::parse(ANSWER_INCORRECT_AFTER_MANY_GUESSES).unwrap(),
             AnswerResponse::IncorrectTooManyGuesses {
                 guess: "435".to_string()
             }

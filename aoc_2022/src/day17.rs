@@ -104,7 +104,7 @@ impl Cavern {
             self.settled[coords.try_cast_as().unwrap()] = b'#';
         }
 
-        let new_height = rock.0.iter().map(|coords| coords[0]).max().unwrap() as isize;
+        let new_height = rock.0.iter().map(|coords| coords[0]).max().unwrap();
         while self.height() < new_height {
             self.settled
                 .push_row(ndarray::ArrayView::from(b"#.......#"))
@@ -223,7 +223,7 @@ fn determine_tower_height_with_matching(n: usize, jets: &[Jet]) -> isize {
 
     // Repeat this until a match has been found. The segment of the tower by which it grew
     // since `initial_cavern` is bound to repeat over and over.
-    while !cavern.matches(&initial_cavern, number_of_rows_to_match as isize) {
+    while !cavern.matches(&initial_cavern, number_of_rows_to_match) {
         rocks_until_repeat +=
             drop_rocks_commensurate_to_jets(&mut cavern, rock_factory(), &mut jet_iter);
     }

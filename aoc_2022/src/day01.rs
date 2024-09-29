@@ -10,7 +10,9 @@ impl ParseInput<'_> for Door {
     type Error = std::convert::Infallible;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        Ok(Self{ elves: parse_input(input) })
+        Ok(Self {
+            elves: parse_input(input),
+        })
     }
 }
 
@@ -32,20 +34,29 @@ impl Part2 for Door {
     }
 }
 
-fn parse_input(input: &str) -> Vec<Vec<u32>>
-{
-    input.lines()
-    .map(|line| line.parse())
-    .chunk_by(|line| line.is_ok())
-    .into_iter()
-    .filter_map(|(is_number, group)| if is_number { Some(group.map(Result::unwrap).collect()) } else { None })
-    .collect()
+fn parse_input(input: &str) -> Vec<Vec<u32>> {
+    input
+        .lines()
+        .map(|line| line.parse())
+        .chunk_by(|line| line.is_ok())
+        .into_iter()
+        .filter_map(|(is_number, group)| {
+            if is_number {
+                Some(group.map(Result::unwrap).collect())
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 fn calories_of_top_n<E: AsRef<[u32]>>(elves: &[E], n: usize) -> u32 {
-    elves.into_iter().map(|items| items.as_ref().into_iter().sum())
-    .sorted_by(|lhs, rhs| <u32 as Ord>::cmp(&rhs, &lhs))
-    .take(n).sum()
+    elves
+        .iter()
+        .map(|items| items.as_ref().iter().sum())
+        .sorted_by(|lhs, rhs| <u32 as Ord>::cmp(rhs, lhs))
+        .take(n)
+        .sum()
 }
 
 #[cfg(test)]

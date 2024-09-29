@@ -277,7 +277,7 @@ C Z";
 
     #[test]
     fn strategy_scores_are_calculated() {
-        assert_equal(EXAMPLE_GUIDE.into_iter().map(Strategy::score), [8, 1, 6])
+        assert_equal(EXAMPLE_GUIDE.iter().map(Strategy::score), [8, 1, 6])
     }
 
     #[test]

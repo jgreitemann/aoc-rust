@@ -154,7 +154,7 @@ impl SessionState {
                 let prev = self.fs.0.insert(
                     self.cwd.clone(),
                     contents
-                        .into_iter()
+                        .iter()
                         .map(|entry| FsNode::from_dir_entry(&self.cwd, entry))
                         .collect(),
                 );
@@ -225,7 +225,7 @@ impl Filesystem {
     }
 
     fn total_size(&self) -> usize {
-        self.directory_size(&Path::new("/"))
+        self.directory_size(Path::new("/"))
     }
 
     fn size_of_directory_to_delete_to_make_space_for(

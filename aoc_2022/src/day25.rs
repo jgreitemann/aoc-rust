@@ -55,24 +55,23 @@ impl FromStr for Snafu {
                 _ => Err(ParseError::InvalidSnafuDigit),
             })
             .try_collect()
-            .map(|digits| Self(digits))
+            .map(Self)
     }
 }
 
 impl std::fmt::Display for Snafu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.iter().rev().fold(Ok(()), |res, digit| {
-            res.and_then(|_| {
-                f.write_str(match digit {
-                    -2 => "=",
-                    -1 => "-",
-                    0 => "0",
-                    1 => "1",
-                    2 => "2",
-                    _ => "#",
-                })
-            })
-        })
+        for digit in self.0.iter().rev() {
+            f.write_str(match digit {
+                -2 => "=",
+                -1 => "-",
+                0 => "0",
+                1 => "1",
+                2 => "2",
+                _ => "#",
+            })?;
+        }
+        Ok(())
     }
 }
 

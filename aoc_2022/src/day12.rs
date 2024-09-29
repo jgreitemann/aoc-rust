@@ -80,11 +80,9 @@ impl Map {
         while let Some(p) = active.pop_front() {
             let distance = flow[p] + 1;
             for n in neighbors_checked(p, self.elevations.shape()) {
-                if self.elevations[n] + 1 >= self.elevations[p] {
-                    if flow[n] > distance {
-                        flow[n] = distance;
-                        active.push_back(n);
-                    }
+                if self.elevations[n] + 1 >= self.elevations[p] && flow[n] > distance {
+                    flow[n] = distance;
+                    active.push_back(n);
                 }
             }
         }

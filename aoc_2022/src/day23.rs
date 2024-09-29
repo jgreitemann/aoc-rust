@@ -47,7 +47,7 @@ type Coords = HashSet<Coord>;
 fn parse_input(input: &str) -> Coords {
     let v: Vec<_> = input
         .lines()
-        .flat_map(|line| line.as_bytes().into_iter())
+        .flat_map(|line| line.as_bytes().iter())
         .collect();
     let shape = (
         input.lines().count(),
@@ -56,7 +56,7 @@ fn parse_input(input: &str) -> Coords {
     let map = ndarray::ArrayView2::from_shape(shape, v.as_slice()).unwrap();
 
     map.indexed_iter()
-        .filter_map(|((y, x), &&c)| (c == b'#').then(|| Vector([x as i32, y as i32])))
+        .filter_map(|((y, x), &&c)| (c == b'#').then_some(Vector([x as i32, y as i32])))
         .collect()
 }
 

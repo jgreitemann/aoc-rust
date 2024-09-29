@@ -244,7 +244,7 @@ c inc -20 if c == 10
     fn intermediate_registers() {
         assert_equal(
             EXAMPLE_INSTRUCTIONS
-                .into_iter()
+                .iter()
                 .scan(Registers::default(), |registers, instr| {
                     *registers = std::mem::take(registers).execute(instr);
                     Some(registers.clone())
