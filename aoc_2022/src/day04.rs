@@ -99,8 +99,8 @@ impl FromStr for Pair {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::assert_equal;
     use assert_matches::assert_matches;
+    use itertools::assert_equal;
 
     const EXAMPLE_INPUT: &str = r"2-4,6-8
 2-3,4-5
@@ -132,9 +132,18 @@ mod tests {
 
     #[test]
     fn invalid_input_produces_errors() {
-        assert_matches!("1-2;3-4".parse::<Pair>(), Err(ParseError::SeparatorNotFound(',')));
-        assert_matches!("1-2,3,4".parse::<Pair>(), Err(ParseError::SeparatorNotFound('-')));
-        assert_matches!("1—2,3-4".parse::<Pair>(), Err(ParseError::SeparatorNotFound('-')));
+        assert_matches!(
+            "1-2;3-4".parse::<Pair>(),
+            Err(ParseError::SeparatorNotFound(','))
+        );
+        assert_matches!(
+            "1-2,3,4".parse::<Pair>(),
+            Err(ParseError::SeparatorNotFound('-'))
+        );
+        assert_matches!(
+            "1—2,3-4".parse::<Pair>(),
+            Err(ParseError::SeparatorNotFound('-'))
+        );
         assert_matches!("NaN-2,3-4".parse::<Pair>(), Err(ParseError::ParseInt(_)));
         assert_matches!("1-2-3,3-4".parse::<Pair>(), Err(ParseError::ParseInt(_)));
         assert_matches!("1-2,3.0-4".parse::<Pair>(), Err(ParseError::ParseInt(_)));

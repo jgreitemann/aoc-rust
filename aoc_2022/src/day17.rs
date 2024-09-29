@@ -96,7 +96,9 @@ impl Cavern {
     }
 
     fn test(&self, rock: &Rock) -> bool {
-        rock.0.iter().all(|coords| self.settled[coords.try_cast_as().unwrap()] == b'.')
+        rock.0
+            .iter()
+            .all(|coords| self.settled[coords.try_cast_as().unwrap()] == b'.')
     }
 
     fn add(&mut self, rock: &Rock) {
@@ -140,19 +142,19 @@ fn drop_rock(
     while cavern.test(&rock) {
         let (_, jet) = jet_iter.next().unwrap();
         match jet {
-            Jet::Left => rock.translate(Vector([0,-1])),
-            Jet::Right => rock.translate(Vector([0,1])),
+            Jet::Left => rock.translate(Vector([0, -1])),
+            Jet::Right => rock.translate(Vector([0, 1])),
         }
         if !cavern.test(&rock) {
             match jet {
-                Jet::Left => rock.translate(Vector([0,1])),
-                Jet::Right => rock.translate(Vector([0,-1])),
+                Jet::Left => rock.translate(Vector([0, 1])),
+                Jet::Right => rock.translate(Vector([0, -1])),
             }
         }
-        rock.translate(Vector([-1,0]));
+        rock.translate(Vector([-1, 0]));
     }
 
-    rock.translate(Vector([1,0]));
+    rock.translate(Vector([1, 0]));
     cavern.add(&rock);
 }
 
@@ -239,7 +241,9 @@ fn determine_tower_height_with_matching(n: usize, jets: &[Jet]) -> isize {
     drop_multiple_rocks(&mut cavern, remaining_rocks, &mut jet_iter);
     let remaining_height = cavern.height() - matching_cavern.height();
 
-    initial_cavern.height() + number_of_repeats as isize * repeating_segment_height + remaining_height
+    initial_cavern.height()
+        + number_of_repeats as isize * repeating_segment_height
+        + remaining_height
 }
 
 const ROCK_SEQUENCE: [&[Vector<isize, 2>]; 5] = [
@@ -388,7 +392,7 @@ mod tests {
         Jet::Left,
         Jet::Right,
         Jet::Right,
-        ];
+    ];
 
     const REAL_INPUT: &str = "\
     >>><>><<<<><<<>>><><<<<>>>><<<><>><>>><<<><<>>><<<><<><>>><<<><<<<><>>>><<<<>><<>>>><<<>><<<<>>><<<>>>><<<<>>>><<<\

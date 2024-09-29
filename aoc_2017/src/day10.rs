@@ -79,10 +79,10 @@ fn sparse_hash<const N: usize>(input: &str) -> [u8; N] {
 fn densify(sparse_hash: &[u8]) -> impl Iterator<Item = u8> + '_ {
     sparse_hash.chunks(16).map(|chunk| {
         chunk
-        .iter()
-        .copied()
-        .reduce(std::ops::BitXor::bitxor)
-        .unwrap()
+            .iter()
+            .copied()
+            .reduce(std::ops::BitXor::bitxor)
+            .unwrap()
     })
 }
 

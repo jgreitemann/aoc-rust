@@ -74,9 +74,7 @@ struct Relation<'input> {
     decendents: HashSet<ProgramName<'input>>,
 }
 
-fn parse_input(
-    input: &str,
-) -> Result<HashMap<ProgramName<'_>, Relation<'_>>, ParseError> {
+fn parse_input(input: &str) -> Result<HashMap<ProgramName<'_>, Relation<'_>>, ParseError> {
     let re = regex::Regex::new(
         r"^(?P<prog>\w+) \((?P<weight>\d+)\)(?: -> (?P<decendents>(?:\w+)(?:, (?:\w+))*))?$",
     )
@@ -98,11 +96,7 @@ fn parse_input(
                     decendents: caps
                         .name("decendents")
                         .map(|decendents| {
-                            decendents
-                                .as_str()
-                                .split(", ")
-                                .map(ProgramName)
-                                .collect()
+                            decendents.as_str().split(", ").map(ProgramName).collect()
                         })
                         .unwrap_or_default(),
                 },

@@ -82,7 +82,9 @@ impl Stacks {
             .get(from - 1)
             .ok_or(Error::StackIndexOutOfBounds)?
             .len();
-        let idx = len.checked_sub(amount).ok_or(Error::NotEnoughCratesToMove)?;
+        let idx = len
+            .checked_sub(amount)
+            .ok_or(Error::NotEnoughCratesToMove)?;
         let top = self.0[from - 1].split_off(idx);
         let to_stack = self.0.get_mut(to - 1).ok_or(Error::StackIndexOutOfBounds)?;
         if rev {
@@ -208,9 +210,7 @@ move 1 from 1 to 2";
     fn assert_stacks_eq(stacks: &Stacks, expected: &[&[char]]) {
         assert_equal(
             stacks.0.iter().cloned(),
-            expected
-                .iter()
-                .map(|col| col.to_vec()),
+            expected.iter().map(|col| col.to_vec()),
         );
     }
 

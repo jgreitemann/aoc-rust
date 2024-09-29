@@ -25,9 +25,27 @@ async fn main() -> Result<()> {
         door!(DoorDate { day: 7, year: 2017 }, day07::Door),
         door!(DoorDate { day: 8, year: 2017 }, day08::Door),
         door!(DoorDate { day: 9, year: 2017 }, day09::Door),
-        door!(DoorDate { day: 10, year: 2017 }, day10::Door),
-        door!(DoorDate { day: 11, year: 2017 }, day11::Door),
-        door!(DoorDate { day: 12, year: 2017 }, day12::Door),
+        door!(
+            DoorDate {
+                day: 10,
+                year: 2017
+            },
+            day10::Door
+        ),
+        door!(
+            DoorDate {
+                day: 11,
+                year: 2017
+            },
+            day11::Door
+        ),
+        door!(
+            DoorDate {
+                day: 12,
+                year: 2017
+            },
+            day12::Door
+        ),
         // append "doors" here...
     ])
     .await

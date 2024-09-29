@@ -1,5 +1,5 @@
 use aoc_companion::prelude::*;
-use aoc_utils::{linalg::*, geometry::Point};
+use aoc_utils::{geometry::Point, linalg::*};
 
 use thiserror::Error;
 
@@ -152,9 +152,7 @@ where
         if let Some(p) = self.pos {
             self.pos = next_head.map(|h| {
                 if (h - p).norm_l2() > 1.5 {
-                    p.neighbors()
-                        .min_by_key(|&v| (h - v).norm_l2_sq())
-                        .unwrap()
+                    p.neighbors().min_by_key(|&v| (h - v).norm_l2_sq()).unwrap()
                 } else {
                     p
                 }

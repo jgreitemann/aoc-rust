@@ -13,7 +13,7 @@ impl ParseInput<'_> for Door {
     type Error = ParseError;
 
     fn parse(input: &str) -> Result<Self, Self::Error> {
-        parse_input(input).map(|connections| Self{connections})
+        parse_input(input).map(|connections| Self { connections })
     }
 }
 
@@ -78,12 +78,18 @@ pub enum Error {
     IndexOutOfBounds(usize),
 }
 
-fn connected_component<C: AsRef<[usize]>>(seed: usize, connections: &[C]) -> Result<BTreeSet<usize>, Error> {
+fn connected_component<C: AsRef<[usize]>>(
+    seed: usize,
+    connections: &[C],
+) -> Result<BTreeSet<usize>, Error> {
     let mut to_check = vec![seed];
     let mut component = BTreeSet::new();
     while let Some(current) = to_check.pop() {
         if component.insert(current) {
-            let connected = connections.get(current).ok_or(Error::IndexOutOfBounds(current))?.as_ref();
+            let connected = connections
+                .get(current)
+                .ok_or(Error::IndexOutOfBounds(current))?
+                .as_ref();
             to_check.extend_from_slice(connected);
         }
     }
@@ -106,8 +112,8 @@ fn components<C: AsRef<[usize]>>(connections: &[C]) -> Result<BTreeSet<BTreeSet<
 
 #[cfg(test)]
 mod tests {
-    use itertools::assert_equal;
     use assert_matches::assert_matches;
+    use itertools::assert_equal;
 
     use super::*;
 
@@ -128,13 +134,22 @@ mod tests {
 
     #[test]
     fn connected_vertices_are_found() {
-        assert_equal(connected_component(0, EXAMPLE_CONNECTIONS).unwrap(), [0,2,3,4,5,6]);
+        assert_equal(
+            connected_component(0, EXAMPLE_CONNECTIONS).unwrap(),
+            [0, 2, 3, 4, 5, 6],
+        );
         assert_equal(connected_component(1, EXAMPLE_CONNECTIONS).unwrap(), [1]);
-        assert_matches!(connected_component(7, EXAMPLE_CONNECTIONS), Err(Error::IndexOutOfBounds(7)));
+        assert_matches!(
+            connected_component(7, EXAMPLE_CONNECTIONS),
+            Err(Error::IndexOutOfBounds(7))
+        );
     }
 
     #[test]
     fn component_groups_are_found() {
-        assert_equal(components(EXAMPLE_CONNECTIONS).unwrap(), [[0,2,3,4,5,6].into(), [1].into()]);
+        assert_equal(
+            components(EXAMPLE_CONNECTIONS).unwrap(),
+            [[0, 2, 3, 4, 5, 6].into(), [1].into()],
+        );
     }
 }

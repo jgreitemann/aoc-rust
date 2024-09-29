@@ -38,22 +38,118 @@ async fn main() -> Result<()> {
         door!(DoorDate { day: 7, year: 2022 }, day07::Door),
         door!(DoorDate { day: 8, year: 2022 }, day08::Door),
         door!(DoorDate { day: 9, year: 2022 }, day09::Door),
-        door!(DoorDate { day: 10, year: 2022 }, day10::Door),
-        door!(DoorDate { day: 11, year: 2022 }, day11::Door),
-        door!(DoorDate { day: 12, year: 2022 }, day12::Door),
-        door!(DoorDate { day: 13, year: 2022 }, day13::Door),
-        door!(DoorDate { day: 14, year: 2022 }, day14::Door),
-        door!(DoorDate { day: 15, year: 2022 }, day15::Door),
-        door!(DoorDate { day: 16, year: 2022 }, day16::Door),
-        door!(DoorDate { day: 17, year: 2022 }, day17::Door),
-        door!(DoorDate { day: 18, year: 2022 }, day18::Door),
-        door!(DoorDate { day: 19, year: 2022 }, day19::Door),
-        door!(DoorDate { day: 20, year: 2022 }, day20::Door),
-        door!(DoorDate { day: 21, year: 2022 }, day21::Door),
-        door!(DoorDate { day: 22, year: 2022 }, day22::Door),
-        door!(DoorDate { day: 23, year: 2022 }, day23::Door),
-        door!(DoorDate { day: 24, year: 2022 }, day24::Door),
-        door!(DoorDate { day: 25, year: 2022 }, day25::Door),
+        door!(
+            DoorDate {
+                day: 10,
+                year: 2022
+            },
+            day10::Door
+        ),
+        door!(
+            DoorDate {
+                day: 11,
+                year: 2022
+            },
+            day11::Door
+        ),
+        door!(
+            DoorDate {
+                day: 12,
+                year: 2022
+            },
+            day12::Door
+        ),
+        door!(
+            DoorDate {
+                day: 13,
+                year: 2022
+            },
+            day13::Door
+        ),
+        door!(
+            DoorDate {
+                day: 14,
+                year: 2022
+            },
+            day14::Door
+        ),
+        door!(
+            DoorDate {
+                day: 15,
+                year: 2022
+            },
+            day15::Door
+        ),
+        door!(
+            DoorDate {
+                day: 16,
+                year: 2022
+            },
+            day16::Door
+        ),
+        door!(
+            DoorDate {
+                day: 17,
+                year: 2022
+            },
+            day17::Door
+        ),
+        door!(
+            DoorDate {
+                day: 18,
+                year: 2022
+            },
+            day18::Door
+        ),
+        door!(
+            DoorDate {
+                day: 19,
+                year: 2022
+            },
+            day19::Door
+        ),
+        door!(
+            DoorDate {
+                day: 20,
+                year: 2022
+            },
+            day20::Door
+        ),
+        door!(
+            DoorDate {
+                day: 21,
+                year: 2022
+            },
+            day21::Door
+        ),
+        door!(
+            DoorDate {
+                day: 22,
+                year: 2022
+            },
+            day22::Door
+        ),
+        door!(
+            DoorDate {
+                day: 23,
+                year: 2022
+            },
+            day23::Door
+        ),
+        door!(
+            DoorDate {
+                day: 24,
+                year: 2022
+            },
+            day24::Door
+        ),
+        door!(
+            DoorDate {
+                day: 25,
+                year: 2022
+            },
+            day25::Door
+        ),
         // append "doors" here...
     ])
     .await

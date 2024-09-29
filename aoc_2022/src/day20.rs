@@ -32,7 +32,10 @@ impl Part2 for Door {
     type Error = std::convert::Infallible;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(sum_of_grove_coords(&decrypted_sequence(&apply_key(&self.numbers), 10)))
+        Ok(sum_of_grove_coords(&decrypted_sequence(
+            &apply_key(&self.numbers),
+            10,
+        )))
     }
 }
 
@@ -56,9 +59,15 @@ fn decrypted_sequence(numbers: &[isize], times: usize) -> Vec<isize> {
         numbers.insert(k, x);
 
         if j < k {
-            indices.iter_mut().filter(|l| (j+1..=k).contains(l)).for_each(|l| *l -= 1);
+            indices
+                .iter_mut()
+                .filter(|l| (j + 1..=k).contains(l))
+                .for_each(|l| *l -= 1);
         } else {
-            indices.iter_mut().filter(|l| (k..j).contains(l)).for_each(|l| *l += 1);
+            indices
+                .iter_mut()
+                .filter(|l| (k..j).contains(l))
+                .for_each(|l| *l += 1);
         }
         indices[i] = k;
     }
@@ -122,5 +131,13 @@ mod tests {
 
     const EXAMPLE_SEQUENCE: &[isize] = &[1, 2, -3, 3, -2, 0, 4];
     const EXAMPLE_DECRYPTED_SEQ: &[isize] = &[-2, 1, 2, -3, 4, 0, 3];
-    const EXAMPLE_PART2_SEQ: &[isize] = &[0, -2434767459, 1623178306, 3246356612, -1623178306, 2434767459, 811589153];
+    const EXAMPLE_PART2_SEQ: &[isize] = &[
+        0,
+        -2434767459,
+        1623178306,
+        3246356612,
+        -1623178306,
+        2434767459,
+        811589153,
+    ];
 }
