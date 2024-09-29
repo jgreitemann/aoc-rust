@@ -3,6 +3,7 @@ use crate::door::*;
 use crate::validation::*;
 
 use anyhow::Result;
+use termion::screen::IntoAlternateScreen;
 use tokio::sync::mpsc;
 
 use std::collections::BTreeMap;
@@ -111,7 +112,7 @@ impl Display for Table {
 }
 
 pub fn prefilled_screen() -> Result<impl std::io::Write + Send> {
-    let mut screen = termion::screen::AlternateScreen::from(std::io::stdout());
+    let mut screen = std::io::stdout().into_alternate_screen()?;
 
     let (_, term_height) = termion::terminal_size()?;
     for _ in 0..term_height {

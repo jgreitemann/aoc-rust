@@ -11,10 +11,10 @@ members = [
 aoc_companion = { path = "aoc_companion" }
 aoc_utils = { path = "aoc_utils" }
 assert_matches = "1.5.0"
-itertools = "0.10.3"
-ndarray = "0.15.6"
-regex = "1.6.0"
-rstest = "0.15.0"
+itertools = "0.13.0"
+ndarray = "0.16.1"
+regex = "1.11.0"
+rstest = "0.23.0"
 tap = "1.0.1"
-thiserror = "1.0.37"
-tokio = "1.21.1"
+thiserror = "1.0.64"
+tokio = "1.40.0"

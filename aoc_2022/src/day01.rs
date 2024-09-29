@@ -36,7 +36,7 @@ fn parse_input(input: &str) -> Vec<Vec<u32>>
 {
     input.lines()
     .map(|line| line.parse())
-    .group_by(|line| line.is_ok())
+    .chunk_by(|line| line.is_ok())
     .into_iter()
     .filter_map(|(is_number, group)| if is_number { Some(group.map(Result::unwrap).collect()) } else { None })
     .collect()

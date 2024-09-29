@@ -456,7 +456,7 @@ enum Instruction {
 fn parse_instructions(s: &str) -> Result<Vec<Instruction>, ParseError> {
     s.chars()
         .into_iter()
-        .group_by(|&b| b == 'L' || b == 'R')
+        .chunk_by(|&b| b == 'L' || b == 'R')
         .into_iter()
         .flat_map(|(is_turn, group)| {
             if is_turn {
