@@ -77,6 +77,7 @@ impl DoorPartResult {
     }
 }
 
+#[derive(Debug)]
 pub struct DoorResult {
     pub part1: Result<DoorPartResult>,
     pub part2: Result<DoorPartResult>,

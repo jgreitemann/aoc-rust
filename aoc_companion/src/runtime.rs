@@ -28,7 +28,7 @@ pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
 }
 
 async fn handle_door<C>(
-    DoorEntry(date, door_fn): &DoorEntry,
+    DoorEntry(date, door_fn): &'static DoorEntry,
     client: Arc<C>,
     progress_sender: mpsc::Sender<DoorProgress>,
     opts: Options,
@@ -52,7 +52,13 @@ where
     } else {
         0
     };
-    let answer = door_fn(input.trim_end(), parts_considered_solved);
+    let (answer_tx, answer_rx) = tokio::sync::oneshot::channel();
+    rayon::spawn(move || {
+        answer_tx
+            .send(door_fn(input.trim_end(), parts_considered_solved))
+            .unwrap()
+    });
+    let answer = answer_rx.await?;
     progress_sender
         .send(DoorProgress(*date, Progress::ValidatingAnswer))
         .await?;
