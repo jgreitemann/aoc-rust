@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 50f5aeee1052453394424f8d0f5ebc94f9a1939889aa5991232744505386ef3d # shrinks to WrappingWindowArgs{ mut data, begin, length } = WrappingWindowArgs { data: [23, -36, 13], begin: 2, length: 2 }
