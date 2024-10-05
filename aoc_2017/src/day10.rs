@@ -1,5 +1,6 @@
 use aoc_companion::prelude::*;
 
+use aoc_utils::wrap::WrappingIndex;
 use itertools::Itertools;
 use tap::tap::Tap;
 use thiserror::Error;
@@ -106,9 +107,10 @@ impl<const N: usize> KnotState<N> {
     }
 
     fn tie(&mut self, length: usize) {
-        self.marks.rotate_left(self.current_pos);
-        self.marks[..length].reverse();
-        self.marks.rotate_right(self.current_pos);
+        self.marks
+            .as_mut_slice()
+            .wrapping_window(self.current_pos, length)
+            .reverse();
         self.current_pos += length + self.skip_size;
         self.current_pos %= N;
         self.skip_size += 1;
