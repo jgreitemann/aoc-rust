@@ -42,7 +42,7 @@ impl Part2 for Door<'_> {
     type Error = std::convert::Infallible;
 
     fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(knot_hash(self.input))
+        Ok(KnotHash::hash(self.input).to_string())
     }
 }
 
@@ -87,8 +87,21 @@ fn densify(sparse_hash: &[u8]) -> impl Iterator<Item = u8> + '_ {
     })
 }
 
-fn knot_hash(input: &str) -> String {
-    format!("{:02x}", densify(&sparse_hash::<256>(input)).format(""))
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct KnotHash(pub [u8; 16]);
+
+impl KnotHash {
+    pub fn hash(input: &str) -> Self {
+        let sparse_hash = sparse_hash::<256>(input);
+        let mut dense_hash = densify(&sparse_hash);
+        Self(std::array::from_fn(move |_| dense_hash.next().unwrap()))
+    }
+}
+
+impl std::fmt::Display for KnotHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:02x}", self.0.iter().format(""))
+    }
 }
 
 struct KnotState<const N: usize> {
@@ -162,9 +175,21 @@ mod tests {
 
     #[test]
     fn example_knot_hashes() {
-        assert_eq!(knot_hash(""), "a2582a3a0e66e6e86e3812dcb672a272");
-        assert_eq!(knot_hash("AoC 2017"), "33efeb34ea91902bb2f59c9920caa6cd");
-        assert_eq!(knot_hash("1,2,3"), "3efbe78a8d82f29979031a4aa0b16a9d");
-        assert_eq!(knot_hash("1,2,4"), "63960835bcdc130f0b66d7ff4f6a5a8e");
+        assert_eq!(
+            KnotHash::hash("").to_string(),
+            "a2582a3a0e66e6e86e3812dcb672a272"
+        );
+        assert_eq!(
+            KnotHash::hash("AoC 2017").to_string(),
+            "33efeb34ea91902bb2f59c9920caa6cd"
+        );
+        assert_eq!(
+            KnotHash::hash("1,2,3").to_string(),
+            "3efbe78a8d82f29979031a4aa0b16a9d"
+        );
+        assert_eq!(
+            KnotHash::hash("1,2,4").to_string(),
+            "63960835bcdc130f0b66d7ff4f6a5a8e"
+        );
     }
 }
