@@ -10,6 +10,7 @@ aoc_companion = { workspace = true }
 aoc_utils = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
+proptest = { workspace = true }
 regex = { workspace = true }
 rstest = { workspace = true }
 tap = { workspace = true }

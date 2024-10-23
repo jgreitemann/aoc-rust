@@ -13,6 +13,7 @@ mod day12;
 mod day13;
 mod day14;
 mod day15;
+mod day16;
 
 use aoc_companion::prelude::*;
 
@@ -69,6 +70,13 @@ async fn main() -> Result<()> {
                 year: 2017
             },
             day15::Door
+        ),
+        door!(
+            DoorDate {
+                day: 16,
+                year: 2017
+            },
+            day16::Door
         ),
         // append "doors" here...
     ])

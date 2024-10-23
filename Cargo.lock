@@ -102,6 +102,7 @@ dependencies = [
  "aoc_utils",
  "assert_matches",
  "itertools",
+ "proptest",
  "regex",
  "rstest",
  "tap",
