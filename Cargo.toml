@@ -14,6 +14,7 @@ assert_matches = "1.5.0"
 itertools = "0.13.0"
 ndarray = "0.16.1"
 proptest = { version = "1.5.0", default-features = false, features = ["std"] }
+rayon = "1.10.0"
 regex = "1.11.0"
 rstest = "0.23.0"
 tap = "1.0.1"
