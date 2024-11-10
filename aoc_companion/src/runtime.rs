@@ -4,8 +4,11 @@ use crate::door::*;
 use crate::output::*;
 use crate::validation::*;
 
+use anyhow::anyhow;
 use anyhow::Result;
+use std::any::Any;
 use std::io::Write;
+use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -54,9 +57,13 @@ where
     };
     let (answer_tx, answer_rx) = tokio::sync::oneshot::channel();
     rayon::spawn(move || {
-        answer_tx
-            .send(door_fn(input.trim_end(), parts_considered_solved))
-            .unwrap()
+        let result =
+            std::panic::catch_unwind(|| door_fn(input.trim_end(), parts_considered_solved))
+                .unwrap_or_else(|e| DoorResult {
+                    part1: Err(panic_as_anyhow_error(e.as_ref())),
+                    part2: Err(panic_as_anyhow_error(e.as_ref())),
+                });
+        answer_tx.send(result).unwrap()
     });
     let answer = answer_rx.await?;
     progress_sender
@@ -86,4 +93,16 @@ where
             .await?;
     }
     Ok(())
+}
+
+fn panic_as_anyhow_error(panic_error: &dyn Any) -> anyhow::Error {
+    if let Some(panic_message) = panic_error
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| panic_error.downcast_ref::<&str>().map(Deref::deref))
+    {
+        anyhow!("Panic: {panic_message}")
+    } else {
+        anyhow!("Panic: cause unknown")
+    }
 }
