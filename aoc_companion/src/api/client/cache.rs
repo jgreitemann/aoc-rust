@@ -205,9 +205,7 @@ mod tests {
                             } = Some(format!("day {}, Part {part}", date.day));
                             Ok(Correct)
                         }
-                        _ => Ok(IncorrectTooManyGuesses {
-                            guess: guess.to_owned(),
-                        }),
+                        _ => Ok(IncorrectTooManyGuesses),
                     }
                 }
                 _ => Err(anyhow!(

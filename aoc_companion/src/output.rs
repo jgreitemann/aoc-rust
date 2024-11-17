@@ -70,17 +70,20 @@ fn write_answer(
             validity: Skipped { .. },
         }) => panic!("Inconsistent PartValidation state"),
         Ok(PartValidation {
-            validity: GuessSubmitted(IncorrectTooLow { guess }),
+            guess: DoorPartResult::Computed { answer, .. },
+            validity: GuessSubmitted(IncorrectTooLow),
             ..
-        }) => (format!("{guess} is too low"), '🔻'),
+        }) => (format!("{answer} is too low"), '🔻'),
         Ok(PartValidation {
-            validity: GuessSubmitted(IncorrectTooHigh { guess }),
+            guess: DoorPartResult::Computed { answer, .. },
+            validity: GuessSubmitted(IncorrectTooHigh),
             ..
-        }) => (format!("{guess} is too high"), '🔺'),
+        }) => (format!("{answer} is too high"), '🔺'),
         Ok(PartValidation {
-            validity: GuessSubmitted(IncorrectTooManyGuesses { guess }),
+            guess: DoorPartResult::Computed { answer, .. },
+            validity: GuessSubmitted(IncorrectTooManyGuesses),
             ..
-        }) => (format!("{guess} is incorrect; too many guesses"), '❌'),
+        }) => (format!("{answer} is incorrect; too many guesses"), '❌'),
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, .. },
             validity: GuessSubmitted(IncorrectOther),

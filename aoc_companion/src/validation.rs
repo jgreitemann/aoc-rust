@@ -86,17 +86,6 @@ async fn validate_part(
                 }
             };
 
-            // sanity check
-            use AnswerResponse::*;
-            match &validity {
-                GuessSubmitted(IncorrectTooHigh { guess })
-                | GuessSubmitted(IncorrectTooLow { guess })
-                | GuessSubmitted(IncorrectTooManyGuesses { guess }) => {
-                    assert_eq!(guess, answer, "The guess '{guess}' stated in the server response does not match the answer '{answer}' which we calculated; this may indicate a bug which led to us submitting the wrong thing");
-                }
-                _ => {}
-            }
-
             Ok(PartValidation {
                 guess: guess.unwrap(),
                 validity,
@@ -166,14 +155,13 @@ mod tests {
             }
 
             assert_eq!(date, &TEST_DAY);
-            let guess = guess.to_owned();
             let guess_num: i32 = guess.parse().unwrap();
             match (part, guess_num) {
                 (Part1, 42) => Ok(Correct),
-                (Part1, x) if x < 42 => Ok(IncorrectTooLow { guess }),
-                (Part1, _) => Ok(IncorrectTooHigh { guess }),
+                (Part1, x) if x < 42 => Ok(IncorrectTooLow),
+                (Part1, _) => Ok(IncorrectTooHigh),
                 (Part2, 123) => Ok(Correct),
-                (Part2, _) => Ok(IncorrectTooManyGuesses { guess }),
+                (Part2, _) => Ok(IncorrectTooManyGuesses),
             }
         }
     }

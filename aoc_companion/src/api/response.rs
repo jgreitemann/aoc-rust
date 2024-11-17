@@ -62,9 +62,9 @@ impl DayResponse {
 
 #[derive(Debug, PartialEq)]
 pub enum AnswerResponse {
-    IncorrectTooLow { guess: String },
-    IncorrectTooHigh { guess: String },
-    IncorrectTooManyGuesses { guess: String },
+    IncorrectTooLow,
+    IncorrectTooHigh,
+    IncorrectTooManyGuesses,
     IncorrectOther,
     GuessedTooRecently,
     Correct,
@@ -75,7 +75,6 @@ impl AnswerResponse {
         let document = Html::parse_document(response);
         let article_selector = Selector::parse("article").unwrap();
         let p_selector = Selector::parse("p").unwrap();
-        let code_selector = Selector::parse("code").unwrap();
         let article = document.select(&article_selector).next().ok_or(
             ResponseParsingError::SelectorDoesNotApply {
                 selector: "article",
@@ -90,18 +89,12 @@ impl AnswerResponse {
         if contains_text("You gave an answer too recently") {
             Ok(Self::GuessedTooRecently)
         } else if contains_text("not the right answer") {
-            if let Some(guess) = paragraph
-                .select(&code_selector)
-                .next()
-                .map(|elem| elem.inner_html())
-            {
-                if contains_text("too low") {
-                    Ok(Self::IncorrectTooLow { guess })
-                } else if contains_text("too high") {
-                    Ok(Self::IncorrectTooHigh { guess })
-                } else {
-                    Ok(Self::IncorrectTooManyGuesses { guess })
-                }
+            if contains_text("too low") {
+                Ok(Self::IncorrectTooLow)
+            } else if contains_text("too high") {
+                Ok(Self::IncorrectTooHigh)
+            } else if contains_text("please wait") {
+                Ok(Self::IncorrectTooManyGuesses)
             } else {
                 Ok(Self::IncorrectOther)
             }
@@ -228,6 +221,7 @@ mod tests {
     const ANSWER_CORRECT_PART_2: &str = include_str!("data/answer/correct_part2.html");
     const ANSWER_TOO_LOW: &str = include_str!("data/answer/incorrect_too_low.html");
     const ANSWER_TOO_HIGH: &str = include_str!("data/answer/incorrect_too_high.html");
+    const ANSWER_TOO_HIGH_OLD: &str = include_str!("data/answer/incorrect_too_high_old.html");
     const ANSWER_INCORRECT_AFTER_MANY_GUESSES: &str =
         include_str!("data/answer/incorrect_too_many_guesses.html");
     const ANSWER_INCORRECT_NON_NUMBER: &str = include_str!("data/answer/incorrect_non_number.html");
@@ -263,15 +257,19 @@ mod tests {
         );
         assert_matches!(
             AnswerResponse::parse(ANSWER_TOO_LOW),
-            Ok(AnswerResponse::IncorrectTooLow { .. })
+            Ok(AnswerResponse::IncorrectTooLow)
         );
         assert_matches!(
             AnswerResponse::parse(ANSWER_TOO_HIGH),
-            Ok(AnswerResponse::IncorrectTooHigh { .. })
+            Ok(AnswerResponse::IncorrectTooHigh)
+        );
+        assert_matches!(
+            AnswerResponse::parse(ANSWER_TOO_HIGH_OLD),
+            Ok(AnswerResponse::IncorrectTooHigh)
         );
         assert_matches!(
             AnswerResponse::parse(ANSWER_INCORRECT_AFTER_MANY_GUESSES),
-            Ok(AnswerResponse::IncorrectTooManyGuesses { .. })
+            Ok(AnswerResponse::IncorrectTooManyGuesses)
         );
         assert_matches!(
             AnswerResponse::parse(ANSWER_INCORRECT_NON_NUMBER),
@@ -280,28 +278,6 @@ mod tests {
         assert_matches!(
             AnswerResponse::parse(ANSWER_GUESSED_TOO_RECENTLY),
             Ok(AnswerResponse::GuessedTooRecently)
-        );
-    }
-
-    #[test]
-    fn answer_response_determines_guess() {
-        assert_eq!(
-            AnswerResponse::parse(ANSWER_TOO_LOW).unwrap(),
-            AnswerResponse::IncorrectTooLow {
-                guess: "234234".to_string()
-            }
-        );
-        assert_eq!(
-            AnswerResponse::parse(ANSWER_TOO_HIGH).unwrap(),
-            AnswerResponse::IncorrectTooHigh {
-                guess: "985639847539754389578395".to_string()
-            }
-        );
-        assert_eq!(
-            AnswerResponse::parse(ANSWER_INCORRECT_AFTER_MANY_GUESSES).unwrap(),
-            AnswerResponse::IncorrectTooManyGuesses {
-                guess: "435".to_string()
-            }
         );
     }
 }
