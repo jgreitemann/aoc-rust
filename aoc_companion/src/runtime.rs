@@ -79,7 +79,14 @@ where
     progress_sender
         .send(DoorProgress(*date, Progress::ValidatingAnswer))
         .await?;
-    validate_answer(date, answer, &status, client.as_ref()).await
+    validate_answer(
+        date,
+        answer,
+        &status,
+        opts.validation_mode(),
+        client.as_ref(),
+    )
+    .await
 }
 
 async fn run_door_tasks<C>(

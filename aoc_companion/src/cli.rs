@@ -1,6 +1,8 @@
 use clap::value_parser;
 pub(crate) use clap::Parser;
 
+use crate::validation::ValidationMode;
+
 #[derive(Debug, Default, Clone, Parser)]
 pub(crate) struct Options {
     #[arg(
@@ -14,4 +16,15 @@ pub(crate) struct Options {
     pub skip_solved: bool,
     #[arg(short, long, value_parser = value_parser!(u32).range(1..=25), help="Only solve problems for the specified day")]
     pub day: Option<u32>,
+    #[arg(short = 'n', long, help = "Do not submit new answers to AoC server")]
+    dry_run: bool,
+}
+
+impl Options {
+    pub(crate) fn validation_mode(&self) -> ValidationMode {
+        match self {
+            Options { dry_run: true, .. } => ValidationMode::DryRun,
+            Options { .. } => ValidationMode::default(),
+        }
+    }
 }

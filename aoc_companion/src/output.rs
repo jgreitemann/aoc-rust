@@ -54,6 +54,10 @@ fn write_answer(
             '🕑',
         ),
         Ok(PartValidation {
+            guess: DoorPartResult::Computed { answer, time },
+            validity: Unknown,
+        }) => (format!("{answer} ({time:?})"), '🤷'),
+        Ok(PartValidation {
             guess: DoorPartResult::Skipped,
             validity: Skipped { correct },
         }) => (format!("{correct} (skipped)"), '⭐'),

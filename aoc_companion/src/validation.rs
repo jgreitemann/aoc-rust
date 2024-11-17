@@ -15,6 +15,7 @@ pub enum PartValidity {
     Skipped { correct: String },
     DisparateAnswer { correct: String },
     GuessSubmitted(AnswerResponse),
+    Unknown,
 }
 
 #[derive(Debug)]
@@ -24,10 +25,18 @@ pub struct ValidationResult {
     pub part2: Result<PartValidation>,
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub enum ValidationMode {
+    #[default]
+    Normal,
+    DryRun,
+}
+
 pub async fn validate_answer(
     date: &DoorDate,
     answer: DoorResult,
     submitted: &DayResponse,
+    mode: ValidationMode,
     client: &(dyn AoCClient + Send + Sync),
 ) -> Result<ValidationResult> {
     use Part::*;
@@ -38,6 +47,7 @@ pub async fn validate_answer(
             Part1,
             answer.part1,
             submitted.first_half.as_deref(),
+            mode,
             client,
         )
         .await?,
@@ -46,6 +56,7 @@ pub async fn validate_answer(
             Part2,
             answer.part2,
             submitted.second_half.as_deref(),
+            mode,
             client,
         )
         .await?,
@@ -57,18 +68,22 @@ async fn validate_part(
     part: Part,
     guess: Result<DoorPartResult>,
     submitted: Option<&str>,
+    mode: ValidationMode,
     client: &(dyn AoCClient + Send + Sync),
 ) -> Result<Result<PartValidation>> {
     use PartValidity::*;
 
     Ok(match guess {
         Ok(DoorPartResult::Computed { ref answer, .. }) => {
-            let validity = match submitted {
-                Some(correct) if correct == answer => Consistent,
-                Some(correct) => DisparateAnswer {
+            let validity = match (submitted, mode) {
+                (Some(correct), _) if correct == answer => Consistent,
+                (Some(correct), _) => DisparateAnswer {
                     correct: correct.to_owned(),
                 },
-                None => GuessSubmitted(client.post_answer(date, part, answer).await?),
+                (None, ValidationMode::DryRun) => Unknown,
+                (None, ValidationMode::Normal) => {
+                    GuessSubmitted(client.post_answer(date, part, answer).await?)
+                }
             };
 
             // sanity check
@@ -177,6 +192,7 @@ mod tests {
                     first_half: Some("42".to_string()),
                     second_half: Some("123".to_string())
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -208,6 +224,7 @@ mod tests {
                     first_half: Some("42".to_string()),
                     second_half: Some("123".to_string())
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -220,7 +237,33 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn correct_answer_for_unsolved_parts_is_submitted() {
+    async fn answer_for_solved_part_is_still_validated_in_dry_run() {
+        let client = FakeValidationClient { on_cooldown: true };
+        assert_matches!(
+            validate_answer(
+                &TEST_DAY,
+                DoorResult {
+                    part1: make_part_result("43"),
+                    part2: make_part_result("123")
+                },
+                &DayResponse {
+                    first_half: Some("42".to_string()),
+                    second_half: Some("123".to_string())
+                },
+                ValidationMode::DryRun,
+                &client
+            )
+            .await,
+            Ok(ValidationResult {
+                date: TEST_DAY,
+                part1: Ok(PartValidation { validity: DisparateAnswer { correct }, ..}),
+                part2: Ok(PartValidation { validity: Consistent, ..})
+            }) if &correct == "42"
+        );
+    }
+
+    #[tokio::test]
+    async fn correct_answer_for_unsolved_parts_is_submitted_in_normal_mode() {
         let client = FakeValidationClient { on_cooldown: false };
         assert_matches!(
             validate_answer(
@@ -233,6 +276,7 @@ mod tests {
                     first_half: None,
                     second_half: None
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -259,6 +303,7 @@ mod tests {
                     first_half: Some("42".to_string()),
                     second_half: None
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -270,6 +315,38 @@ mod tests {
                 }),
                 part2: Ok(PartValidation {
                     validity: GuessSubmitted(Correct),
+                    ..
+                })
+            })
+        );
+    }
+
+    #[tokio::test]
+    async fn answer_for_unsolved_parts_is_not_submitted_in_dry_run() {
+        let client = FakeValidationClient { on_cooldown: false };
+        assert_matches!(
+            validate_answer(
+                &TEST_DAY,
+                DoorResult {
+                    part1: make_part_result("42"),
+                    part2: make_part_result("123")
+                },
+                &DayResponse {
+                    first_half: None,
+                    second_half: None
+                },
+                ValidationMode::DryRun,
+                &client
+            )
+            .await,
+            Ok(ValidationResult {
+                date: TEST_DAY,
+                part1: Ok(PartValidation {
+                    validity: Unknown,
+                    ..
+                }),
+                part2: Ok(PartValidation {
+                    validity: Unknown,
                     ..
                 })
             })
@@ -290,6 +367,7 @@ mod tests {
                     first_half: None,
                     second_half: None
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -321,6 +399,7 @@ mod tests {
                     first_half: Some("42".to_string()),
                     second_half: None
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
@@ -355,6 +434,7 @@ mod tests {
                     first_half: Some("42".to_string()),
                     second_half: None
                 },
+                ValidationMode::Normal,
                 &client
             )
             .await,
