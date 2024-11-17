@@ -14,10 +14,20 @@ use tokio::sync::mpsc;
 
 pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
     let opts = Options::parse();
+
+    let filter_day = opts.day;
+    let doors = doors
+        .iter()
+        .filter(move |entry| filter_day.is_none_or(|filter_day| entry.0.day == filter_day));
+
     let client = caching_client(opts.empty_cache)?;
 
     let (tx, rx) = mpsc::channel(25);
-    let updater_task = tokio::task::spawn(process_progress_updates(rx, prefilled_screen()?, doors));
+    let updater_task = tokio::task::spawn(process_progress_updates(
+        rx,
+        prefilled_screen()?,
+        doors.clone(),
+    ));
 
     let result = run_door_tasks(tx, doors, client, &opts).await;
 
@@ -74,7 +84,7 @@ where
 
 async fn run_door_tasks<C>(
     tx: mpsc::Sender<DoorProgress>,
-    doors: &'static [DoorEntry],
+    doors: impl IntoIterator<Item = &'static DoorEntry>,
     client: C,
     opts: &Options,
 ) -> Result<()>
