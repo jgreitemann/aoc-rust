@@ -11,8 +11,11 @@ aoc_utils = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
 proptest = { workspace = true }
+rayon = { workspace = true }
 regex = { workspace = true }
 rstest = { workspace = true }
 tap = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.40"
+tracing-test = "0.2.5"
