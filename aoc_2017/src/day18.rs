@@ -156,25 +156,25 @@ enum ReceiveResult {
 }
 
 trait Sender {
-    fn send(&self, val: i64) -> Result<(), RuntimeError>;
+    async fn send(&self, val: i64) -> Result<(), RuntimeError>;
 }
 
 trait Receiver {
-    fn recv(&self, reg: RegisterAccess<'_>) -> ReceiveResult;
+    async fn recv(&mut self, reg: RegisterAccess<'_>) -> ReceiveResult;
 }
 
 #[derive(Debug, Default)]
 struct LastValue(Cell<Option<i64>>);
 
 impl Sender for &LastValue {
-    fn send(&self, val: i64) -> Result<(), RuntimeError> {
+    async fn send(&self, val: i64) -> Result<(), RuntimeError> {
         self.0.set(Some(val));
         Ok(())
     }
 }
 
 impl Receiver for &LastValue {
-    fn recv(&self, reg: RegisterAccess<'_>) -> ReceiveResult {
+    async fn recv(&mut self, reg: RegisterAccess<'_>) -> ReceiveResult {
         if *reg.or_default() != 0 {
             self.0.take().map_or(
                 ReceiveResult::Err(RuntimeError::NoSnd),
@@ -188,16 +188,16 @@ impl Receiver for &LastValue {
 
 #[derive(Debug)]
 struct ChannelSender {
-    tx: std::sync::mpsc::Sender<i64>,
+    tx: tokio::sync::mpsc::Sender<i64>,
     send_count: Arc<AtomicI64>,
     pending_recv_count: Arc<AtomicI64>,
 }
 
 impl Sender for ChannelSender {
     #[instrument]
-    fn send(&self, val: i64) -> Result<(), RuntimeError> {
+    async fn send(&self, val: i64) -> Result<(), RuntimeError> {
         info!(val, "send");
-        let _ = self.tx.send(val);
+        let _ = self.tx.send(val).await;
         self.send_count
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         self.pending_recv_count
@@ -208,14 +208,14 @@ impl Sender for ChannelSender {
 
 #[derive(Debug)]
 struct ChannelReceiver {
-    rx: std::sync::mpsc::Receiver<i64>,
+    rx: tokio::sync::mpsc::Receiver<i64>,
     send_count: Arc<AtomicI64>,
     pending_recv_count: Arc<AtomicI64>,
 }
 
 impl Receiver for ChannelReceiver {
     #[instrument]
-    fn recv(&self, reg: RegisterAccess<'_>) -> ReceiveResult {
+    async fn recv(&mut self, reg: RegisterAccess<'_>) -> ReceiveResult {
         let concurrent_recv = self
             .pending_recv_count
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -225,7 +225,7 @@ impl Receiver for ChannelReceiver {
             );
         }
         info!(%concurrent_recv, "recv");
-        let Ok(val) = self.rx.recv() else {
+        let Some(val) = self.rx.recv().await else {
             return ReceiveResult::Interrupt(
                 self.send_count.load(std::sync::atomic::Ordering::SeqCst),
             );
@@ -238,7 +238,7 @@ impl Receiver for ChannelReceiver {
 
 fn channel(pending_recv_count: Arc<AtomicI64>) -> (ChannelSender, ChannelReceiver) {
     let send_count = Arc::new(AtomicI64::default());
-    let (tx, rx) = std::sync::mpsc::channel();
+    let (tx, rx) = tokio::sync::mpsc::channel(100);
     (
         ChannelSender {
             tx,
@@ -253,41 +253,41 @@ fn channel(pending_recv_count: Arc<AtomicI64>) -> (ChannelSender, ChannelReceive
     )
 }
 
-fn run(
-    registers: &mut HashMap<Register, i64>,
+async fn run(
+    mut registers: HashMap<Register, i64>,
     asm: &[Instruction],
     sender: impl Sender,
-    receiver: impl Receiver,
+    mut receiver: impl Receiver,
 ) -> Result<i64, RuntimeError> {
     let mut pc = 0;
     loop {
         let mut jump = 1;
         match asm[pc] {
-            Instruction::Snd(op) => sender.send(op.fetch(registers))?,
+            Instruction::Snd(op) => sender.send(op.fetch(&mut registers)).await?,
             Instruction::Set(reg, op) => {
-                let val = op.fetch(registers);
+                let val = op.fetch(&mut registers);
                 registers.insert(reg, val);
             }
             Instruction::Add(reg, op) => {
-                let op_val = op.fetch(registers);
-                *reg.access(registers).or_default() += op_val;
+                let op_val = op.fetch(&mut registers);
+                *reg.access(&mut registers).or_default() += op_val;
             }
             Instruction::Mul(reg, op) => {
-                let op_val = op.fetch(registers);
-                *reg.access(registers).or_default() *= op_val;
+                let op_val = op.fetch(&mut registers);
+                *reg.access(&mut registers).or_default() *= op_val;
             }
             Instruction::Mod(reg, op) => {
-                let op_val = op.fetch(registers);
-                *reg.access(registers).or_default() %= op_val;
+                let op_val = op.fetch(&mut registers);
+                *reg.access(&mut registers).or_default() %= op_val;
             }
-            Instruction::Rcv(reg) => match receiver.recv(reg.access(registers)) {
+            Instruction::Rcv(reg) => match receiver.recv(reg.access(&mut registers)).await {
                 ReceiveResult::Ok => {}
                 ReceiveResult::Interrupt(return_val) => return Ok(return_val),
                 ReceiveResult::Err(e) => return Err(e),
             },
             Instruction::Jgz(cond, op) => {
-                if cond.fetch(registers) > 0 {
-                    jump = op.fetch(registers);
+                if cond.fetch(&mut registers) > 0 {
+                    jump = op.fetch(&mut registers);
                 }
             }
         }
@@ -307,7 +307,10 @@ impl Part1 for Door {
 
     fn part1(&self) -> Result<Self::Output, Self::Error> {
         let last_value = LastValue::default();
-        run(&mut HashMap::new(), &self.asm, &last_value, &last_value)
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        runtime.block_on(run(HashMap::new(), &self.asm, &last_value, &last_value))
     }
 }
 
@@ -319,29 +322,30 @@ impl Part2 for Door {
         let pending_recv_count = Arc::new(AtomicI64::default());
         let (send_0, recv_0) = channel(pending_recv_count.clone());
         let (send_1, recv_1) = channel(pending_recv_count);
-        let (res_0, res_1) = rayon::join(
-            || {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let (res_0, _) = runtime.block_on(async {
+            tokio::try_join!(
                 info_span!("program 0").in_scope(|| {
                     run(
-                        &mut HashMap::from([(Register(b'p'), 0)]),
+                        HashMap::from([(Register(b'p'), 0)]),
                         &self.asm,
                         send_0,
                         recv_1,
                     )
-                })
-            },
-            || {
+                }),
                 info_span!("program 1").in_scope(|| {
                     run(
-                        &mut HashMap::from([(Register(b'p'), 1)]),
+                        HashMap::from([(Register(b'p'), 1)]),
                         &self.asm,
                         send_1,
                         recv_0,
                     )
                 })
-            },
-        );
-        res_1.and(res_0)
+            )
+        })?;
+        Ok(res_0)
     }
 }
 
