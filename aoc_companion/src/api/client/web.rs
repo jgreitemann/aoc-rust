@@ -2,7 +2,6 @@ use crate::api::{AnswerResponse, AoCClient, DayResponse};
 use crate::door::{DoorDate, Part};
 
 use anyhow::{Context, Result};
-use async_trait::async_trait;
 use thiserror::Error;
 
 use std::collections::HashMap;
@@ -39,7 +38,6 @@ impl WebClient {
     }
 }
 
-#[async_trait]
 impl AoCClient for WebClient {
     async fn get_input(&self, &DoorDate { year, day }: &DoorDate) -> Result<String> {
         let resp = self

@@ -2,10 +2,10 @@ use crate::api::{AnswerResponse, AoCClient, DayResponse};
 use crate::door::{DoorDate, Part};
 
 use anyhow::Result;
-use async_trait::async_trait;
 
-#[async_trait]
-pub trait Cache {
+#[trait_variant::make(Cache: Send)]
+#[allow(unused)]
+pub trait LocalCache {
     async fn cache(&mut self, key: &str, value: &str);
     async fn recall(&self, key: &str) -> Option<String>;
     async fn dirty(&mut self, key: &str);
@@ -41,7 +41,6 @@ where
     }
 }
 
-#[async_trait]
 impl<U, C> AoCClient for CachingClient<U, C>
 where
     U: AoCClient + Send + Sync,
@@ -110,7 +109,6 @@ mod tests {
 
     use super::*;
 
-    #[async_trait]
     impl Cache for HashMap<String, String> {
         async fn cache(&mut self, key: &str, value: &str) {
             self.insert(key.to_owned(), value.to_owned());
@@ -141,7 +139,6 @@ mod tests {
         }
     }
 
-    #[async_trait]
     impl AoCClient for FakeUnderlyingClient {
         async fn get_input(&self, date: &DoorDate) -> Result<String> {
             match date {

@@ -37,7 +37,7 @@ pub async fn validate_answer(
     answer: DoorResult,
     submitted: &DayResponse,
     mode: ValidationMode,
-    client: &(dyn AoCClient + Send + Sync),
+    client: &(impl AoCClient + Send + Sync),
 ) -> Result<ValidationResult> {
     use Part::*;
     Ok(ValidationResult {
@@ -69,7 +69,7 @@ async fn validate_part(
     guess: Result<DoorPartResult>,
     submitted: Option<&str>,
     mode: ValidationMode,
-    client: &(dyn AoCClient + Send + Sync),
+    client: &(impl AoCClient + Send + Sync),
 ) -> Result<Result<PartValidation>> {
     use PartValidity::*;
 
@@ -106,7 +106,6 @@ mod tests {
     use super::*;
     use anyhow::anyhow;
     use assert_matches::assert_matches;
-    use async_trait::async_trait;
 
     use AnswerResponse::*;
     use PartValidity::*;
@@ -127,7 +126,6 @@ mod tests {
         on_cooldown: bool,
     }
 
-    #[async_trait]
     impl AoCClient for FakeValidationClient {
         async fn get_input(&self, _: &DoorDate) -> Result<String> {
             panic!("operation not supported by fake")

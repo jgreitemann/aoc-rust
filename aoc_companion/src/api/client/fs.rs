@@ -1,6 +1,5 @@
 use super::Cache;
 
-use async_trait::async_trait;
 use std::path::PathBuf;
 
 pub struct FilesystemCache {
@@ -21,7 +20,6 @@ impl FilesystemCache {
     }
 }
 
-#[async_trait]
 impl Cache for FilesystemCache {
     async fn cache(&mut self, key: &str, value: &str) {
         let _ = std::fs::create_dir(&self.dir);
