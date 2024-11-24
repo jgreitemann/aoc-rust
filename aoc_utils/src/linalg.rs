@@ -622,7 +622,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn indexing_out_of_bounds_panics() {
-        V1[42];
+        let _ = V1[42];
     }
 
     #[test]

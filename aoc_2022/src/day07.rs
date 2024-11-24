@@ -402,12 +402,12 @@ dir foo
 
         assert_matches!(
             state.clone().execute(&Command::Cd(PathBuf::from("bar"))),
-            Err(RuntimeError::NotADirectory(file)) if &file == &Path::new("/bar")
+            Err(RuntimeError::NotADirectory(file)) if file == Path::new("/bar")
         );
 
         assert_matches!(
             state.clone().execute(&Command::Cd(PathBuf::from("baz"))),
-            Err(RuntimeError::NoSuchDirectory(dir)) if &dir == &Path::new("/baz")
+            Err(RuntimeError::NoSuchDirectory(dir)) if dir == Path::new("/baz")
         );
     }
 

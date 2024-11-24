@@ -294,6 +294,7 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
     }
 
     #[test]
+    #[allow(clippy::reversed_empty_ranges)]
     fn size_of_line_segments() {
         assert_eq!((1..=5).size(), 5);
         assert_eq!((3..=5).size(), 3);
