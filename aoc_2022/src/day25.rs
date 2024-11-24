@@ -96,7 +96,7 @@ impl From<i64> for Snafu {
                 x -= 5;
                 carry += 1;
             }
-            digits.push(x as i64);
+            digits.push(x);
         }
         Self(digits)
     }
