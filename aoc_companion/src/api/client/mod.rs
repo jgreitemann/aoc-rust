@@ -7,9 +7,7 @@ use crate::door::{DoorDate, Part};
 
 use anyhow::Result;
 
-#[trait_variant::make(AoCClient: Send)]
-#[allow(unused)]
-pub trait LocalAoCClient {
+pub trait AoCClient {
     async fn get_input(&self, date: &DoorDate) -> Result<String>;
     async fn get_day(&self, date: &DoorDate) -> Result<DayResponse>;
     async fn post_answer(&self, date: &DoorDate, part: Part, guess: &str)

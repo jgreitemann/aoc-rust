@@ -40,15 +40,12 @@ pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
     result
 }
 
-async fn handle_door<C>(
+async fn handle_door(
     DoorEntry(date, door_fn): &'static DoorEntry,
-    client: Arc<C>,
+    client: Arc<impl AoCClient>,
     progress_sender: mpsc::Sender<DoorProgress>,
     opts: Options,
-) -> Result<ValidationResult>
-where
-    C: AoCClient + Send + Sync,
-{
+) -> Result<ValidationResult> {
     progress_sender
         .send(DoorProgress(*date, Progress::DownloadingInput))
         .await?;
@@ -89,19 +86,16 @@ where
     .await
 }
 
-async fn run_door_tasks<C>(
+async fn run_door_tasks(
     tx: mpsc::Sender<DoorProgress>,
     doors: impl IntoIterator<Item = &'static DoorEntry>,
-    client: C,
+    client: impl AoCClient + 'static,
     opts: &Options,
-) -> Result<()>
-where
-    C: AoCClient + Send + Sync + 'static,
-{
+) -> Result<()> {
     let client = Arc::new(client);
     let mut set = tokio::task::JoinSet::new();
     for entry in doors {
-        set.spawn(handle_door(entry, client.clone(), tx.clone(), opts.clone()));
+        set.spawn_local(handle_door(entry, client.clone(), tx.clone(), opts.clone()));
     }
 
     while let Some(result) = set.join_next().await {

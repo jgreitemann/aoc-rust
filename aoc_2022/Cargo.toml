@@ -17,7 +17,7 @@ regex = { workspace = true }
 rstest = { workspace = true }
 tap = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

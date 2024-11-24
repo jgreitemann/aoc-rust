@@ -19,7 +19,7 @@ mod day18;
 
 use aoc_companion::prelude::*;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     aoc_main(&[
         door!(DoorDate { day: 1, year: 2017 }, day01::Door),

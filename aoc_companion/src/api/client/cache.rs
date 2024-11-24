@@ -3,9 +3,7 @@ use crate::door::{DoorDate, Part};
 
 use anyhow::Result;
 
-#[trait_variant::make(Cache: Send)]
-#[allow(unused)]
-pub trait LocalCache {
+pub trait Cache {
     async fn cache(&mut self, key: &str, value: &str);
     async fn recall(&self, key: &str) -> Option<String>;
     async fn dirty(&mut self, key: &str);

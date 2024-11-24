@@ -37,7 +37,7 @@ pub async fn validate_answer(
     answer: DoorResult,
     submitted: &DayResponse,
     mode: ValidationMode,
-    client: &(impl AoCClient + Send + Sync),
+    client: &impl AoCClient,
 ) -> Result<ValidationResult> {
     use Part::*;
     Ok(ValidationResult {
@@ -69,7 +69,7 @@ async fn validate_part(
     guess: Result<DoorPartResult>,
     submitted: Option<&str>,
     mode: ValidationMode,
-    client: &(impl AoCClient + Send + Sync),
+    client: &impl AoCClient,
 ) -> Result<Result<PartValidation>> {
     use PartValidity::*;
 

@@ -15,6 +15,6 @@ regex = { workspace = true }
 rstest = { workspace = true }
 tap = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros"] }
 tracing = "0.1.40"
 tracing-test = "0.2.5"
