@@ -11,20 +11,16 @@ pub(crate) struct Door {
     shape: (usize, usize),
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         let (blizzards, shape) = parse_input(input);
         Self { blizzards, shape }
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<u32, RuntimeError> {
         shortest_time_to_exit(&self.blizzards, self.shape, 500)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<u32, RuntimeError> {
         shortest_time_for_snack_recovery(&self.blizzards, self.shape, 500)
     }

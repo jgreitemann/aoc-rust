@@ -9,19 +9,15 @@ pub(crate) struct Door {
     program: Vec<Instruction>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|program| Self { program })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> isize {
         relevant_signal_strengths(execute(&self.program)).sum()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<String, ReadError> {
         read_screen(&render(execute(&self.program)))
     }

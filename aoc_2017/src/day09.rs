@@ -4,19 +4,15 @@ pub(crate) struct Door<'input> {
     stream: &'input str,
 }
 
-impl<'input> ParseInput<'input> for Door<'input> {
+impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Self {
         Self { stream: input }
     }
-}
 
-impl Part1 for Door<'_> {
     fn part1(&self) -> usize {
         stream_group_scores(self.stream).sum()
     }
-}
 
-impl Part2 for Door<'_> {
     fn part2(&self) -> usize {
         self.stream.chars().ignore_bangs().count_garbage()
     }

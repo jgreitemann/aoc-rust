@@ -16,7 +16,7 @@ pub(crate) enum Error {
     RowDoesNotContainEvenlyDivisibleNumbers,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         let spreadsheet = input
             .lines()
@@ -24,15 +24,11 @@ impl<'input> ParseInput<'input> for Door {
             .collect::<Result<_, ParseIntError>>()?;
         Ok(Self { spreadsheet })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<i32, Error> {
         checksum(&self.spreadsheet, minmax_diff)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<i32, Error> {
         checksum(&self.spreadsheet, evenly_divisible_quotient)
     }

@@ -9,19 +9,15 @@ pub(crate) struct Door {
     blueprints: Vec<Blueprint>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         parse_blueprints(input).map(|blueprints| Self { blueprints })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> u32 {
         total_quality_level(24, &self.blueprints)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> u32 {
         self.blueprints
             .iter()

@@ -10,19 +10,15 @@ pub(crate) struct Door {
     jet_pattern: Vec<Jet>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_jet_pattern(input).map(|jet_pattern| Self { jet_pattern })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> isize {
         cavern_after_dropping_rocks(2022, &self.jet_pattern).height()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> isize {
         determine_tower_height_with_matching(1000000000000, &self.jet_pattern)
     }

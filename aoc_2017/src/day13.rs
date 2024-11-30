@@ -38,19 +38,15 @@ fn min_safe_delay(layers: &[Layer]) -> usize {
         .unwrap()
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(Door)
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         self.total_severity()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         min_safe_delay(&self.0)
     }

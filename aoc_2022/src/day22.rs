@@ -14,7 +14,7 @@ pub(crate) struct Door {
     instructions: Vec<Instruction>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let (map_str, instr_str) = input
             .split_once("\n\n")
@@ -24,18 +24,14 @@ impl<'input> ParseInput<'input> for Door {
             instructions: parse_instructions(instr_str)?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         self.map
             .player_start()
             .end::<PlainWrapping>(&self.instructions, &self.map)
             .password()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         self.map
             .player_start()

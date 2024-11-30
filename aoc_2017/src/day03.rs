@@ -6,21 +6,17 @@ pub(crate) struct Door {
     input: usize,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         Ok(Self {
             input: input.parse()?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> i32 {
         manhattan_distance(SpiralIter::new().nth(self.input - 1).unwrap())
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> i32 {
         first_partial_sum_along_spiral_exceeding(self.input as i32)
     }

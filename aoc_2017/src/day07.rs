@@ -31,20 +31,16 @@ pub(crate) struct Door<'input> {
     relations: HashMap<ProgramName<'input>, Relation<'input>>,
 }
 
-impl<'input> ParseInput<'input> for Door<'input> {
+impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let relations = parse_input(input)?;
         Ok(Self { relations })
     }
-}
 
-impl<'input> Part1 for Door<'input> {
     fn part1(&self) -> Result<ProgramName<'input>, GraphError> {
         find_bottom_program(&self.relations)
     }
-}
 
-impl Part2 for Door<'_> {
     fn part2(&self) -> Result<u32, GraphError> {
         let subtower_weights = calc_subtower_weights(&self.relations)?;
         correct_weight(&self.relations, &subtower_weights)

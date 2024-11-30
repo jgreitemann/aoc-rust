@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::{
+    convert::Infallible,
+    fmt::{Display, Formatter},
+};
 use thiserror::Error;
 
 use anyhow::{anyhow, Result};
@@ -39,7 +42,7 @@ pub trait IntoParseResult<T> {
 }
 
 impl<T> IntoParseResult<T> for T {
-    type Error = std::convert::Infallible;
+    type Error = Infallible;
 
     fn into_parse_result(self) -> Result<T, Self::Error> {
         Ok(self)
@@ -71,6 +74,7 @@ impl Submissible for usize {}
 impl Submissible for isize {}
 impl Submissible for String {}
 impl Submissible for str {}
+impl Submissible for Infallible {}
 
 pub trait IntoResult {
     type Output: ToString + Submissible;
@@ -84,7 +88,7 @@ where
     T: ToString + Submissible,
 {
     type Output = T;
-    type Error = std::convert::Infallible;
+    type Error = Infallible;
 
     fn into_result(self) -> Result<Self::Output, Self::Error> {
         Ok(self)
@@ -104,16 +108,16 @@ where
     }
 }
 
-pub trait ParseInput<'input>: Sized {
+pub trait Solution<'input>: Sized {
     fn parse(input: &'input str) -> impl IntoParseResult<Self>;
-}
 
-pub trait Part1 {
-    fn part1(&self) -> impl IntoResult;
-}
+    fn part1(&self) -> impl IntoResult {
+        Err::<Infallible, DoorError>(DoorError::SolutionNotImplemented)
+    }
 
-pub trait Part2 {
-    fn part2(&self) -> impl IntoResult;
+    fn part2(&self) -> impl IntoResult {
+        Err::<Infallible, DoorError>(DoorError::SolutionNotImplemented)
+    }
 }
 
 pub struct DoorEntry(pub DoorDate, pub fn(&str, usize) -> DoorResult);
@@ -152,64 +156,35 @@ pub struct DoorResult {
 
 pub mod detail {
     use super::*;
-    pub use core::marker::PhantomData;
 
-    // http://lukaskalbertodt.github.io/2019/12/05/generalized-autoref-based-specialization.html
-    pub struct AutoRefSpecializationWrapper<T>(pub PhantomData<T>);
-
-    pub trait DoorSolution<'input> {
-        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult;
-    }
-
-    impl<'input, D> DoorSolution<'input> for AutoRefSpecializationWrapper<D>
-    where
-        D: ParseInput<'input> + Part1,
-    {
-        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult {
+    pub fn solve<'input, D: Solution<'input>>(
+        input: &'input str,
+        parts_solved: usize,
+    ) -> DoorResult {
+        if parts_solved >= 2 {
             DoorResult {
-                part1: if parts_solved == 0 {
-                    match D::parse(input).into_parse_result() {
-                        Ok(door) => DoorPartResult::timed(|| door.part1().into_result()),
-                        Err(err) => Err(anyhow::Error::from(err)),
-                    }
-                } else {
-                    Ok(DoorPartResult::Skipped)
-                },
-                part2: Err(anyhow!(DoorError::SolutionNotImplemented)),
+                part1: Ok(DoorPartResult::Skipped),
+                part2: Ok(DoorPartResult::Skipped),
             }
-        }
-    }
-
-    impl<'input, D> DoorSolution<'input> for &AutoRefSpecializationWrapper<D>
-    where
-        D: ParseInput<'input> + Part1 + Part2,
-    {
-        fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult {
-            if parts_solved >= 2 {
-                DoorResult {
-                    part1: Ok(DoorPartResult::Skipped),
-                    part2: Ok(DoorPartResult::Skipped),
-                }
-            } else {
-                match D::parse(input).into_parse_result() {
-                    Ok(door) => {
-                        if parts_solved == 0 {
-                            DoorResult {
-                                part1: DoorPartResult::timed(|| door.part1().into_result()),
-                                part2: DoorPartResult::timed(|| door.part2().into_result()),
-                            }
-                        } else {
-                            DoorResult {
-                                part1: Ok(DoorPartResult::Skipped),
-                                part2: DoorPartResult::timed(|| door.part2().into_result()),
-                            }
+        } else {
+            match D::parse(input).into_parse_result() {
+                Ok(door) => {
+                    if parts_solved == 0 {
+                        DoorResult {
+                            part1: DoorPartResult::timed(|| door.part1().into_result()),
+                            part2: DoorPartResult::timed(|| door.part2().into_result()),
+                        }
+                    } else {
+                        DoorResult {
+                            part1: Ok(DoorPartResult::Skipped),
+                            part2: DoorPartResult::timed(|| door.part2().into_result()),
                         }
                     }
-                    Err(err) => DoorResult {
-                        part1: Err(anyhow::Error::from(err)),
-                        part2: Err(anyhow!(DoorError::DependentParseError)),
-                    },
                 }
+                Err(err) => DoorResult {
+                    part1: Err(anyhow::Error::from(err)),
+                    part2: Err(anyhow!(DoorError::DependentParseError)),
+                },
             }
         }
     }
@@ -219,9 +194,7 @@ pub mod detail {
 macro_rules! door {
     ($date:expr, $d:ty) => {
         aoc_companion::door::DoorEntry($date, |input, parts_solved| {
-            use aoc_companion::door::detail::*;
-            (&&AutoRefSpecializationWrapper(std::marker::PhantomData::<$d>))
-                .solve(input, parts_solved)
+            aoc_companion::door::detail::solve::<$d>(input, parts_solved)
         })
     };
 }

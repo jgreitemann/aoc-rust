@@ -11,21 +11,17 @@ pub(crate) struct Door {
     paths: Vec<Path>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|paths| Self { paths })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         let mut pit = Pit::new_bottomless(&self.paths);
         pit.fill_up();
         pit.settled_sand.len()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         let mut pit = Pit::new_with_floor(&self.paths);
         pit.fill_up();

@@ -11,21 +11,17 @@ pub(crate) struct Door {
     elves: Coords,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         Self {
             elves: parse_input(input),
         }
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         open_spaces_in_bounding_rect(&execute_many_rounds(self.elves.clone(), 10).0)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         execute_many_rounds(self.elves.clone(), usize::MAX).1
     }

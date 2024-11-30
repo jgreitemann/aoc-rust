@@ -7,19 +7,15 @@ pub(crate) struct Door<'input> {
     signal: &'input str,
 }
 
-impl<'input> ParseInput<'input> for Door<'input> {
+impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Self {
         Door { signal: input }
     }
-}
 
-impl Part1 for Door<'_> {
     fn part1(&self) -> Result<usize, Error> {
         disjoint_subseq_index(self.signal, 4).ok_or(Error::NoPacket)
     }
-}
 
-impl Part2 for Door<'_> {
     fn part2(&self) -> Result<usize, Error> {
         disjoint_subseq_index(self.signal, 14).ok_or(Error::NoMessage)
     }

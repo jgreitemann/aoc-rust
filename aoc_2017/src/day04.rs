@@ -5,7 +5,7 @@ pub(crate) struct Door {
     passphrases: Vec<Vec<String>>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         let passphrases = input
             .lines()
@@ -13,15 +13,11 @@ impl<'input> ParseInput<'input> for Door {
             .collect();
         Self { passphrases }
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         count_valid_passphrases(&self.passphrases, passphrase_has_no_duplicates)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         count_valid_passphrases(&self.passphrases, passphrase_has_no_anagrams)
     }

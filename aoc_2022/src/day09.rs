@@ -9,20 +9,16 @@ pub(crate) struct Door {
     motions: Vec<Motion>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|motions| Self { motions })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         let directions: Vec<_> = as_directions(self.motions.iter().cloned()).collect();
         count_unique_positions(directions.into_iter().head_positions().tail_positions())
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         let directions: Vec<_> = as_directions(self.motions.iter().cloned()).collect();
         count_unique_positions(directions.into_iter().head_positions().tie_knots(10))

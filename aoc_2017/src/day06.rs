@@ -9,7 +9,7 @@ pub(crate) struct Door {
     bank: Vec<i32>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         let bank = input
             .split_whitespace()
@@ -17,15 +17,11 @@ impl<'input> ParseInput<'input> for Door {
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self { bank })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         count_redistribution_cycles_until_recurrence(self.bank.clone())
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         redistribution_cycle_loop_length(self.bank.clone())
     }

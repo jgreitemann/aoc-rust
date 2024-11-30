@@ -9,24 +9,20 @@ pub(crate) struct Door {
     rucksacks: Vec<Vec<u32>>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         Ok(Self {
             rucksacks: input.lines().map(parse_priorities).try_collect()?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<u32, Error> {
         self.rucksacks
             .iter()
             .map(|rucksack| Rucksack::new(rucksack).common_item_priority())
             .fold_ok(0, std::ops::Add::add)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<u32, Error> {
         group_batch_priorities(&self.rucksacks).map(|batches| batches.iter().sum())
     }

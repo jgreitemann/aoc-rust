@@ -41,23 +41,19 @@ pub(crate) enum MoveError {
     ProgramNameNotFound { name: char },
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let moves = input.split(',').map(str::parse).try_collect()?;
         Ok(Door { moves })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<String, MoveError> {
         self.moves
             .iter()
             .try_fold(initial_sequence(16), apply_move)
             .map(|v| v.iter().join(""))
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<String, MoveError> {
         perform_many_dances(16, 1_000_000_000, &self.moves).map(|v| v.iter().join(""))
     }

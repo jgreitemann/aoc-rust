@@ -7,20 +7,16 @@ pub(crate) struct Door<'input> {
     program: Vec<Instruction<'input>>,
 }
 
-impl<'input> ParseInput<'input> for Door<'input> {
+impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|program| Self { program })
     }
-}
 
-impl Part1 for Door<'_> {
     fn part1(&self) -> Result<i32, ExecutionError> {
         largest_register_value(&execute_program(&self.program))
             .ok_or(ExecutionError::RegistersEmpty)
     }
-}
 
-impl Part2 for Door<'_> {
     fn part2(&self) -> Result<i32, ExecutionError> {
         largest_intermediate_register_value(&self.program)
     }

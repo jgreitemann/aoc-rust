@@ -12,20 +12,16 @@ pub(crate) struct Door {
     map: Map,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         input.parse().map(|map| Self { map })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         let flow = self.map.dijkstra_flow();
         flow[self.map.start]
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         let flow = self.map.dijkstra_flow();
         self.map

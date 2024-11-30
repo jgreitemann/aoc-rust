@@ -11,21 +11,17 @@ pub(crate) struct Door {
     rows: [KnotHash; 128],
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         Door {
             rows: std::array::from_fn(|row| KnotHash::hash(&format!("{input}-{row}"))),
         }
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> u32 {
         self.count_ones()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         self.number_of_regions()
     }

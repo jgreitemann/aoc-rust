@@ -11,9 +11,18 @@ pub(crate) struct Door<'input> {
     input: &'input str,
 }
 
-impl<'input> ParseInput<'input> for Door<'input> {
+impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Self {
         Self { input }
+    }
+
+    fn part1(&self) -> Result<u16, Error> {
+        let lengths = as_list_of_numbers(self.input)?;
+        product_of_first_two_elements(&apply_ties::<256>(lengths.into_iter()))
+    }
+
+    fn part2(&self) -> String {
+        KnotHash::hash(self.input).to_string()
     }
 }
 
@@ -23,19 +32,6 @@ pub(crate) enum Error {
     NotEnoughElements,
     #[error(transparent)]
     ParseError(#[from] ParseIntError),
-}
-
-impl Part1 for Door<'_> {
-    fn part1(&self) -> Result<u16, Error> {
-        let lengths = as_list_of_numbers(self.input)?;
-        product_of_first_two_elements(&apply_ties::<256>(lengths.into_iter()))
-    }
-}
-
-impl Part2 for Door<'_> {
-    fn part2(&self) -> String {
-        KnotHash::hash(self.input).to_string()
-    }
 }
 
 fn as_list_of_numbers(input: &str) -> Result<Vec<u8>, ParseIntError> {

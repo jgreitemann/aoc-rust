@@ -59,9 +59,47 @@ impl std::fmt::Debug for Register {
     }
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_assembly(input).map(|asm| Door { asm })
+    }
+
+    fn part1(&self) -> Result<i64, RuntimeError> {
+        let last_value = LastValue::default();
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        runtime.block_on(run(HashMap::new(), &self.asm, &last_value, &last_value))
+    }
+
+    fn part2(&self) -> Result<i64, RuntimeError> {
+        let pending_recv_count = Arc::new(AtomicI64::default());
+        let (send_0, recv_0) = channel(pending_recv_count.clone());
+        let (send_1, recv_1) = channel(pending_recv_count);
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        let (res_0, _) = runtime.block_on(async {
+            tokio::try_join!(
+                info_span!("program 0").in_scope(|| {
+                    run(
+                        HashMap::from([(Register(b'p'), 0)]),
+                        &self.asm,
+                        send_0,
+                        recv_1,
+                    )
+                }),
+                info_span!("program 1").in_scope(|| {
+                    run(
+                        HashMap::from([(Register(b'p'), 1)]),
+                        &self.asm,
+                        send_1,
+                        recv_0,
+                    )
+                })
+            )
+        })?;
+        Ok(res_0)
     }
 }
 
@@ -296,48 +334,6 @@ async fn run(
         } else {
             return Err(RuntimeError::InvalidJump(new_pc));
         }
-    }
-}
-
-impl Part1 for Door {
-    fn part1(&self) -> Result<i64, RuntimeError> {
-        let last_value = LastValue::default();
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        runtime.block_on(run(HashMap::new(), &self.asm, &last_value, &last_value))
-    }
-}
-
-impl Part2 for Door {
-    fn part2(&self) -> Result<i64, RuntimeError> {
-        let pending_recv_count = Arc::new(AtomicI64::default());
-        let (send_0, recv_0) = channel(pending_recv_count.clone());
-        let (send_1, recv_1) = channel(pending_recv_count);
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        let (res_0, _) = runtime.block_on(async {
-            tokio::try_join!(
-                info_span!("program 0").in_scope(|| {
-                    run(
-                        HashMap::from([(Register(b'p'), 0)]),
-                        &self.asm,
-                        send_0,
-                        recv_1,
-                    )
-                }),
-                info_span!("program 1").in_scope(|| {
-                    run(
-                        HashMap::from([(Register(b'p'), 1)]),
-                        &self.asm,
-                        send_1,
-                        recv_0,
-                    )
-                })
-            )
-        })?;
-        Ok(res_0)
     }
 }
 

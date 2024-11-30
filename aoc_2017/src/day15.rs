@@ -20,7 +20,7 @@ pub(crate) enum ParseError {
     ParseIntError(#[from] ParseIntError),
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let lines: [&str; 2] = array::from_iter_exact(input.lines())
             .map_err(|lines| ParseError::WrongNumberOfLines(lines.len()))?;
@@ -38,15 +38,11 @@ impl<'input> ParseInput<'input> for Door {
 
         Ok(Door { start })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         count_matching_pairs_part_1(self.start)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         count_matching_pairs_part_2(self.start)
     }

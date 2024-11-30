@@ -6,21 +6,17 @@ pub(crate) struct Door {
     elves: Vec<Vec<u32>>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         Self {
             elves: parse_input(input),
         }
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> u32 {
         calories_of_top_n(&self.elves, 1)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> u32 {
         calories_of_top_n(&self.elves, 3)
     }

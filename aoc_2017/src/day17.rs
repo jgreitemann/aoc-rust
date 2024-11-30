@@ -8,21 +8,17 @@ pub(crate) struct Door {
     skip_len: usize,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         Ok(Door {
             skip_len: input.parse()?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> u32 {
         resulting_spinlock(FINAL_NUMBER, self.skip_len)[0]
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> u32 {
         find_value_after_zero(&resulting_spinlock(50_000_000, self.skip_len))
     }

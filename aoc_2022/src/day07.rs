@@ -11,19 +11,15 @@ pub(crate) struct Door {
     session: Vec<Command>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_session(input).map(|session| Self { session })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<usize, RuntimeError> {
         Filesystem::from_session(&self.session).map(|fs| fs.total_size_of_small_directories())
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<usize, RuntimeError> {
         Filesystem::from_session(&self.session)
             .and_then(|fs| fs.size_of_directory_to_delete_to_make_space_for(30000000))

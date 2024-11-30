@@ -10,21 +10,17 @@ pub(crate) struct Door {
     monkeys: Vec<Monkey>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|monkeys| Self { monkeys })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> usize {
         let mut game = Game::<u64>::from(&self.monkeys, Operation::DivByThree);
         game.play_rounds(20);
         game.monkey_business()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> usize {
         let mut game = Game::<ModuloTableWorryLevel>::from(&self.monkeys, Operation::NoOp);
         game.play_rounds(10000);

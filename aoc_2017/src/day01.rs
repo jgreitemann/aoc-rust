@@ -11,21 +11,17 @@ pub(crate) enum Error {
     CharacterIsNotDigit(char),
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, Error> {
         Ok(Self {
             digits: digits(input)?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> u32 {
         adjacent_equal_digit_sum(&self.digits)
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> u32 {
         opposing_equal_digit_sum(&self.digits)
     }

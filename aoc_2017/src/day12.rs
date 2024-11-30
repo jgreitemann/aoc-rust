@@ -9,19 +9,15 @@ pub(crate) struct Door {
     connections: Vec<Vec<usize>>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|connections| Self { connections })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<usize, Error> {
         connected_component(0, &self.connections).map(|comp| comp.len())
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<usize, Error> {
         components(&self.connections).map(|comps| comps.len())
     }

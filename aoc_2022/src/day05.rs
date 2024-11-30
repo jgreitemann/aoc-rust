@@ -11,7 +11,7 @@ pub(crate) struct Door {
     instructions: Vec<Instruction>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let (stacks_input, instr_input) = input.split_once("\n\n").unwrap();
         Ok(Self {
@@ -19,16 +19,12 @@ impl<'input> ParseInput<'input> for Door {
             instructions: instr_input.lines().map(str::parse).try_collect()?,
         })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Result<String, Error> {
         let final_stacks = self.stacks.clone().apply_all(&self.instructions, true)?;
         final_stacks.solution()
     }
-}
 
-impl Part2 for Door {
     fn part2(&self) -> Result<String, Error> {
         let final_stacks = self.stacks.clone().apply_all(&self.instructions, false)?;
         final_stacks.solution()

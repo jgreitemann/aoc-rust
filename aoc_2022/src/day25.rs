@@ -10,7 +10,7 @@ pub(crate) struct Door {
     fuel: Vec<Snafu>,
 }
 
-impl<'input> ParseInput<'input> for Door {
+impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         input
             .lines()
@@ -18,9 +18,7 @@ impl<'input> ParseInput<'input> for Door {
             .try_collect()
             .map(|fuel| Self { fuel })
     }
-}
 
-impl Part1 for Door {
     fn part1(&self) -> Snafu {
         sum_snafu_numbers(&self.fuel)
     }
