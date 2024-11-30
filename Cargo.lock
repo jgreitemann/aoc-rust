@@ -132,6 +132,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc_2024"
+version = "0.1.0"
+dependencies = [
+ "aoc_companion",
+ "aoc_utils",
+ "itertools",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "aoc_companion"
 version = "0.1.0"
 dependencies = [

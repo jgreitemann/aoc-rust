@@ -5,6 +5,7 @@ members = [
     "aoc_utils",
     "aoc_2017",
     "aoc_2022",
+    "aoc_2024",
 ]
 
 [workspace.dependencies]
