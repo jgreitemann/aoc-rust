@@ -29,7 +29,9 @@ pub async fn aoc_main(doors: &'static [DoorEntry]) -> Result<()> {
         doors.clone(),
     ));
 
-    let result = run_door_tasks(tx, doors, client, &opts).await;
+    let result = tokio::task::LocalSet::new()
+        .run_until(run_door_tasks(tx, doors, client, &opts))
+        .await;
 
     let final_table = updater_task.await?;
     if result.is_ok() {
