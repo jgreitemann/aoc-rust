@@ -5,38 +5,30 @@ use std::collections::BTreeSet;
 use itertools::Itertools;
 use thiserror::Error;
 
-pub struct Door {
+pub(crate) struct Door {
     connections: Vec<Vec<usize>>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|connections| Self { connections })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = Error;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<usize, Error> {
         connected_component(0, &self.connections).map(|comp| comp.len())
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = Error;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<usize, Error> {
         components(&self.connections).map(|comps| comps.len())
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("A line in the input does not match the regex: '{line}'")]
     LineDoesNotMatchPattern { line: String },
     #[error("Index for line is out-of-order: expected {expected}, found {actual}")]
@@ -73,7 +65,7 @@ fn parse_input(input: &str) -> Result<Vec<Vec<usize>>, ParseError> {
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("Index out-of-bounds: {0}")]
     IndexOutOfBounds(usize),
 }

@@ -1,43 +1,29 @@
 use aoc_companion::prelude::*;
-use std::{collections::HashSet, convert::Infallible};
+use std::collections::HashSet;
 
-pub struct Door {
+pub(crate) struct Door {
     passphrases: Vec<Vec<String>>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = Infallible;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Self {
         let passphrases = input
             .lines()
             .map(|line| line.split_whitespace().map(|s| s.to_string()).collect())
             .collect();
-        Ok(Self { passphrases })
+        Self { passphrases }
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_valid_passphrases(
-            &self.passphrases,
-            passphrase_has_no_duplicates,
-        ))
+    fn part1(&self) -> usize {
+        count_valid_passphrases(&self.passphrases, passphrase_has_no_duplicates)
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_valid_passphrases(
-            &self.passphrases,
-            passphrase_has_no_anagrams,
-        ))
+    fn part2(&self) -> usize {
+        count_valid_passphrases(&self.passphrases, passphrase_has_no_anagrams)
     }
 }
 

@@ -1,20 +1,18 @@
 use aoc_companion::prelude::*;
 use itertools::Itertools;
 
-pub struct Door {
+pub(crate) struct Door {
     digits: Vec<u32>,
 }
 
 #[derive(Debug, Error, PartialEq)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("Encountered an input character which is not a digit: {0:?}")]
     CharacterIsNotDigit(char),
 }
 
-impl ParseInput<'_> for Door {
-    type Error = Error;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, Error> {
         Ok(Self {
             digits: digits(input)?,
         })
@@ -22,20 +20,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(adjacent_equal_digit_sum(&self.digits))
+    fn part1(&self) -> u32 {
+        adjacent_equal_digit_sum(&self.digits)
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(opposing_equal_digit_sum(&self.digits))
+    fn part2(&self) -> u32 {
+        opposing_equal_digit_sum(&self.digits)
     }
 }
 

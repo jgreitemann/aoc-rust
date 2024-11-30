@@ -6,38 +6,30 @@ use thiserror::Error;
 use std::cmp::Ordering;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     pairs: Vec<(PacketData, PacketData)>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|pairs| Self { pairs })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(correctly_ordered_index_sum(&self.pairs))
+    fn part1(&self) -> usize {
+        correctly_ordered_index_sum(&self.pairs)
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(decoder_key(&self.pairs))
+    fn part2(&self) -> usize {
+        decoder_key(&self.pairs)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error(transparent)]
     ParseInt(#[from] std::num::ParseIntError),
     #[error("Did not find a pair of packets")]

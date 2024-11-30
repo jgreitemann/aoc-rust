@@ -8,33 +8,25 @@ use std::num::ParseIntError;
 const MINUTES: u32 = 30;
 const TRAINING_TIME: u32 = 4;
 
-pub struct Door {
+pub(crate) struct Door {
     cave: Cave,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseIntError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         parse_input(input).map(|cave| Self { cave })
     }
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(find_optimal_flow_alone(&self.cave))
+    fn part1(&self) -> u32 {
+        find_optimal_flow_alone(&self.cave)
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(find_optimal_flow_with_elephant(&self.cave))
+    fn part2(&self) -> u32 {
+        find_optimal_flow_with_elephant(&self.cave)
     }
 }
 

@@ -9,15 +9,13 @@ use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     map: Map,
     instructions: Vec<Instruction>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         let (map_str, instr_str) = input
             .split_once("\n\n")
             .ok_or(ParseError::EmptyLineNotFound)?;
@@ -29,33 +27,25 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self
-            .map
+    fn part1(&self) -> usize {
+        self.map
             .player_start()
             .end::<PlainWrapping>(&self.instructions, &self.map)
-            .password())
+            .password()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self
-            .map
+    fn part2(&self) -> usize {
+        self.map
             .player_start()
             .end::<CubicWrapping<50>>(&self.instructions, &self.map)
-            .password())
+            .password()
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Input does not contain an empty line")]
     EmptyLineNotFound,
     #[error(transparent)]

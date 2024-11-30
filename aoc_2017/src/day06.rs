@@ -1,15 +1,16 @@
 use aoc_companion::prelude::*;
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    num::ParseIntError,
+};
 
-pub struct Door {
+pub(crate) struct Door {
     bank: Vec<i32>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::num::ParseIntError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         let bank = input
             .split_whitespace()
             .map(|s| s.parse())
@@ -19,22 +20,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_redistribution_cycles_until_recurrence(
-            self.bank.clone(),
-        ))
+    fn part1(&self) -> usize {
+        count_redistribution_cycles_until_recurrence(self.bank.clone())
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(redistribution_cycle_loop_length(self.bank.clone()))
+    fn part2(&self) -> usize {
+        redistribution_cycle_loop_length(self.bank.clone())
     }
 }
 

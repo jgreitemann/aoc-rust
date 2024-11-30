@@ -1,18 +1,17 @@
 use aoc_companion::prelude::*;
 
+use door::Submissible;
 use itertools::Itertools;
 use thiserror::Error;
 
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     fuel: Vec<Snafu>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         input
             .lines()
             .map(str::parse)
@@ -22,22 +21,19 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = Snafu;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(sum_snafu_numbers(&self.fuel))
+    fn part1(&self) -> Snafu {
+        sum_snafu_numbers(&self.fuel)
     }
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Encountered invalid SNAFU digit")]
     InvalidSnafuDigit,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Snafu(Vec<i64>);
+pub(crate) struct Snafu(Vec<i64>);
 
 impl FromStr for Snafu {
     type Err = ParseError;
@@ -74,6 +70,8 @@ impl std::fmt::Display for Snafu {
         Ok(())
     }
 }
+
+impl Submissible for Snafu {}
 
 impl From<Snafu> for i64 {
     fn from(value: Snafu) -> Self {

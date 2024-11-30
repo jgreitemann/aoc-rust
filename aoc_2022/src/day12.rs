@@ -8,45 +8,36 @@ use thiserror::Error;
 use std::collections::VecDeque;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     map: Map,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         input.parse().map(|map| Self { map })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> usize {
         let flow = self.map.dijkstra_flow();
-        Ok(flow[self.map.start])
+        flow[self.map.start]
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> usize {
         let flow = self.map.dijkstra_flow();
-        Ok(self
-            .map
+        self.map
             .points_with_elevation(0)
             .map(|p| flow[p])
             .min()
-            .unwrap())
+            .unwrap()
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Could not find starting position (S) on map")]
     StartMissing,
     #[error("Could not find destination position (E) on map")]

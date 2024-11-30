@@ -6,40 +6,32 @@ use thiserror::Error;
 
 use std::collections::{BTreeSet, BinaryHeap, HashSet};
 
-pub struct Door {
+pub(crate) struct Door {
     blizzards: Blizzards,
     shape: (usize, usize),
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Self {
         let (blizzards, shape) = parse_input(input);
-        Ok(Self { blizzards, shape })
+        Self { blizzards, shape }
     }
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = RuntimeError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<u32, RuntimeError> {
         shortest_time_to_exit(&self.blizzards, self.shape, 500)
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = RuntimeError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<u32, RuntimeError> {
         shortest_time_for_snack_recovery(&self.blizzards, self.shape, 500)
     }
 }
 
 #[derive(Debug, Error, PartialEq, Eq)]
-pub enum RuntimeError {
+pub(crate) enum RuntimeError {
     #[error("Could not find a path to the exit within the specified time box")]
     NoPathFoundInTime,
 }

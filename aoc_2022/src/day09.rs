@@ -5,44 +5,32 @@ use thiserror::Error;
 
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     motions: Vec<Motion>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|motions| Self { motions })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> usize {
         let directions: Vec<_> = as_directions(self.motions.iter().cloned()).collect();
-        Ok(count_unique_positions(
-            directions.into_iter().head_positions().tail_positions(),
-        ))
+        count_unique_positions(directions.into_iter().head_positions().tail_positions())
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> usize {
         let directions: Vec<_> = as_directions(self.motions.iter().cloned()).collect();
-        Ok(count_unique_positions(
-            directions.into_iter().head_positions().tie_knots(10),
-        ))
+        count_unique_positions(directions.into_iter().head_positions().tie_knots(10))
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Missing space in motion line")]
     NoSpace,
     #[error("Motion direction must be either U, D, L, or R; found: {0:?}")]

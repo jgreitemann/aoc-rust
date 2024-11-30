@@ -6,47 +6,36 @@ use thiserror::Error;
 
 use std::iter::Peekable;
 
-pub struct Door {
+pub(crate) struct Door {
     jet_pattern: Vec<Jet>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_jet_pattern(input).map(|jet_pattern| Self { jet_pattern })
     }
 }
 
 impl Part1 for Door {
-    type Output = isize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(cavern_after_dropping_rocks(2022, &self.jet_pattern).height())
+    fn part1(&self) -> isize {
+        cavern_after_dropping_rocks(2022, &self.jet_pattern).height()
     }
 }
 
 impl Part2 for Door {
-    type Output = isize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(determine_tower_height_with_matching(
-            1000000000000,
-            &self.jet_pattern,
-        ))
+    fn part2(&self) -> isize {
+        determine_tower_height_with_matching(1000000000000, &self.jet_pattern)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Encountered an invalid character ({0:?}) in the jet pattern")]
     InvalidJetPatternChar(char),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Jet {
+enum Jet {
     Left,
     Right,
 }

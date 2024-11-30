@@ -3,33 +3,25 @@ use aoc_companion::prelude::*;
 use itertools::Itertools;
 use thiserror::Error;
 
-pub struct Door<'input> {
+pub(crate) struct Door<'input> {
     program: Vec<Instruction<'input>>,
 }
 
 impl<'input> ParseInput<'input> for Door<'input> {
-    type Error = ParseError;
-
-    fn parse(input: &'input str) -> Result<Self, Self::Error> {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|program| Self { program })
     }
 }
 
 impl Part1 for Door<'_> {
-    type Output = i32;
-    type Error = ExecutionError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<i32, ExecutionError> {
         largest_register_value(&execute_program(&self.program))
             .ok_or(ExecutionError::RegistersEmpty)
     }
 }
 
 impl Part2 for Door<'_> {
-    type Output = i32;
-    type Error = ExecutionError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<i32, ExecutionError> {
         largest_intermediate_register_value(&self.program)
     }
 }

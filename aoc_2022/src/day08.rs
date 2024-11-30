@@ -4,12 +4,12 @@ use itertools::Itertools;
 use std::str::FromStr;
 use thiserror::Error;
 
-pub struct Door {
+pub(crate) struct Door {
     map: Map,
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("The input is empty")]
     EmptyInput,
     #[error("Encountered a non-numeric character: {0:?}")]
@@ -18,10 +18,8 @@ pub enum ParseError {
     NonRectangularShape(#[from] ndarray::ShapeError),
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         Ok(Self {
             map: input.parse()?,
         })
@@ -29,20 +27,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self.map.visible_tree_count())
+    fn part1(&self) -> usize {
+        self.map.visible_tree_count()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self.map.max_scenic_score())
+    fn part2(&self) -> usize {
+        self.map.max_scenic_score()
     }
 }
 

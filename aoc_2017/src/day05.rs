@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 use aoc_companion::prelude::*;
 
 use JumpChangePolicy::*;
@@ -8,14 +10,12 @@ enum JumpChangePolicy {
     DecreaseLongJumps,
 }
 
-pub struct Door {
+pub(crate) struct Door {
     jumps: Vec<isize>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::num::ParseIntError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         input
             .lines()
             .map(|s| s.parse())
@@ -25,20 +25,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(Program::new(self.jumps.clone(), AlwaysIncrease).count())
+    fn part1(&self) -> usize {
+        Program::new(self.jumps.clone(), AlwaysIncrease).count()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(Program::new(self.jumps.clone(), DecreaseLongJumps).count())
+    fn part2(&self) -> usize {
+        Program::new(self.jumps.clone(), DecreaseLongJumps).count()
     }
 }
 

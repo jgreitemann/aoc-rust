@@ -7,39 +7,31 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     session: Vec<Command>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_session(input).map(|session| Self { session })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = RuntimeError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<usize, RuntimeError> {
         Filesystem::from_session(&self.session).map(|fs| fs.total_size_of_small_directories())
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = RuntimeError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<usize, RuntimeError> {
         Filesystem::from_session(&self.session)
             .and_then(|fs| fs.size_of_directory_to_delete_to_make_space_for(30000000))
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error(transparent)]
     InvalidFileSize(#[from] std::num::ParseIntError),
     #[error("Prompt does not start with a dollar")]
@@ -51,7 +43,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Error)]
-pub enum RuntimeError {
+pub(crate) enum RuntimeError {
     #[error("No such directory: {0}")]
     NoSuchDirectory(PathBuf),
     #[error("Not a directory: {0}")]

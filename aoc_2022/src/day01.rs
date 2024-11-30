@@ -2,35 +2,27 @@ use aoc_companion::prelude::*;
 
 use itertools::Itertools;
 
-pub struct Door {
+pub(crate) struct Door {
     elves: Vec<Vec<u32>>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
-        Ok(Self {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Self {
+        Self {
             elves: parse_input(input),
-        })
+        }
     }
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(calories_of_top_n(&self.elves, 1))
+    fn part1(&self) -> u32 {
+        calories_of_top_n(&self.elves, 1)
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(calories_of_top_n(&self.elves, 3))
+    fn part2(&self) -> u32 {
+        calories_of_top_n(&self.elves, 3)
     }
 }
 

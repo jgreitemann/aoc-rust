@@ -7,42 +7,34 @@ use thiserror::Error;
 use std::collections::HashSet;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     paths: Vec<Path>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|paths| Self { paths })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> usize {
         let mut pit = Pit::new_bottomless(&self.paths);
         pit.fill_up();
-        Ok(pit.settled_sand.len())
+        pit.settled_sand.len()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> usize {
         let mut pit = Pit::new_with_floor(&self.paths);
         pit.fill_up();
-        Ok(pit.settled_sand.len())
+        pit.settled_sand.len()
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("A set of coordinates is not comma-separated.")]
     CoordinatesNotSeparatedByComma,
     #[error(transparent)]

@@ -3,38 +3,30 @@ use aoc_companion::prelude::*;
 use itertools::Itertools;
 use thiserror::Error;
 
-pub struct Door<'input> {
+pub(crate) struct Door<'input> {
     signal: &'input str,
 }
 
 impl<'input> ParseInput<'input> for Door<'input> {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &'input str) -> Result<Self, Self::Error> {
-        Ok(Door { signal: input })
+    fn parse(input: &'input str) -> Self {
+        Door { signal: input }
     }
 }
 
 impl Part1 for Door<'_> {
-    type Output = usize;
-    type Error = Error;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<usize, Error> {
         disjoint_subseq_index(self.signal, 4).ok_or(Error::NoPacket)
     }
 }
 
 impl Part2 for Door<'_> {
-    type Output = usize;
-    type Error = Error;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<usize, Error> {
         disjoint_subseq_index(self.signal, 14).ok_or(Error::NoMessage)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("No start of packet marker found")]
     NoPacket,
     #[error("No start of message marker found")]

@@ -11,33 +11,25 @@ use std::ops::RangeInclusive;
 
 const LINE_Y: isize = 2000000;
 
-pub struct Door {
+pub(crate) struct Door {
     sensors: Vec<SensorData>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseIntError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         parse_input(input).map(|sensors| Self { sensors })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(coverage_on_line(&self.sensors, LINE_Y).size()
-            - number_of_beacons_on_line(&self.sensors, LINE_Y))
+    fn part1(&self) -> usize {
+        coverage_on_line(&self.sensors, LINE_Y).size()
+            - number_of_beacons_on_line(&self.sensors, LINE_Y)
     }
 }
 
 impl Part2 for Door {
-    type Output = isize;
-    type Error = RuntimeError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<isize, RuntimeError> {
         const N: isize = 4000000;
         find_distress_beacon_in_bounds(&self.sensors, 0..=N)
             .ok_or(RuntimeError::DistressBeaconNotFound)
@@ -46,7 +38,7 @@ impl Part2 for Door {
 }
 
 #[derive(Debug, Error)]
-pub enum RuntimeError {
+pub(crate) enum RuntimeError {
     #[error("No distress beacon found in bounds")]
     DistressBeaconNotFound,
 }

@@ -6,42 +6,34 @@ use thiserror::Error;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     monkeys: Vec<Monkey>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|monkeys| Self { monkeys })
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> usize {
         let mut game = Game::<u64>::from(&self.monkeys, Operation::DivByThree);
         game.play_rounds(20);
-        Ok(game.monkey_business())
+        game.monkey_business()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> usize {
         let mut game = Game::<ModuloTableWorryLevel>::from(&self.monkeys, Operation::NoOp);
         game.play_rounds(10000);
-        Ok(game.monkey_business())
+        game.monkey_business()
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Incomplete monkey input: not enough lines")]
     NotEnoughLinesForMonkey,
     #[error("Could not find monkey's starting items on line {0:?}")]

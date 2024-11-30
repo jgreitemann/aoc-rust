@@ -7,37 +7,27 @@ use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use std::ops::Range;
 
-pub struct Door {
+pub(crate) struct Door {
     elves: Coords,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
-        Ok(Self {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Self {
+        Self {
             elves: parse_input(input),
-        })
+        }
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(open_spaces_in_bounding_rect(
-            &execute_many_rounds(self.elves.clone(), 10).0,
-        ))
+    fn part1(&self) -> usize {
+        open_spaces_in_bounding_rect(&execute_many_rounds(self.elves.clone(), 10).0)
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(execute_many_rounds(self.elves.clone(), usize::MAX).1)
+    fn part2(&self) -> usize {
+        execute_many_rounds(self.elves.clone(), usize::MAX).1
     }
 }
 

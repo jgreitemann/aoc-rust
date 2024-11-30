@@ -32,21 +32,88 @@ pub enum DoorError {
     DependentParseError,
 }
 
-pub trait ParseInput<'input>: Sized {
+pub trait IntoParseResult<T> {
     type Error: std::error::Error + Send + Sync + 'static;
-    fn parse(input: &'input str) -> Result<Self, Self::Error>;
+
+    fn into_parse_result(self) -> Result<T, Self::Error>;
+}
+
+impl<T> IntoParseResult<T> for T {
+    type Error = std::convert::Infallible;
+
+    fn into_parse_result(self) -> Result<T, Self::Error> {
+        Ok(self)
+    }
+}
+
+impl<T, E> IntoParseResult<T> for Result<T, E>
+where
+    E: std::error::Error + Send + Sync + 'static,
+{
+    type Error = E;
+
+    fn into_parse_result(self) -> Result<T, Self::Error> {
+        self
+    }
+}
+
+pub trait Submissible {}
+
+impl Submissible for u8 {}
+impl Submissible for i8 {}
+impl Submissible for u16 {}
+impl Submissible for i16 {}
+impl Submissible for u32 {}
+impl Submissible for i32 {}
+impl Submissible for u64 {}
+impl Submissible for i64 {}
+impl Submissible for usize {}
+impl Submissible for isize {}
+impl Submissible for String {}
+impl Submissible for str {}
+
+pub trait IntoResult {
+    type Output: ToString + Submissible;
+    type Error: std::error::Error + Send + Sync + 'static;
+
+    fn into_result(self) -> Result<Self::Output, Self::Error>;
+}
+
+impl<T> IntoResult for T
+where
+    T: ToString + Submissible,
+{
+    type Output = T;
+    type Error = std::convert::Infallible;
+
+    fn into_result(self) -> Result<Self::Output, Self::Error> {
+        Ok(self)
+    }
+}
+
+impl<T, E> IntoResult for Result<T, E>
+where
+    T: ToString + Submissible,
+    E: std::error::Error + Send + Sync + 'static,
+{
+    type Output = T;
+    type Error = E;
+
+    fn into_result(self) -> Result<Self::Output, Self::Error> {
+        self
+    }
+}
+
+pub trait ParseInput<'input>: Sized {
+    fn parse(input: &'input str) -> impl IntoParseResult<Self>;
 }
 
 pub trait Part1 {
-    type Output: ToString;
-    type Error: std::error::Error + Send + Sync + 'static;
-    fn part1(&self) -> Result<Self::Output, Self::Error>;
+    fn part1(&self) -> impl IntoResult;
 }
 
 pub trait Part2 {
-    type Output: ToString;
-    type Error: std::error::Error + Send + Sync + 'static;
-    fn part2(&self) -> Result<Self::Output, Self::Error>;
+    fn part2(&self) -> impl IntoResult;
 }
 
 pub struct DoorEntry(pub DoorDate, pub fn(&str, usize) -> DoorResult);
@@ -101,8 +168,8 @@ pub mod detail {
         fn solve(&self, input: &'input str, parts_solved: usize) -> DoorResult {
             DoorResult {
                 part1: if parts_solved == 0 {
-                    match D::parse(input) {
-                        Ok(door) => DoorPartResult::timed(|| door.part1()),
+                    match D::parse(input).into_parse_result() {
+                        Ok(door) => DoorPartResult::timed(|| door.part1().into_result()),
                         Err(err) => Err(anyhow::Error::from(err)),
                     }
                 } else {
@@ -124,17 +191,17 @@ pub mod detail {
                     part2: Ok(DoorPartResult::Skipped),
                 }
             } else {
-                match D::parse(input) {
+                match D::parse(input).into_parse_result() {
                     Ok(door) => {
                         if parts_solved == 0 {
                             DoorResult {
-                                part1: DoorPartResult::timed(|| door.part1()),
-                                part2: DoorPartResult::timed(|| door.part2()),
+                                part1: DoorPartResult::timed(|| door.part1().into_result()),
+                                part2: DoorPartResult::timed(|| door.part2().into_result()),
                             }
                         } else {
                             DoorResult {
                                 part1: Ok(DoorPartResult::Skipped),
-                                part2: DoorPartResult::timed(|| door.part2()),
+                                part2: DoorPartResult::timed(|| door.part2().into_result()),
                             }
                         }
                     }

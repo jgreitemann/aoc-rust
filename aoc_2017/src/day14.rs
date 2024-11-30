@@ -7,35 +7,27 @@ use itertools::Itertools;
 
 use crate::day10::KnotHash;
 
-pub struct Door {
+pub(crate) struct Door {
     rows: [KnotHash; 128],
 }
 
-impl ParseInput<'_> for Door {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
-        Ok(Door {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Self {
+        Door {
             rows: std::array::from_fn(|row| KnotHash::hash(&format!("{input}-{row}"))),
-        })
+        }
     }
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self.count_ones())
+    fn part1(&self) -> u32 {
+        self.count_ones()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self.number_of_regions())
+    fn part2(&self) -> usize {
+        self.number_of_regions()
     }
 }
 
@@ -85,21 +77,20 @@ impl KnotHash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::Itertools;
 
     #[test]
     fn count_used_squares() {
-        assert_eq!(Door::parse("flqrgnkx").unwrap().count_ones(), 8108);
+        assert_eq!(Door::parse("flqrgnkx").count_ones(), 8108);
     }
 
     #[test]
     fn count_number_of_regions() {
-        assert_eq!(Door::parse("flqrgnkx").unwrap().number_of_regions(), 1242);
+        assert_eq!(Door::parse("flqrgnkx").number_of_regions(), 1242);
     }
 
     #[test]
     fn indexing_into_grid() {
-        let door = Door::parse("flqrgnkx").unwrap();
+        let door = Door::parse("flqrgnkx");
         let rows: Vec<String> = (0..8)
             .map(|row| {
                 (0..8)

@@ -5,45 +5,37 @@ use thiserror::Error;
 
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     records: Vec<Record>,
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("The symbol '{0}' is invalid in this context")]
     InvalidSymbol(String),
     #[error("No space on line")]
     NoSpaceOnLine,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|records| Self { records })
     }
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(as_strategy(self.records.iter())
+    fn part1(&self) -> u32 {
+        as_strategy(self.records.iter())
             .map(|strat| strat.score())
-            .sum())
+            .sum()
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = ParseError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(target_strategies(self.records.iter())
+    fn part2(&self) -> u32 {
+        target_strategies(self.records.iter())
             .map(|strat| strat.score())
-            .sum())
+            .sum()
     }
 }
 

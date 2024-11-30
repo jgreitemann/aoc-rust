@@ -4,7 +4,7 @@ use aoc_companion::prelude::*;
 
 use thiserror::Error;
 
-pub struct Door(Vec<Layer>);
+pub(crate) struct Door(Vec<Layer>);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Layer {
@@ -38,34 +38,26 @@ fn min_safe_delay(layers: &[Layer]) -> usize {
         .unwrap()
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(Door)
     }
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(self.total_severity())
+    fn part1(&self) -> usize {
+        self.total_severity()
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(min_safe_delay(&self.0))
+    fn part2(&self) -> usize {
+        min_safe_delay(&self.0)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("A line in the input does not contain a colon")]
     MissingColon,
     #[error("Depth or range are not numeric")]

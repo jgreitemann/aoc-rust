@@ -7,39 +7,31 @@ use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     monkeys: HashMap<String, Monkey>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|monkeys| Self { monkeys })
     }
 }
 
 impl Part1 for Door {
-    type Output = isize;
-    type Error = RuntimeError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<isize, RuntimeError> {
         solve_for("root", &self.monkeys)
     }
 }
 
 impl Part2 for Door {
-    type Output = isize;
-    type Error = RuntimeError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<isize, RuntimeError> {
         let transformed = transform_for_part2(&self.monkeys)?;
         solve_for("humn", &transformed)
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Assignment not found on line: {0}")]
     AssignmentNotFound(String),
     #[error("Operator expression not found: {0}")]
@@ -51,7 +43,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Error)]
-pub enum RuntimeError {
+pub(crate) enum RuntimeError {
     #[error("Could not find an equation involving {0:?}")]
     CouldNotFindAnEquationInvolvingVariable(String),
 }

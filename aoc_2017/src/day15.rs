@@ -6,12 +6,12 @@ use aoc_utils::array;
 const FACTORS: [u64; 2] = [16807, 48271];
 const MODULUS: u64 = 2147483647;
 
-pub struct Door {
+pub(crate) struct Door {
     start: [u64; 2],
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("expected two lines, got {0}")]
     WrongNumberOfLines(usize),
     #[error("a line did not start with the expected prefix")]
@@ -20,10 +20,8 @@ pub enum ParseError {
     ParseIntError(#[from] ParseIntError),
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         let lines: [&str; 2] = array::from_iter_exact(input.lines())
             .map_err(|lines| ParseError::WrongNumberOfLines(lines.len()))?;
 
@@ -43,20 +41,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_matching_pairs_part_1(self.start))
+    fn part1(&self) -> usize {
+        count_matching_pairs_part_1(self.start)
     }
 }
 
 impl Part2 for Door {
-    type Output = usize;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(count_matching_pairs_part_2(self.start))
+    fn part2(&self) -> usize {
+        count_matching_pairs_part_2(self.start)
     }
 }
 

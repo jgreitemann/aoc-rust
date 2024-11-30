@@ -4,7 +4,7 @@ use aoc_companion::prelude::*;
 use itertools::Itertools;
 use proptest::char;
 
-pub struct Door {
+pub(crate) struct Door {
     moves: Vec<DanceMove>,
 }
 
@@ -16,7 +16,7 @@ enum DanceMove {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("encountered an empty dance move instruction")]
     EmptyMove,
     #[error("dance move {0:?} is not recognized")]
@@ -32,7 +32,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum MoveError {
+pub(crate) enum MoveError {
     #[error(
         "program with index {index} is out-of-range for the dance group of only {len} programs"
     )]
@@ -41,20 +41,15 @@ pub enum MoveError {
     ProgramNameNotFound { name: char },
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         let moves = input.split(',').map(str::parse).try_collect()?;
         Ok(Door { moves })
     }
 }
 
 impl Part1 for Door {
-    type Output = String;
-    type Error = MoveError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<String, MoveError> {
         self.moves
             .iter()
             .try_fold(initial_sequence(16), apply_move)
@@ -63,10 +58,7 @@ impl Part1 for Door {
 }
 
 impl Part2 for Door {
-    type Output = String;
-    type Error = MoveError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<String, MoveError> {
         perform_many_dances(16, 1_000_000_000, &self.moves).map(|v| v.iter().join(""))
     }
 }

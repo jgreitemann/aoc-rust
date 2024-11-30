@@ -5,38 +5,30 @@ use thiserror::Error;
 
 use std::str::FromStr;
 
-pub struct Door {
+pub(crate) struct Door {
     program: Vec<Instruction>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_input(input).map(|program| Self { program })
     }
 }
 
 impl Part1 for Door {
-    type Output = isize;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(relevant_signal_strengths(execute(&self.program)).sum())
+    fn part1(&self) -> isize {
+        relevant_signal_strengths(execute(&self.program)).sum()
     }
 }
 
 impl Part2 for Door {
-    type Output = String;
-    type Error = ReadError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<String, ReadError> {
         read_screen(&render(execute(&self.program)))
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Empty line")]
     EmptyLine,
     #[error("Encountered an invalid instruction: {0:?}")]
@@ -48,7 +40,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Error)]
-pub enum ReadError {
+pub(crate) enum ReadError {
     #[error("Human help is needed in reading the displayed string:\n{0}")]
     NeedToRead(String),
 }

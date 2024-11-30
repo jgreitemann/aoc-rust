@@ -6,15 +6,13 @@ use thiserror::Error;
 use std::str::FromStr;
 
 #[derive(Debug)]
-pub struct Door {
+pub(crate) struct Door {
     stacks: Stacks,
     instructions: Vec<Instruction>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         let (stacks_input, instr_input) = input.split_once("\n\n").unwrap();
         Ok(Self {
             stacks: stacks_input.parse()?,
@@ -24,27 +22,21 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = String;
-    type Error = Error;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<String, Error> {
         let final_stacks = self.stacks.clone().apply_all(&self.instructions, true)?;
         final_stacks.solution()
     }
 }
 
 impl Part2 for Door {
-    type Output = String;
-    type Error = Error;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<String, Error> {
         let final_stacks = self.stacks.clone().apply_all(&self.instructions, false)?;
         final_stacks.solution()
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Stacks string is empty")]
     NoLines,
     #[error("Rows are not equal in length")]
@@ -56,7 +48,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("The stack index in the instruction is out-of-bounds")]
     StackIndexOutOfBounds,
     #[error("There aren't enough crates to move as instructed")]

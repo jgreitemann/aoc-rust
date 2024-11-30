@@ -1,3 +1,5 @@
+#![allow(refining_impl_trait_internal)]
+
 mod day01;
 mod day02;
 mod day03;

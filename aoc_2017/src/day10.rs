@@ -7,20 +7,18 @@ use thiserror::Error;
 
 use std::num::ParseIntError;
 
-pub struct Door<'input> {
+pub(crate) struct Door<'input> {
     input: &'input str,
 }
 
 impl<'input> ParseInput<'input> for Door<'input> {
-    type Error = std::convert::Infallible;
-
-    fn parse(input: &'input str) -> Result<Self, Self::Error> {
-        Ok(Self { input })
+    fn parse(input: &'input str) -> Self {
+        Self { input }
     }
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("The size of the string is insufficient to perform the operation")]
     NotEnoughElements,
     #[error(transparent)]
@@ -28,21 +26,15 @@ pub enum Error {
 }
 
 impl Part1 for Door<'_> {
-    type Output = u16;
-    type Error = Error;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<u16, Error> {
         let lengths = as_list_of_numbers(self.input)?;
         product_of_first_two_elements(&apply_ties::<256>(lengths.into_iter()))
     }
 }
 
 impl Part2 for Door<'_> {
-    type Output = String;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(KnotHash::hash(self.input).to_string())
+    fn part2(&self) -> String {
+        KnotHash::hash(self.input).to_string()
     }
 }
 

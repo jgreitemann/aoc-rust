@@ -5,14 +5,12 @@ use thiserror::Error;
 
 use std::collections::HashSet;
 
-pub struct Door {
+pub(crate) struct Door {
     rucksacks: Vec<Vec<u32>>,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         Ok(Self {
             rucksacks: input.lines().map(parse_priorities).try_collect()?,
         })
@@ -20,10 +18,7 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = Error;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<u32, Error> {
         self.rucksacks
             .iter()
             .map(|rucksack| Rucksack::new(rucksack).common_item_priority())
@@ -32,22 +27,19 @@ impl Part1 for Door {
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = Error;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<u32, Error> {
         group_batch_priorities(&self.rucksacks).map(|batches| batches.iter().sum())
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Cannot assign a priority to item '{0}'")]
     InvalidItemChar(char),
 }
 
 #[derive(Debug, Error)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("There no one common item")]
     NoUniqueCommonItem,
     #[error("The group is empty")]

@@ -7,13 +7,13 @@ use std::{
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("Input line doesn't not match regular expression: {line:?}")]
     LineDoesNotMatch { line: String },
 }
 
 #[derive(Debug, Error)]
-pub enum GraphError {
+pub(crate) enum GraphError {
     #[error("The graph is cyclic")]
     GraphIsCyclic,
     #[error("There are multiple tree components")]
@@ -27,33 +27,25 @@ pub enum GraphError {
     },
 }
 
-pub struct Door<'input> {
+pub(crate) struct Door<'input> {
     relations: HashMap<ProgramName<'input>, Relation<'input>>,
 }
 
 impl<'input> ParseInput<'input> for Door<'input> {
-    type Error = ParseError;
-
-    fn parse(input: &'input str) -> Result<Self, Self::Error> {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         let relations = parse_input(input)?;
         Ok(Self { relations })
     }
 }
 
 impl<'input> Part1 for Door<'input> {
-    type Output = ProgramName<'input>;
-    type Error = GraphError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<ProgramName<'input>, GraphError> {
         find_bottom_program(&self.relations)
     }
 }
 
 impl Part2 for Door<'_> {
-    type Output = u32;
-    type Error = GraphError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<u32, GraphError> {
         let subtower_weights = calc_subtower_weights(&self.relations)?;
         correct_weight(&self.relations, &subtower_weights)
     }
@@ -67,6 +59,8 @@ impl Display for ProgramName<'_> {
         f.write_str(self.0)
     }
 }
+
+impl door::Submissible for ProgramName<'_> {}
 
 #[derive(Debug)]
 struct Relation<'input> {

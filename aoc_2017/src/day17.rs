@@ -4,14 +4,12 @@ use aoc_companion::prelude::*;
 
 const FINAL_NUMBER: u32 = 2017;
 
-pub struct Door {
+pub(crate) struct Door {
     skip_len: usize,
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseIntError;
-
-    fn parse(input: &'_ str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseIntError> {
         Ok(Door {
             skip_len: input.parse()?,
         })
@@ -19,23 +17,14 @@ impl ParseInput<'_> for Door {
 }
 
 impl Part1 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
-        Ok(resulting_spinlock(FINAL_NUMBER, self.skip_len)[0])
+    fn part1(&self) -> u32 {
+        resulting_spinlock(FINAL_NUMBER, self.skip_len)[0]
     }
 }
 
 impl Part2 for Door {
-    type Output = u32;
-    type Error = std::convert::Infallible;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
-        Ok(find_value_after_zero(&resulting_spinlock(
-            50_000_000,
-            self.skip_len,
-        )))
+    fn part2(&self) -> u32 {
+        find_value_after_zero(&resulting_spinlock(50_000_000, self.skip_len))
     }
 }
 

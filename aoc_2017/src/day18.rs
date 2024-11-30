@@ -9,12 +9,12 @@ use tracing::{info, info_span, instrument};
 
 use aoc_companion::prelude::*;
 
-pub struct Door {
+pub(crate) struct Door {
     asm: Vec<Instruction>,
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     #[error("expected a space delimiting tokens in instruction")]
     MissingToken,
     #[error("invalid instruction {0:?}")]
@@ -26,7 +26,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum RuntimeError {
+pub(crate) enum RuntimeError {
     #[error("executing the rcv instruction before any snd instruction has been executed")]
     NoSnd,
     #[error("program terminated due to jump to PC {0}")]
@@ -59,10 +59,8 @@ impl std::fmt::Debug for Register {
     }
 }
 
-impl ParseInput<'_> for Door {
-    type Error = ParseError;
-
-    fn parse(input: &str) -> Result<Self, Self::Error> {
+impl<'input> ParseInput<'input> for Door {
+    fn parse(input: &'input str) -> Result<Self, ParseError> {
         parse_assembly(input).map(|asm| Door { asm })
     }
 }
@@ -302,10 +300,7 @@ async fn run(
 }
 
 impl Part1 for Door {
-    type Output = i64;
-    type Error = RuntimeError;
-
-    fn part1(&self) -> Result<Self::Output, Self::Error> {
+    fn part1(&self) -> Result<i64, RuntimeError> {
         let last_value = LastValue::default();
         let runtime = tokio::runtime::Builder::new_current_thread()
             .build()
@@ -315,10 +310,7 @@ impl Part1 for Door {
 }
 
 impl Part2 for Door {
-    type Output = i64;
-    type Error = RuntimeError;
-
-    fn part2(&self) -> Result<Self::Output, Self::Error> {
+    fn part2(&self) -> Result<i64, RuntimeError> {
         let pending_recv_count = Arc::new(AtomicI64::default());
         let (send_0, recv_0) = channel(pending_recv_count.clone());
         let (send_1, recv_1) = channel(pending_recv_count);
