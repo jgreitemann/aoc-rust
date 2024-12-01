@@ -137,6 +137,7 @@ version = "0.1.0"
 dependencies = [
  "aoc_companion",
  "aoc_utils",
+ "assert_matches",
  "itertools",
  "thiserror",
  "tokio",
