@@ -1,7 +1,7 @@
 use crate::api::{AnswerResponse, AoCClient, DayResponse};
 use crate::door::{DoorDate, Part};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use thiserror::Error;
 
 use std::collections::HashMap;
@@ -46,14 +46,17 @@ impl AoCClient for WebClient {
             .send()
             .await?;
 
-        if resp.status() == reqwest::StatusCode::from_u16(400).unwrap() {
-            // Bad request in case of authentication failure
-            return Err(SessionError::AuthenticationInvalidOrExpired).context(format!(
-                "Failed to authenticate when downloading input for day {day}, {year}"
-            ));
+        use reqwest::StatusCode;
+        match resp.status() {
+            StatusCode::BAD_REQUEST => Err(SessionError::AuthenticationInvalidOrExpired)
+                .with_context(|| {
+                    format!("Failed to authenticate when downloading input for day {day}, {year}")
+                }),
+            StatusCode::OK => Ok(resp.text().await?),
+            status => Err(anyhow!("{}", resp.text().await?)).with_context(|| {
+                format!("Failed to download input for day {day}, {year}: HTTP {status}")
+            }),
         }
-
-        Ok(resp.text().await?)
     }
 
     async fn get_day(&self, &DoorDate { year, day }: &DoorDate) -> Result<DayResponse> {
@@ -62,6 +65,7 @@ impl AoCClient for WebClient {
             .get(format!("https://adventofcode.com/{year}/day/{day}"))
             .send()
             .await?
+            .error_for_status()?
             .text()
             .await?;
         Ok(DayResponse::parse(&resp))
@@ -89,7 +93,14 @@ impl AoCClient for WebClient {
             ));
         }
 
-        let text = resp.text().await?;
+        let text = resp
+            .error_for_status()
+            .with_context(|| {
+                format!("Failed to post answer {guess:?} for part {part} of day {day}, {year}")
+            })?
+            .text()
+            .await?;
+
         AnswerResponse::parse(&text).with_context(|| {
             format!(
                     "Failed to parse server response after posting the answer {guess:?} for part {part} of day {day}, {year}"
