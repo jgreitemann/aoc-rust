@@ -1,6 +1,7 @@
 use std::num::ParseIntError;
 
 use aoc_companion::prelude::*;
+use aoc_utils::iter::IterUtils;
 use itertools::Itertools;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -21,7 +22,7 @@ impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
         let (left, right) = input
             .lines()
-            .map(|line| {
+            .map(|line| -> Result<(usize, usize), ParseError> {
                 line.split_ascii_whitespace()
                     .collect_tuple()
                     .ok_or_else(|| ParseError::WhitespaceError {
@@ -29,9 +30,8 @@ impl<'input> Solution<'input> for Door {
                     })
                     .and_then(|(lhs, rhs)| Ok((lhs.parse()?, rhs.parse()?)))
             })
-            .collect::<Result<Vec<(usize, usize)>, _>>()?
-            .into_iter()
-            .unzip();
+            .try_unzip()?;
+
         Ok(Door { left, right })
     }
 
