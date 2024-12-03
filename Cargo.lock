@@ -139,6 +139,7 @@ dependencies = [
  "aoc_utils",
  "assert_matches",
  "itertools",
+ "ndarray",
  "regex",
  "thiserror",
  "tokio",

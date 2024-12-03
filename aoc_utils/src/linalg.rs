@@ -379,11 +379,13 @@ impl_point_2d!(i16);
 impl_point_2d!(i32);
 impl_point_2d!(i64);
 impl_point_2d!(i128);
+impl_point_2d!(isize);
 impl_point_2d!(u8);
 impl_point_2d!(u16);
 impl_point_2d!(u32);
 impl_point_2d!(u64);
 impl_point_2d!(u128);
+impl_point_2d!(usize);
 
 macro_rules! impl_point_3d {
     ($num:ty) => {
@@ -446,6 +448,7 @@ impl_point_3d!(i16);
 impl_point_3d!(i32);
 impl_point_3d!(i64);
 impl_point_3d!(i128);
+impl_point_3d!(isize);
 
 unsafe impl<const N: usize> ndarray::NdIndex<ndarray::Dim<[usize; N]>> for Vector<usize, N>
 where

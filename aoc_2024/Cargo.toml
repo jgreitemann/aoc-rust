@@ -10,6 +10,7 @@ aoc_companion = { workspace = true }
 aoc_utils = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
+ndarray = { workspace = true }
 regex = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
