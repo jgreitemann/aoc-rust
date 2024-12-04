@@ -289,7 +289,7 @@ macro_rules! impl_point_2d {
                 let nn: &[_] = match self.0 {
                     [<$num>::MIN, <$num>::MIN] => &[Vector([1, 0]), Vector([1, 1]), Vector([0, 1])],
                     [<$num>::MIN, <$num>::MAX] => &[Vector([1, 1]), Vector([0, 0]), Vector([1, 0])],
-                    [<$num>::MAX, <$num>::MIN] => &[Vector([1, 1]), Vector([0, 0]), Vector([0, 0])],
+                    [<$num>::MAX, <$num>::MIN] => &[Vector([1, 1]), Vector([0, 0]), Vector([0, 1])],
                     [<$num>::MAX, <$num>::MAX] => &[Vector([0, 1]), Vector([0, 0]), Vector([1, 0])],
                     [<$num>::MIN, _] => &[
                         Vector([1, 1]),
@@ -370,6 +370,35 @@ macro_rules! impl_point_2d {
                     rel_iter: nn.iter(),
                 }
             }
+
+            fn next_nearest_neighbors(self) -> Neighbors<Self> {
+                let nn: &[_] = match self.0 {
+                    [<$num>::MIN, <$num>::MIN] => &[Vector([1, 1])],
+                    [<$num>::MIN, <$num>::MAX] => &[Vector([1, 0])],
+                    [<$num>::MAX, <$num>::MIN] => &[Vector([0, 1])],
+                    [<$num>::MAX, <$num>::MAX] => &[Vector([0, 0])],
+                    [<$num>::MIN, _] => &[Vector([1, 2]), Vector([1, 0])],
+                    [<$num>::MAX, _] => &[Vector([0, 2]), Vector([0, 0])],
+                    [_, <$num>::MIN] => &[Vector([2, 1]), Vector([0, 1])],
+                    [_, <$num>::MAX] => &[Vector([0, 0]), Vector([2, 0])],
+                    [_, _] => &[
+                        Vector([2, 2]),
+                        Vector([0, 2]),
+                        Vector([0, 0]),
+                        Vector([2, 0]),
+                    ],
+                };
+                let offset = match self.0 {
+                    [<$num>::MIN, <$num>::MIN] => Vector([0, 0]),
+                    [<$num>::MIN, _] => Vector([0, 1]),
+                    [_, <$num>::MIN] => Vector([1, 0]),
+                    [_, _] => Vector([1, 1]),
+                };
+                Neighbors {
+                    center: self - offset,
+                    rel_iter: nn.iter(),
+                }
+            }
         }
     };
 }
@@ -433,6 +462,27 @@ macro_rules! impl_point_3d {
                     Vector([-1, 0, 0]),
                     Vector([0, -1, 0]),
                     Vector([0, 0, -1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+
+            fn next_nearest_neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 3>] = &[
+                    Vector([1, 0, -1]),
+                    Vector([0, 1, -1]),
+                    Vector([-1, 0, -1]),
+                    Vector([0, -1, -1]),
+                    Vector([1, 1, 0]),
+                    Vector([-1, 1, 0]),
+                    Vector([-1, -1, 0]),
+                    Vector([1, -1, 0]),
+                    Vector([1, 0, 1]),
+                    Vector([0, 1, 1]),
+                    Vector([-1, 0, 1]),
+                    Vector([0, -1, 1]),
                 ];
                 Neighbors {
                     center: self,

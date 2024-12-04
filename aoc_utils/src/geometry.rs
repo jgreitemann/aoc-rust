@@ -4,6 +4,7 @@ where
 {
     fn neighbors(self) -> Neighbors<Self>;
     fn nearest_neighbors(self) -> Neighbors<Self>;
+    fn next_nearest_neighbors(self) -> Neighbors<Self>;
 }
 
 pub struct Neighbors<P>

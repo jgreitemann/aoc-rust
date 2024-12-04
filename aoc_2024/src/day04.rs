@@ -44,7 +44,7 @@ fn count_xmas(view: ndarray::ArrayView2<u8>) -> usize {
                 .neighbors()
                 .filter_map(move |second| extrapolate::<4>(first, second))
         })
-        .filter_map(|line| try_map(line, |Vector(idx)| view.get(idx).copied().ok_or(())).ok())
+        .filter_map(|line| try_map(line, |idx| view.get(idx).copied().ok_or(())).ok())
         .filter(|elems| elems == b"XMAS")
         .count()
 }
@@ -54,15 +54,10 @@ fn count_cross_of_mas(view: ndarray::ArrayView2<u8>) -> usize {
         .filter(|(_, b)| **b == b'A')
         .filter(|&(center, _)| {
             let center = Vector(center.into());
-            let nearest_neighbors: Vec<_> = center.nearest_neighbors().collect();
-
             center
-                .neighbors()
-                .filter(move |n| !nearest_neighbors.contains(n))
+                .next_nearest_neighbors()
                 .filter_map(move |nnn| extrapolate::<3>(nnn, center))
-                .filter_map(|line| {
-                    try_map(line, |Vector(idx)| view.get(idx).copied().ok_or(())).ok()
-                })
+                .filter_map(|line| try_map(line, |idx| view.get(idx).copied().ok_or(())).ok())
                 .filter(|elems| elems == b"MAS")
                 .count()
                 == 2
