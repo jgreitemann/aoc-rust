@@ -13,4 +13,5 @@ itertools = { workspace = true }
 ndarray = { workspace = true }
 regex = { workspace = true }
 thiserror = { workspace = true }
+tap = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }

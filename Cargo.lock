@@ -141,6 +141,7 @@ dependencies = [
  "itertools",
  "ndarray",
  "regex",
+ "tap",
  "thiserror",
  "tokio",
 ]
