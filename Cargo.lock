@@ -140,6 +140,7 @@ dependencies = [
  "assert_matches",
  "itertools",
  "ndarray",
+ "rayon",
  "regex",
  "tap",
  "thiserror",

@@ -3,6 +3,7 @@ use std::{cell::Cell, collections::HashSet, ops::Range};
 use aoc_companion::prelude::*;
 use aoc_utils::linalg::Vector;
 use itertools::Itertools;
+use rayon::prelude::*;
 use tap::Tap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -116,6 +117,7 @@ impl Door {
     fn count_incursions_resulting_in_loop(&self) -> usize {
         let (col_bounds, row_bounds) = self.map.bounds.clone();
         Itertools::cartesian_product(col_bounds, row_bounds)
+            .par_bridge()
             .map(|(col, row)| Vector([col, row]))
             .filter(|p| self.starting_guard.pos != *p)
             .filter(|p| !self.map.obstacles.contains(p))
