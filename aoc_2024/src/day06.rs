@@ -106,12 +106,8 @@ fn step(mut current: Guard, map: &Map) -> Guard {
 
 impl Door {
     fn path(&self) -> impl Iterator<Item = Guard> + use<'_> {
-        let mut guard = self.starting_guard;
-        std::iter::from_fn(move || {
-            let current = guard;
-            Some(std::mem::replace(&mut guard, step(current, &self.map)))
-        })
-        .take_while(|guard| self.map.is_in_bounds(guard.pos))
+        itertools::iterate(self.starting_guard, |&current| step(current, &self.map))
+            .take_while(|guard| self.map.is_in_bounds(guard.pos))
     }
 
     fn count_incursions_resulting_in_loop(&self) -> usize {
