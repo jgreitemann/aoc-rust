@@ -135,10 +135,12 @@ dependencies = [
 name = "aoc_2024"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "aoc_companion",
  "aoc_utils",
  "assert_matches",
  "itertools",
+ "lazy_static",
  "ndarray",
  "rayon",
  "regex",
