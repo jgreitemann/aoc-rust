@@ -36,27 +36,21 @@ pub enum DoorError {
 }
 
 pub trait IntoParseResult<T> {
-    type Error: std::error::Error + Send + Sync + 'static;
-
-    fn into_parse_result(self) -> Result<T, Self::Error>;
+    fn into_parse_result(self) -> anyhow::Result<T>;
 }
 
 impl<T> IntoParseResult<T> for T {
-    type Error = Infallible;
-
-    fn into_parse_result(self) -> Result<T, Self::Error> {
+    fn into_parse_result(self) -> Result<T> {
         Ok(self)
     }
 }
 
 impl<T, E> IntoParseResult<T> for Result<T, E>
 where
-    E: std::error::Error + Send + Sync + 'static,
+    anyhow::Error: From<E>,
 {
-    type Error = E;
-
-    fn into_parse_result(self) -> Result<T, Self::Error> {
-        self
+    fn into_parse_result(self) -> Result<T> {
+        Ok(self?)
     }
 }
 
@@ -78,9 +72,8 @@ impl Submissible for Infallible {}
 
 pub trait IntoResult {
     type Output: ToString + Submissible;
-    type Error: std::error::Error + Send + Sync + 'static;
 
-    fn into_result(self) -> Result<Self::Output, Self::Error>;
+    fn into_result(self) -> Result<Self::Output>;
 }
 
 impl<T> IntoResult for T
@@ -88,23 +81,21 @@ where
     T: ToString + Submissible,
 {
     type Output = T;
-    type Error = Infallible;
 
-    fn into_result(self) -> Result<Self::Output, Self::Error> {
+    fn into_result(self) -> Result<Self::Output> {
         Ok(self)
     }
 }
 
 impl<T, E> IntoResult for Result<T, E>
 where
+    anyhow::Error: From<E>,
     T: ToString + Submissible,
-    E: std::error::Error + Send + Sync + 'static,
 {
     type Output = T;
-    type Error = E;
 
-    fn into_result(self) -> Result<Self::Output, Self::Error> {
-        self
+    fn into_result(self) -> Result<Self::Output> {
+        Ok(self?)
     }
 }
 
@@ -132,11 +123,10 @@ pub enum DoorPartResult {
 }
 
 impl DoorPartResult {
-    fn timed<T, E, F>(part_fn: F) -> Result<DoorPartResult>
+    fn timed<T, F>(part_fn: F) -> Result<DoorPartResult>
     where
         T: ToString,
-        E: std::error::Error + Send + Sync + 'static,
-        F: FnOnce() -> Result<T, E>,
+        F: FnOnce() -> Result<T>,
     {
         let start = std::time::Instant::now();
         let answer = part_fn()?;
@@ -182,7 +172,7 @@ pub mod detail {
                     }
                 }
                 Err(err) => DoorResult {
-                    part1: Err(anyhow::Error::from(err)),
+                    part1: Err(err),
                     part2: Err(anyhow!(DoorError::DependentParseError)),
                 },
             }
