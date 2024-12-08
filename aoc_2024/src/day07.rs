@@ -16,11 +16,8 @@ impl<'input> Solution<'input> for Door {
         parse_equations(input).map(Door)
     }
 
-    fn part1(&self) -> Result<i64> {
-        Ok(total_test_value_of_equations_fulfilled_by(
-            &ADD_AND_MUL,
-            &self.0,
-        ))
+    fn part1(&self) -> i64 {
+        total_test_value_of_equations_fulfilled_by(&ADD_AND_MUL, &self.0)
     }
 
     fn part2(&self) -> i64 {
@@ -40,12 +37,12 @@ fn parse_equations(input: &str) -> Result<Vec<Equation>> {
             Ok(Equation {
                 test_value: res_str
                     .parse()
-                    .with_context(|| format!("while parsing equation test value {res_str:?}"))?,
+                    .with_context(|| format!("failed to parse equation test value {res_str:?}"))?,
                 operands: ops_str
                     .split(' ')
                     .map(|op| {
                         op.parse()
-                            .with_context(|| format!("while parsing equation operand {op:?}"))
+                            .with_context(|| format!("failed to parse equation operand {op:?}"))
                     })
                     .try_collect()?,
             })
@@ -73,7 +70,7 @@ impl Equation {
                     .fold(0, |acc, (op, num)| match op {
                         Op::Add => acc + num,
                         Op::Mul => acc * num,
-                        Op::Concat => 10_i64.pow(num.ilog10() + 1) * acc + num,
+                        Op::Concat => 10i64.pow(num.ilog10() + 1) * acc + num,
                     })
                     == self.test_value
             })
@@ -156,7 +153,7 @@ mod tests {
             EXAMPLE_EQNS
                 .each_ref()
                 .map(|eqn| eqn.can_be_fulfilled_with(&ADD_AND_MUL)),
-            [true, true, false, false, false, false, false, false, true,]
+            [true, true, false, false, false, false, false, false, true]
         );
     }
 
@@ -166,14 +163,14 @@ mod tests {
             EXAMPLE_EQNS
                 .each_ref()
                 .map(|eqn| eqn.can_be_fulfilled_with(&ALL_OPS)),
-            [true, true, false, true, true, false, true, false, true,]
+            [true, true, false, true, true, false, true, false, true]
         );
     }
 
     #[test]
     fn total_test_values_of_equations_fulfilled_by_combination_of_add_and_mul() {
         assert_eq!(
-            total_test_value_of_equations_fulfilled_by(&ADD_AND_MUL, &*EXAMPLE_EQNS,),
+            total_test_value_of_equations_fulfilled_by(&ADD_AND_MUL, EXAMPLE_EQNS.as_slice()),
             3749
         );
     }
@@ -181,7 +178,7 @@ mod tests {
     #[test]
     fn total_test_values_of_equations_fulfilled_by_combination_of_all_operators() {
         assert_eq!(
-            total_test_value_of_equations_fulfilled_by(&ALL_OPS, &*EXAMPLE_EQNS,),
+            total_test_value_of_equations_fulfilled_by(&ALL_OPS, EXAMPLE_EQNS.as_slice()),
             11387
         );
     }
