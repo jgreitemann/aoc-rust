@@ -25,3 +25,19 @@ where
         self.rel_iter.next().map(|r| self.center + *r)
     }
 }
+
+pub fn map_bounds(input: &str) -> [std::ops::Range<i32>; 2] {
+    let rows = input.lines().count();
+    let cols = input.lines().next().map(|line| line.len()).unwrap_or(0);
+    [0..cols.try_into().unwrap(), 0..rows.try_into().unwrap()]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_bounds_of_map_input() {
+        assert_eq!(map_bounds("ABC\nDEF\n"), [0..3, 0..2]);
+    }
+}

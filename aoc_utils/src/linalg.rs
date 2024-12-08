@@ -5,7 +5,7 @@ use num_traits::{Num, NumCast, Pow, Signed};
 use paste::paste;
 use thiserror::Error;
 
-use std::str::FromStr;
+use std::{ops::RangeBounds, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Scalar<T: Num>(T);
@@ -273,6 +273,16 @@ where
             .map(|x| x.pow(P))
             .map(num_traits::sign::abs)
             .fold(T::zero(), std::ops::Add::add)
+    }
+
+    pub fn in_bounds(&self, bounds: &[impl RangeBounds<T>; N]) -> bool
+    where
+        T: PartialOrd,
+    {
+        self.0
+            .into_iter()
+            .zip(bounds)
+            .all(|(c, bounds)| bounds.contains(&c))
     }
 }
 

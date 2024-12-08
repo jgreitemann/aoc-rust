@@ -1,7 +1,7 @@
 use std::{cell::Cell, collections::HashSet, ops::Range};
 
 use aoc_companion::prelude::*;
-use aoc_utils::linalg::Vector;
+use aoc_utils::{geometry::map_bounds, linalg::Vector};
 use itertools::Itertools;
 use rayon::prelude::*;
 use tap::Tap;
@@ -15,7 +15,7 @@ pub(crate) struct Door {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Map {
     obstacles: HashSet<Vector<i32, 2>>,
-    bounds: (Range<i32>, Range<i32>),
+    bounds: [Range<i32>; 2],
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -34,9 +34,6 @@ pub(crate) enum ParseError {
 
 impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ParseError> {
-        let rows = input.lines().count() as i32;
-        let cols = input.lines().next().map(str::len).unwrap_or(0) as i32;
-
         let starting_pos: Cell<Option<Vector<i32, 2>>> = Cell::default();
 
         let obstacles = input
@@ -62,7 +59,7 @@ impl<'input> Solution<'input> for Door {
         Ok(Door {
             map: Map {
                 obstacles,
-                bounds: (0..cols, 0..rows),
+                bounds: map_bounds(input),
             },
             starting_guard: Guard {
                 pos: starting_pos.take().ok_or(ParseError::NoStartingPosition)?,
@@ -84,10 +81,6 @@ impl Map {
     fn is_free(&self, pos: Vector<i32, 2>) -> bool {
         !self.obstacles.contains(&pos)
     }
-
-    fn is_in_bounds(&self, pos: Vector<i32, 2>) -> bool {
-        self.bounds.0.contains(&pos.0[0]) && self.bounds.1.contains(&pos.0[1])
-    }
 }
 
 fn step(mut current: Guard, map: &Map) -> Guard {
@@ -107,11 +100,11 @@ fn step(mut current: Guard, map: &Map) -> Guard {
 impl Door {
     fn path(&self) -> impl Iterator<Item = Guard> + use<'_> {
         itertools::iterate(self.starting_guard, |&current| step(current, &self.map))
-            .take_while(|guard| self.map.is_in_bounds(guard.pos))
+            .take_while(|guard| guard.pos.in_bounds(&self.map.bounds))
     }
 
     fn count_incursions_resulting_in_loop(&self) -> usize {
-        let (col_bounds, row_bounds) = self.map.bounds.clone();
+        let [col_bounds, row_bounds] = self.map.bounds.clone();
         Itertools::cartesian_product(col_bounds, row_bounds)
             .par_bridge()
             .map(|(col, row)| Vector([col, row]))
@@ -164,7 +157,7 @@ mod tests {
                     Vector([0, 8]),
                     Vector([6, 9]),
                 ]),
-                bounds: (0..10, 0..10),
+                bounds: [0..10, 0..10],
             },
             starting_guard: Guard {
                 pos: Vector([4, 6]),
