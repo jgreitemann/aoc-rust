@@ -142,6 +142,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "ndarray",
+ "proptest",
  "rayon",
  "regex",
  "tap",
