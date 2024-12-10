@@ -2,7 +2,6 @@ use std::{num::ParseIntError, str::FromStr};
 
 use aoc_companion::prelude::*;
 use itertools::Itertools;
-use proptest::char;
 
 pub(crate) struct Door {
     moves: Vec<DanceMove>,
