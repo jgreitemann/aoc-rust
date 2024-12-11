@@ -17,29 +17,31 @@ use aoc_companion::prelude::*;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     aoc_main(&[
-        door!(DoorDate { day: 1, year: 2024 }, day01::Door),
-        door!(DoorDate { day: 2, year: 2024 }, day02::Door),
-        door!(DoorDate { day: 3, year: 2024 }, day03::Door),
-        door!(DoorDate { day: 4, year: 2024 }, day04::Door),
-        door!(DoorDate { day: 5, year: 2024 }, day05::Door),
-        door!(DoorDate { day: 6, year: 2024 }, day06::Door),
-        door!(DoorDate { day: 7, year: 2024 }, day07::Door),
-        door!(DoorDate { day: 8, year: 2024 }, day08::Door),
-        door!(DoorDate { day: 9, year: 2024 }, day09::Door),
-        door!(
-            DoorDate {
-                day: 10,
-                year: 2024
-            },
-            day10::Door
-        ),
-        door!(
-            DoorDate {
-                day: 11,
-                year: 2024
-            },
-            day11::Door
-        ),
+        door!(2024-12-01 ~> day01),
+        door!(2024-12-02 ~> day02),
+        door!(2024-12-03 ~> day03),
+        door!(2024-12-04 ~> day04),
+        door!(2024-12-05 ~> day05),
+        door!(2024-12-06 ~> day06),
+        door!(2024-12-07 ~> day07),
+        door!(2024-12-08 ~> day08),
+        door!(2024-12-09 ~> day09),
+        door!(2024-12-10 ~> day10),
+        door!(2024-12-11 ~> day11),
+        // door!(2024-12-12 ~> day12),
+        // door!(2024-12-13 ~> day13),
+        // door!(2024-12-14 ~> day14),
+        // door!(2024-12-15 ~> day15),
+        // door!(2024-12-16 ~> day16),
+        // door!(2024-12-17 ~> day17),
+        // door!(2024-12-18 ~> day18),
+        // door!(2024-12-19 ~> day19),
+        // door!(2024-12-20 ~> day20),
+        // door!(2024-12-21 ~> day21),
+        // door!(2024-12-22 ~> day22),
+        // door!(2024-12-23 ~> day23),
+        // door!(2024-12-24 ~> day24),
+        // door!(2024-12-25 ~> day25),
         // append "doors" here...
     ])
     .await

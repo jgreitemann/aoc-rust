@@ -182,9 +182,16 @@ pub mod detail {
 
 #[macro_export]
 macro_rules! door {
-    ($date:expr, $d:ty) => {
-        aoc_companion::door::DoorEntry($date, |input, parts_solved| {
-            aoc_companion::door::detail::solve::<$d>(input, parts_solved)
-        })
+    ($year:literal-12-$day:literal ~> $mod:ident) => {
+        aoc_companion::door::DoorEntry(
+            aoc_companion::door::DoorDate {
+                #[allow(clippy::zero_prefixed_literal)]
+                day: $day,
+                year: $year,
+            },
+            |input, parts_solved| {
+                aoc_companion::door::detail::solve::<$mod::Door>(input, parts_solved)
+            },
+        )
     };
 }

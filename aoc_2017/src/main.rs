@@ -24,78 +24,24 @@ use aoc_companion::prelude::*;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     aoc_main(&[
-        door!(DoorDate { day: 1, year: 2017 }, day01::Door),
-        door!(DoorDate { day: 2, year: 2017 }, day02::Door),
-        door!(DoorDate { day: 3, year: 2017 }, day03::Door),
-        door!(DoorDate { day: 4, year: 2017 }, day04::Door),
-        door!(DoorDate { day: 5, year: 2017 }, day05::Door),
-        door!(DoorDate { day: 6, year: 2017 }, day06::Door),
-        door!(DoorDate { day: 7, year: 2017 }, day07::Door),
-        door!(DoorDate { day: 8, year: 2017 }, day08::Door),
-        door!(DoorDate { day: 9, year: 2017 }, day09::Door),
-        door!(
-            DoorDate {
-                day: 10,
-                year: 2017
-            },
-            day10::Door
-        ),
-        door!(
-            DoorDate {
-                day: 11,
-                year: 2017
-            },
-            day11::Door
-        ),
-        door!(
-            DoorDate {
-                day: 12,
-                year: 2017
-            },
-            day12::Door
-        ),
-        door!(
-            DoorDate {
-                day: 13,
-                year: 2017
-            },
-            day13::Door
-        ),
-        door!(
-            DoorDate {
-                day: 14,
-                year: 2017
-            },
-            day14::Door
-        ),
-        door!(
-            DoorDate {
-                day: 15,
-                year: 2017
-            },
-            day15::Door
-        ),
-        door!(
-            DoorDate {
-                day: 16,
-                year: 2017
-            },
-            day16::Door
-        ),
-        door!(
-            DoorDate {
-                day: 17,
-                year: 2017
-            },
-            day17::Door
-        ),
-        door!(
-            DoorDate {
-                day: 18,
-                year: 2017
-            },
-            day18::Door
-        ),
+        door!(2017-12-01 ~> day01),
+        door!(2017-12-02 ~> day02),
+        door!(2017-12-03 ~> day03),
+        door!(2017-12-04 ~> day04),
+        door!(2017-12-05 ~> day05),
+        door!(2017-12-06 ~> day06),
+        door!(2017-12-07 ~> day07),
+        door!(2017-12-08 ~> day08),
+        door!(2017-12-09 ~> day09),
+        door!(2017-12-10 ~> day10),
+        door!(2017-12-11 ~> day11),
+        door!(2017-12-12 ~> day12),
+        door!(2017-12-13 ~> day13),
+        door!(2017-12-14 ~> day14),
+        door!(2017-12-15 ~> day15),
+        door!(2017-12-16 ~> day16),
+        door!(2017-12-17 ~> day17),
+        door!(2017-12-18 ~> day18),
         // append "doors" here...
     ])
     .await
