@@ -4,7 +4,7 @@ use std::{
 };
 
 use aoc_companion::prelude::*;
-use aoc_utils::{geometry::map_bounds, linalg::Vector};
+use aoc_utils::{geometry::try_map_bounds, linalg::Vector};
 use itertools::Itertools;
 
 pub(crate) struct Door {
@@ -15,7 +15,7 @@ pub(crate) struct Door {
 impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Self {
         Door {
-            bounds: map_bounds(input),
+            bounds: try_map_bounds(input).unwrap(),
             antennae: parse_antennae(input),
         }
     }
@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn parse_example_bounds() {
-        assert_eq!(map_bounds(EXAMPLE_INPUT), EXAMPLE_BOUNDS);
+        assert_eq!(try_map_bounds(EXAMPLE_INPUT).unwrap(), EXAMPLE_BOUNDS);
     }
 
     #[test]

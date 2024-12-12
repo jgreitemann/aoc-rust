@@ -33,7 +33,7 @@ fn parse_map(input: &str) -> Result<ndarray::Array2<u8>, ndarray::ShapeError> {
         .flat_map(|line| line.as_bytes().iter().map(|b| b - b'0'))
         .collect();
     let bounds = map_bounds(input);
-    ndarray::Array2::from_shape_vec(bounds.map(|b| b.end as usize), data)
+    ndarray::Array2::from_shape_vec(bounds.map(|b| b.end), data)
 }
 
 fn reachable_niners<Coll>(start: Vector<usize, 2>, map: &ndarray::Array2<u8>) -> Coll

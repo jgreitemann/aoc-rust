@@ -1,7 +1,7 @@
 use std::{cell::Cell, collections::HashSet, ops::Range};
 
 use aoc_companion::prelude::*;
-use aoc_utils::{geometry::map_bounds, linalg::Vector};
+use aoc_utils::{geometry::try_map_bounds, linalg::Vector};
 use itertools::Itertools;
 use rayon::prelude::*;
 use tap::Tap;
@@ -59,7 +59,7 @@ impl<'input> Solution<'input> for Door {
         Ok(Door {
             map: Map {
                 obstacles,
-                bounds: map_bounds(input),
+                bounds: try_map_bounds(input).unwrap(),
             },
             starting_guard: Guard {
                 pos: starting_pos.take().ok_or(ParseError::NoStartingPosition)?,
