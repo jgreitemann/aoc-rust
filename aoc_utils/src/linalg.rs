@@ -157,9 +157,11 @@ impl_vector_op!(Add, add);
 impl_vector_op!(Sub, sub);
 impl_vector_op!(Mul, mul);
 impl_vector_op!(Div, div);
+impl_vector_op!(Rem, rem);
 
 impl_scalar_op!(Mul, mul);
 impl_scalar_op!(Div, div);
+impl_scalar_op!(Rem, rem);
 
 impl<T, const N: usize> std::iter::Sum for Vector<T, N>
 where
