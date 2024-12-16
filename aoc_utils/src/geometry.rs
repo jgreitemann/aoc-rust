@@ -7,6 +7,7 @@ where
     fn next_nearest_neighbors(self) -> Neighbors<Self>;
 }
 
+#[derive(Clone)]
 pub struct Neighbors<P>
 where
     P: 'static + Copy + std::ops::Add<Output = P>,
