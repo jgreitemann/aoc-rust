@@ -1,27 +1,29 @@
 use std::collections::HashMap;
 
+type CacheFunc<T, R> = Box<dyn Fn(&T, &mut CacheView<T, R>) -> R>;
+
 pub struct Cache<T, R>
 where
     T: std::hash::Hash + Eq,
 {
     data: HashMap<T, R>,
-    func: fn(&T, &mut CacheView<T, R>) -> R,
+    func: CacheFunc<T, R>,
 }
 
 impl<T, R> Cache<T, R>
 where
     T: std::hash::Hash + Eq,
 {
-    pub fn new(func: fn(&T, &mut CacheView<T, R>) -> R) -> Self {
+    pub fn new(func: impl Fn(&T, &mut CacheView<T, R>) -> R + 'static) -> Self {
         Self {
             data: HashMap::new(),
-            func,
+            func: Box::new(func),
         }
     }
 
     pub fn view(&mut self) -> CacheView<'_, T, R> {
         let Cache { data, func } = self;
-        CacheView { data, func: *func }
+        CacheView { data, func }
     }
 }
 
@@ -30,7 +32,7 @@ where
     T: std::hash::Hash + Eq,
 {
     pub data: &'c mut HashMap<T, R>,
-    pub func: fn(&T, &mut Self) -> R,
+    pub func: &'c dyn Fn(&T, &mut Self) -> R,
 }
 
 impl<T, R> CacheView<'_, T, R>
