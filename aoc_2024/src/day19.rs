@@ -1,5 +1,7 @@
 use anyhow::bail;
 use aoc_companion::prelude::*;
+use aoc_utils::cache::{Cache, CacheView};
+use itertools::Itertools;
 use regex::Regex;
 
 pub(crate) struct Door<'input> {
@@ -36,21 +38,28 @@ impl<'input> Door<'input> {
     }
 
     fn number_of_matches(&self) -> usize {
+        let towels = self.towels.iter().map(|s| s.to_string()).collect_vec();
+        let mut cache = Cache::<&str, usize>::new(move |pattern, cache| {
+            number_of_matches_for_pattern(pattern, &towels, cache)
+        });
         self.patterns
             .iter()
-            .inspect(|x| eprintln!("{x}"))
-            .map(|pattern| number_of_matches_for_pattern(pattern, &self.towels))
+            .map(|pattern| *cache.view().get_or_calc(pattern))
             .sum()
     }
 }
 
-fn number_of_matches_for_pattern(pattern: &str, towels: &[&str]) -> usize {
+fn number_of_matches_for_pattern<'input>(
+    pattern: &'input str,
+    towels: &[String],
+    cache: &mut CacheView<&'input str, usize>,
+) -> usize {
     towels
         .iter()
         .map(|towel| match pattern.strip_prefix(towel) {
             None => 0,
             Some("") => 1,
-            Some(rest) => number_of_matches_for_pattern(rest, towels),
+            Some(rest) => *cache.get_or_calc(rest),
         })
         .sum()
 }
