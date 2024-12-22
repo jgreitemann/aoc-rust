@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 
 use aoc_companion::prelude::*;
-use aoc_utils::cache::{Cache, CacheView};
+use aoc_utils::cache::cached;
 use itertools::Itertools;
 
 pub(crate) struct Door {
@@ -58,24 +58,24 @@ fn blink_seq(rocks: &[u64]) -> impl Iterator<Item = Vec<u64>> {
 }
 
 fn stone_count(n: usize, rocks: &[u64]) -> usize {
-    let mut cache = Cache::new(stone_count_recursive);
+    let mut cached_stone_count_recursive = cached(stone_count_recursive);
     rocks
         .iter()
-        .map(|&r| *cache.view().get_or_calc((n, r)))
+        .map(move |&r| cached_stone_count_recursive((n, r)))
         .sum()
 }
 
 fn stone_count_recursive(
-    &(n, r): &(usize, u64),
-    cache: &mut CacheView<'_, (usize, u64), usize>,
+    (n, r): (usize, u64),
+    recurse: &mut dyn FnMut((usize, u64)) -> usize,
 ) -> usize {
     if n == 0 {
         1
     } else {
         match try_split(r) {
-            Ok((lhs, rhs)) => *cache.get_or_calc((n - 1, lhs)) + *cache.get_or_calc((n - 1, rhs)),
-            Err(0) => *cache.get_or_calc((n - 1, 1)),
-            Err(x) => *cache.get_or_calc((n - 1, 2024 * x)),
+            Ok((lhs, rhs)) => recurse((n - 1, lhs)) + recurse((n - 1, rhs)),
+            Err(0) => recurse((n - 1, 1)),
+            Err(x) => recurse((n - 1, 2024 * x)),
         }
     }
 }

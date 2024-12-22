@@ -1,6 +1,6 @@
 use anyhow::bail;
 use aoc_companion::prelude::*;
-use aoc_utils::cache::{Cache, CacheView};
+use aoc_utils::cache::cached;
 use itertools::Itertools;
 use regex::Regex;
 
@@ -39,12 +39,12 @@ impl<'input> Door<'input> {
 
     fn number_of_matches(&self) -> usize {
         let towels = self.towels.iter().map(|s| s.to_string()).collect_vec();
-        let mut cache = Cache::<&str, usize>::new(move |pattern, cache| {
-            number_of_matches_for_pattern(pattern, &towels, cache)
+        let mut cached_number_of_matches_for_pattern = cached(move |pattern, recurse| {
+            number_of_matches_for_pattern(pattern, &towels, recurse)
         });
         self.patterns
             .iter()
-            .map(|pattern| *cache.view().get_or_calc(pattern))
+            .map(|pattern| cached_number_of_matches_for_pattern(pattern))
             .sum()
     }
 }
@@ -52,14 +52,14 @@ impl<'input> Door<'input> {
 fn number_of_matches_for_pattern<'input>(
     pattern: &'input str,
     towels: &[String],
-    cache: &mut CacheView<&'input str, usize>,
+    recurse: &mut dyn FnMut(&'input str) -> usize,
 ) -> usize {
     towels
         .iter()
         .map(|towel| match pattern.strip_prefix(towel) {
             None => 0,
             Some("") => 1,
-            Some(rest) => *cache.get_or_calc(rest),
+            Some(rest) => recurse(rest),
         })
         .sum()
 }
