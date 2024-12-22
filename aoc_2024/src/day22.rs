@@ -1,8 +1,7 @@
-use std::num::ParseIntError;
+use std::{collections::HashMap, num::ParseIntError};
 
 use aoc_companion::prelude::*;
 use itertools::{iterate, Itertools};
-use rayon::iter::{ParallelBridge, ParallelIterator};
 
 pub(crate) struct Door {
     initial_numbers: Vec<u64>,
@@ -45,7 +44,7 @@ fn prices(seed: u64) -> impl Iterator<Item = u64> {
     prng(seed).map(|p| p % 10)
 }
 
-fn profit(seed: u64, trigger: [i8; 4]) -> u64 {
+fn profit_by_diffs(seed: u64) -> HashMap<[i8; 4], u64> {
     prices(seed)
         .zip(
             std::iter::once(0)
@@ -55,40 +54,33 @@ fn profit(seed: u64, trigger: [i8; 4]) -> u64 {
         )
         .take(2000)
         .tuple_windows()
-        .find(|((_, d1), (_, d2), (_, d3), (_, d4))| [*d1, *d2, *d3, *d4] == trigger)
-        .map(|w| w.3 .0)
-        .unwrap_or(0)
-}
-
-fn trigger_combos() -> impl Iterator<Item = [i8; 4]> {
-    (-9..=9)
-        .cartesian_product(-9..=9)
-        .cartesian_product(-9..=9)
-        .cartesian_product(-9..=9)
-        .map(|(((d1, d2), d3), d4)| [d1, d2, d3, d4])
+        .fold(
+            HashMap::new(),
+            |mut mapping, ((_, d1), (_, d2), (_, d3), (price, d4))| {
+                mapping.entry([d1, d2, d3, d4]).or_insert(price);
+                mapping
+            },
+        )
 }
 
 fn most_profit(seeds: &[u64]) -> u64 {
-    trigger_combos()
-        .par_bridge()
-        .map(|trigger| seeds.iter().map(|&seed| profit(seed, trigger)).sum())
-        .max()
-        .unwrap()
+    let global_mapping = seeds
+        .iter()
+        .map(|&seed| profit_by_diffs(seed))
+        .reduce(|mut acc, seed_mapping| {
+            for (seq, price) in seed_mapping {
+                *acc.entry(seq).or_default() += price;
+            }
+            acc
+        })
+        .unwrap_or_default();
+
+    global_mapping.values().copied().max().unwrap_or_default()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    const EXAMPLE_TRIGGER: [i8; 4] = [-2, 1, -1, 3];
-
-    #[test]
-    fn profit_for_example_trigger() {
-        assert_eq!(profit(1, EXAMPLE_TRIGGER), 7);
-        assert_eq!(profit(2, EXAMPLE_TRIGGER), 7);
-        assert_eq!(profit(3, EXAMPLE_TRIGGER), 0);
-        assert_eq!(profit(2024, EXAMPLE_TRIGGER), 9);
-    }
 
     #[test]
     fn most_profit_for_example() {
