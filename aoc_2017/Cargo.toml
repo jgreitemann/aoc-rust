@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 aoc_companion = { workspace = true }
 aoc_utils = { workspace = true }
+anyhow = { workspace = true }
 assert_matches = { workspace = true }
 itertools = { workspace = true }
 regex = { workspace = true }
