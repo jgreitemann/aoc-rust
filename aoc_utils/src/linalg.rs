@@ -239,6 +239,14 @@ where
             .map(|x| x * x)
             .fold(T::zero(), std::ops::Add::add)
     }
+
+    pub fn dot(&self, other: Self) -> T {
+        self.0
+            .into_iter()
+            .zip(other.0)
+            .map(|(x, y)| x * y)
+            .fold(T::zero(), std::ops::Add::add)
+    }
 }
 
 impl<T, const N: usize> Vector<T, N>
@@ -734,6 +742,31 @@ mod tests {
 
         assert_eq!(V1F32.norm_lp_pow::<4>(), 98f32);
         assert_eq!(V1F32.norm_lp::<4>(), f64::powf(98., 0.25));
+    }
+
+    #[test]
+    fn vector_integral_dot_product() {
+        assert_eq!(V1.dot(V1), V1.norm_l2_sq());
+        assert_eq!(V1.dot(V1), V1.norm_l2_sq());
+        assert_eq!(V2.dot(V2), V2.norm_l2_sq());
+        assert_eq!(V3.dot(V3), V3.norm_l2_sq());
+        assert_eq!(V4.dot(V4), V4.norm_l2_sq());
+        assert_eq!(V5.dot(V5), V5.norm_l2_sq());
+        assert_eq!(V6.dot(V6), V6.norm_l2_sq());
+        assert_eq!(V7.dot(V7), V7.norm_l2_sq());
+        assert_eq!(V1I8.dot(V1I8), V1I8.norm_l2_sq());
+        assert_eq!(V1I64.dot(V1I64), V1I64.norm_l2_sq());
+        assert_eq!(V1U32.dot(V1U32), V1U32.norm_l2_sq());
+
+        assert_eq!(V1.dot(V2), 32);
+        assert_eq!(V2.dot(V1), 32);
+        assert_eq!(V2.dot(V3), 109);
+        assert_eq!(V3.dot(V1), 46);
+    }
+
+    #[test]
+    fn vector_floating_point_dot_product() {
+        assert_eq!(V1F32.dot(V1F32), V1F32.norm_l2_sq());
     }
 
     #[test]
