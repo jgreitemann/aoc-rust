@@ -45,13 +45,13 @@ enum Instruction {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Operand {
+pub(crate) enum Operand {
     Immediate(i64),
     Register(Register),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-struct Register(u8);
+pub(crate) struct Register(pub u8);
 
 impl std::fmt::Debug for Register {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -166,7 +166,7 @@ impl FromStr for Register {
 }
 
 impl Register {
-    fn access<'a>(
+    pub(crate) fn access<'a>(
         &self,
         registers: &'a mut HashMap<Register, i64>,
     ) -> hash_map::Entry<'a, Register, i64> {
@@ -175,7 +175,7 @@ impl Register {
 }
 
 impl Operand {
-    fn fetch(&self, registers: &mut HashMap<Register, i64>) -> i64 {
+    pub(crate) fn fetch(&self, registers: &mut HashMap<Register, i64>) -> i64 {
         match self {
             Operand::Immediate(val) => *val,
             Operand::Register(reg) => *reg.access(registers).or_default(),
