@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 pub trait Point
 where
     Self: Copy + std::ops::Add<Output = Self>,
@@ -44,6 +46,33 @@ pub fn try_map_bounds<T: TryFrom<usize>>(
     ])
 }
 
+pub fn parse_ascii_map(input: &str) -> Result<ndarray::Array2<u8>, ndarray::ShapeError> {
+    let mut shape = map_bounds(input).map(|b| b.end);
+    shape.reverse();
+    ndarray::Array2::from_shape_vec(shape, input.lines().flat_map(str::bytes).collect())
+}
+
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum ParseMapError<E> {
+    #[error(transparent)]
+    ShapeError(ndarray::ShapeError),
+    #[error(transparent)]
+    ConversionError(#[from] E),
+}
+
+pub fn try_parse_map<T, E>(
+    input: &str,
+    f: impl FnMut(u8) -> Result<T, E>,
+) -> Result<ndarray::Array2<T>, ParseMapError<E>> {
+    let mut shape = map_bounds(input).map(|b| b.end);
+    shape.reverse();
+    ndarray::Array2::from_shape_vec(
+        shape,
+        input.lines().flat_map(str::bytes).map(f).try_collect()?,
+    )
+    .map_err(ParseMapError::ShapeError)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -51,5 +80,41 @@ mod tests {
     #[test]
     fn find_bounds_of_map_input() {
         assert_eq!(map_bounds("ABC\nDEF\n"), [0..3, 0..2]);
+    }
+
+    #[test]
+    fn ascii_map() {
+        assert_eq!(
+            parse_ascii_map("ABC\nDEF\n").unwrap(),
+            ndarray::array![[b'A', b'B', b'C'], [b'D', b'E', b'F']],
+        )
+    }
+
+    #[test]
+    fn fallible_map() {
+        #[derive(Debug, thiserror::Error, PartialEq, Eq)]
+        #[error("Not a digit")]
+        struct NotADigit;
+
+        fn to_digit(ascii: u8) -> Result<u32, NotADigit> {
+            char::from(ascii).to_digit(10).ok_or(NotADigit)
+        }
+
+        assert_eq!(
+            try_parse_map("123\n456\n", to_digit),
+            Ok(ndarray::array![[1, 2, 3], [4, 5, 6]])
+        );
+
+        assert_eq!(
+            try_parse_map("123\n46\n", to_digit),
+            Err(ParseMapError::ShapeError(ndarray::ShapeError::from_kind(
+                ndarray::ErrorKind::OutOfBounds
+            )))
+        );
+
+        assert_eq!(
+            try_parse_map("123\n4x6\n", to_digit),
+            Err(ParseMapError::ConversionError(NotADigit))
+        );
     }
 }

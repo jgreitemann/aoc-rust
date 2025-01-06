@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use aoc_companion::prelude::*;
 use aoc_utils::{
     array,
-    geometry::{map_bounds, Point},
+    geometry::{parse_ascii_map, Point},
     linalg::Vector,
 };
 use ndarray::ShapeError;
@@ -17,7 +17,7 @@ pub(crate) struct Door {
 impl<'input> Solution<'input> for Door {
     fn parse(input: &'input str) -> Result<Self, ShapeError> {
         Ok(Self {
-            map: parse_map(input)?,
+            map: parse_ascii_map(input)?,
         })
     }
 
@@ -28,17 +28,6 @@ impl<'input> Solution<'input> for Door {
     fn part2(&self) -> usize {
         discounted_price(&self.map)
     }
-}
-
-fn parse_map(input: &str) -> Result<Map, ShapeError> {
-    let bounds = map_bounds(input);
-    Map::from_shape_vec(
-        bounds.map(|rng| rng.end),
-        input
-            .lines()
-            .flat_map(|line| line.as_bytes().iter().copied())
-            .collect(),
-    )
 }
 
 fn segment(map: &Map) -> Vec<HashSet<Vector<usize, 2>>> {
@@ -272,13 +261,16 @@ AAAAAA";
 
     #[test]
     fn fencing_price_using_perimeter() {
-        assert_eq!(fencing_price(&parse_map(FIRST_EXAMPLE_INPUT).unwrap()), 140);
         assert_eq!(
-            fencing_price(&parse_map(SECOND_EXAMPLE_INPUT).unwrap()),
+            fencing_price(&parse_ascii_map(FIRST_EXAMPLE_INPUT).unwrap()),
+            140
+        );
+        assert_eq!(
+            fencing_price(&parse_ascii_map(SECOND_EXAMPLE_INPUT).unwrap()),
             772
         );
         assert_eq!(
-            fencing_price(&parse_map(THIRD_EXAMPLE_INPUT).unwrap()),
+            fencing_price(&parse_ascii_map(THIRD_EXAMPLE_INPUT).unwrap()),
             1930
         );
     }
@@ -286,16 +278,19 @@ AAAAAA";
     #[test]
     fn fencing_price_with_bulk_discount() {
         assert_eq!(
-            discounted_price(&parse_map(FIRST_EXAMPLE_INPUT).unwrap()),
+            discounted_price(&parse_ascii_map(FIRST_EXAMPLE_INPUT).unwrap()),
             80
         );
         assert_eq!(
-            discounted_price(&parse_map(SECOND_EXAMPLE_INPUT).unwrap()),
+            discounted_price(&parse_ascii_map(SECOND_EXAMPLE_INPUT).unwrap()),
             436
         );
-        assert_eq!(discounted_price(&parse_map(E_SHAPED_INPUT).unwrap()), 236);
         assert_eq!(
-            discounted_price(&parse_map(TOUCHING_HOLE_INPUT).unwrap()),
+            discounted_price(&parse_ascii_map(E_SHAPED_INPUT).unwrap()),
+            236
+        );
+        assert_eq!(
+            discounted_price(&parse_ascii_map(TOUCHING_HOLE_INPUT).unwrap()),
             368
         );
     }

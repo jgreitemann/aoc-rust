@@ -2,7 +2,10 @@ use std::collections::HashSet;
 
 use anyhow::{anyhow, bail};
 use aoc_companion::prelude::*;
-use aoc_utils::{geometry::map_bounds, linalg::Vector};
+use aoc_utils::{
+    geometry::{try_parse_map, ParseMapError},
+    linalg::Vector,
+};
 use itertools::Itertools;
 
 pub(crate) struct Door {
@@ -59,23 +62,20 @@ impl<'input> Solution<'input> for Door {
     }
 }
 
-fn parse_map(map_str: &str) -> Result<Map> {
-    let mut shape = map_bounds(map_str).map(|r| r.end);
-    shape.reverse();
-    let map_data = map_str
-        .lines()
-        .flat_map(|line| line.as_bytes())
-        .map(|b| match b {
-            b'.' => Ok(Tile::Free),
-            b'#' => Ok(Tile::Wall),
-            b'O' => Ok(Tile::Crate),
-            b'[' => Ok(Tile::LCrate),
-            b']' => Ok(Tile::RCrate),
-            b'@' => Ok(Tile::Robot),
-            b => Err(anyhow!("Unrecognized tile: {b:?}")),
-        })
-        .try_collect()?;
-    Ok(ndarray::Array2::from_shape_vec(shape, map_data).unwrap())
+#[derive(Debug, thiserror::Error)]
+#[error("Unrecognized tile: {0:#x}")]
+struct UnrecognizedTile(u8);
+
+fn parse_map(map_str: &str) -> Result<Map, ParseMapError<UnrecognizedTile>> {
+    try_parse_map(map_str, |b| match b {
+        b'.' => Ok(Tile::Free),
+        b'#' => Ok(Tile::Wall),
+        b'O' => Ok(Tile::Crate),
+        b'[' => Ok(Tile::LCrate),
+        b']' => Ok(Tile::RCrate),
+        b'@' => Ok(Tile::Robot),
+        b => Err(UnrecognizedTile(b)),
+    })
 }
 
 fn parse_moves(moves_str: &str) -> Result<Vec<Move>> {
