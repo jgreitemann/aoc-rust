@@ -2,7 +2,7 @@
 
 mod day01;
 mod day02;
-// mod day03;
+mod day03;
 // mod day04;
 // mod day05;
 // mod day06;
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
     aoc_main(&[
         door!(2020-12-01 ~> day01),
         door!(2020-12-02 ~> day02),
-        // door!(2020-12-03 ~> day03),
+        door!(2020-12-03 ~> day03),
         // door!(2020-12-04 ~> day04),
         // door!(2020-12-05 ~> day05),
         // door!(2020-12-06 ~> day06),
