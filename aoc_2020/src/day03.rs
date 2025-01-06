@@ -66,7 +66,7 @@ struct SlopeIter<'a> {
     col_iter: Box<dyn Iterator<Item = usize>>,
 }
 
-impl<'a> Iterator for SlopeIter<'a> {
+impl Iterator for SlopeIter<'_> {
     type Item = bool;
 
     fn next(&mut self) -> Option<Self::Item> {
