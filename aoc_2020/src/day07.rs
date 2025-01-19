@@ -1,10 +1,9 @@
 use anyhow::bail;
 use aoc_companion::prelude::*;
-
 use aoc_utils::cache::cached;
 use itertools::Itertools;
 use regex::Regex;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
 pub(crate) struct Door<'input> {
     regulations: HashMap<Color<'input>, Vec<Requirement<'input>>>,
@@ -12,11 +11,12 @@ pub(crate) struct Door<'input> {
 
 impl<'input> Solution<'input> for Door<'input> {
     fn parse(input: &'input str) -> Result<Self> {
-        let outer_re =
+        static RE: LazyLock<Regex> = LazyLock::new(|| {
             Regex::new(r"([a-z]+ [a-z]+) bags contain ((?:\d+ [a-z]+ [a-z]+ bags?(?:, )?)+)\.")
-                .unwrap();
+                .unwrap()
+        });
 
-        let regulations = outer_re
+        let regulations = RE
             .captures_iter(input)
             .map(|cap| cap.extract())
             .map(|(_, [color, requirements])| {
@@ -55,8 +55,10 @@ struct Requirement<'input> {
 
 impl<'input> Requirement<'input> {
     fn parse(req: &'input str) -> Result<Requirement<'input>> {
-        let inner_re = Regex::new(r"^(\d+) ([a-z]+ [a-z]+) bags?$").unwrap();
-        let Some((_, [quantity, color])) = inner_re.captures(req).map(|cap| cap.extract()) else {
+        static RE: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r"^(\d+) ([a-z]+ [a-z]+) bags?$").unwrap());
+
+        let Some((_, [quantity, color])) = RE.captures(req).map(|cap| cap.extract()) else {
             bail!("requirement regex didn't match");
         };
 
