@@ -73,7 +73,7 @@ impl Door {
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::lazy_static;
+    use std::sync::LazyLock;
 
     use super::*;
 
@@ -110,20 +110,20 @@ mod tests {
         Vector([11, 0]),
     ];
 
-    lazy_static! {
-        static ref EXAMPLE_ANTENNAE: HashMap<u8, Vec<Vector<i32, 2>>> = HashMap::from([
+    static EXAMPLE_ANTENNAE: LazyLock<HashMap<u8, Vec<Vector<i32, 2>>>> = LazyLock::new(|| {
+        HashMap::from([
             (
                 b'0',
                 vec![
                     Vector([8, 1]),
                     Vector([5, 2]),
                     Vector([7, 3]),
-                    Vector([4, 4])
-                ]
+                    Vector([4, 4]),
+                ],
             ),
             (b'A', vec![Vector([6, 5]), Vector([8, 8]), Vector([9, 9])]),
-        ]);
-    }
+        ])
+    });
 
     #[test]
     fn parse_example_bounds() {

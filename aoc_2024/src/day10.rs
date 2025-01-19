@@ -66,7 +66,7 @@ fn trailhead_ratings(map: &ndarray::Array2<u8>) -> impl Iterator<Item = usize> +
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::lazy_static;
+    use std::sync::LazyLock;
 
     use super::*;
 
@@ -80,8 +80,8 @@ mod tests {
 01329801
 10456732";
 
-    lazy_static! {
-        static ref EXAMPLE_MAP: ndarray::Array2<u8> = ndarray::array![
+    static EXAMPLE_MAP: LazyLock<ndarray::Array2<u8>> = LazyLock::new(|| {
+        ndarray::array![
             [8, 9, 0, 1, 0, 1, 2, 3],
             [7, 8, 1, 2, 1, 8, 7, 4],
             [8, 7, 4, 3, 0, 9, 6, 5],
@@ -90,8 +90,8 @@ mod tests {
             [3, 2, 0, 1, 9, 0, 1, 2],
             [0, 1, 3, 2, 9, 8, 0, 1],
             [1, 0, 4, 5, 6, 7, 3, 2],
-        ];
-    }
+        ]
+    });
 
     #[test]
     fn parse_example_map() {

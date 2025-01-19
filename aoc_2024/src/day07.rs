@@ -86,7 +86,7 @@ fn total_test_value_of_equations_fulfilled_by(ops: &[Op], eqns: &[Equation]) -> 
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::lazy_static;
+    use std::sync::LazyLock;
 
     use super::*;
 
@@ -101,46 +101,46 @@ mod tests {
 21037: 9 7 18 13
 292: 11 6 16 20";
 
-    lazy_static! {
-        static ref EXAMPLE_EQNS: [Equation; 9] = [
+    static EXAMPLE_EQNS: LazyLock<[Equation; 9]> = LazyLock::new(|| {
+        [
             Equation {
                 test_value: 190,
-                operands: vec![10, 19]
+                operands: vec![10, 19],
             },
             Equation {
                 test_value: 3267,
-                operands: vec![81, 40, 27]
+                operands: vec![81, 40, 27],
             },
             Equation {
                 test_value: 83,
-                operands: vec![17, 5]
+                operands: vec![17, 5],
             },
             Equation {
                 test_value: 156,
-                operands: vec![15, 6]
+                operands: vec![15, 6],
             },
             Equation {
                 test_value: 7290,
-                operands: vec![6, 8, 6, 15]
+                operands: vec![6, 8, 6, 15],
             },
             Equation {
                 test_value: 161011,
-                operands: vec![16, 10, 13]
+                operands: vec![16, 10, 13],
             },
             Equation {
                 test_value: 192,
-                operands: vec![17, 8, 14]
+                operands: vec![17, 8, 14],
             },
             Equation {
                 test_value: 21037,
-                operands: vec![9, 7, 18, 13]
+                operands: vec![9, 7, 18, 13],
             },
             Equation {
                 test_value: 292,
-                operands: vec![11, 6, 16, 20]
+                operands: vec![11, 6, 16, 20],
             },
-        ];
-    }
+        ]
+    });
 
     #[test]
     fn parse_example_input() {
