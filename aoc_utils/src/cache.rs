@@ -1,20 +1,20 @@
 use std::{collections::HashMap, hash::Hash};
 
-type CacheFunc<T, R> = Box<dyn Fn(T, &mut CacheView<T, R>) -> R>;
+type CacheFunc<'f, T, R> = Box<dyn Fn(T, &mut CacheView<T, R>) -> R + 'f>;
 
-struct Cache<T, R>
+struct Cache<'f, T, R>
 where
     T: Clone + Hash + Eq,
 {
     data: HashMap<T, R>,
-    func: CacheFunc<T, R>,
+    func: CacheFunc<'f, T, R>,
 }
 
-impl<T, R> Cache<T, R>
+impl<'f, T, R> Cache<'f, T, R>
 where
     T: Clone + Hash + Eq,
 {
-    pub fn new(func: impl Fn(T, &mut CacheView<T, R>) -> R + 'static) -> Self {
+    pub fn new(func: impl Fn(T, &mut CacheView<T, R>) -> R + 'f) -> Self {
         Self {
             data: HashMap::new(),
             func: Box::new(func),
@@ -50,10 +50,11 @@ where
     }
 }
 
-pub fn cached<T, R>(func: impl Fn(T, &mut dyn FnMut(T) -> R) -> R + 'static) -> impl FnMut(T) -> R
+pub fn cached<'f, T, R, F>(func: F) -> impl FnMut(T) -> R + use<'f, T, R, F>
 where
-    T: Hash + Eq + Clone,
-    R: Clone,
+    T: Hash + Eq + Clone + 'f,
+    R: Clone + 'f,
+    F: Fn(T, &mut dyn FnMut(T) -> R) -> R + 'f,
 {
     let mut cache = Cache::new(move |x, cache: &mut CacheView<T, R>| {
         func(x, &mut |y| cache.get_or_calc(y).clone())
