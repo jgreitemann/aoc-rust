@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail};
 use aoc_companion::prelude::*;
 use aoc_utils::array;
-use itertools::{iterate, Itertools};
+use itertools::{Itertools, iterate};
 
 pub(crate) struct Door {
     initial_registers: [u64; 3],

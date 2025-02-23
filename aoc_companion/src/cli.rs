@@ -1,5 +1,5 @@
-use clap::value_parser;
 pub(crate) use clap::Parser;
+use clap::value_parser;
 
 use crate::validation::ValidationMode;
 

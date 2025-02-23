@@ -1,9 +1,9 @@
 use std::{
     cell::Cell,
-    collections::{hash_map, HashMap},
+    collections::{HashMap, hash_map},
     num::ParseIntError,
     str::FromStr,
-    sync::{atomic::AtomicI64, Arc},
+    sync::{Arc, atomic::AtomicI64},
 };
 use tracing::{info, info_span, instrument};
 

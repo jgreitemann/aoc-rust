@@ -102,7 +102,7 @@ where
 mod tests {
     use anyhow::anyhow;
     use assert_matches::assert_matches;
-    use itertools::{assert_equal, Itertools};
+    use itertools::{Itertools, assert_equal};
     use std::{collections::HashMap, sync::Mutex};
 
     use super::*;
@@ -277,8 +277,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn repeatedly_getting_day_response_for_the_same_day_without_posting_answers_only_uses_underlying_client_once(
-    ) {
+    async fn repeatedly_getting_day_response_for_the_same_day_without_posting_answers_only_uses_underlying_client_once()
+     {
         let client = CachingClient::new(FakeUnderlyingClient::new(), HashMap::new());
         let before = client.get_day(TEST_DATE_1).await.unwrap();
         let after = client.get_day(TEST_DATE_1).await.unwrap();
@@ -286,8 +286,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn repeatedly_getting_day_response_for_the_same_day_uses_the_underlying_client_again_if_the_correct_answer_has_been_posted(
-    ) {
+    async fn repeatedly_getting_day_response_for_the_same_day_uses_the_underlying_client_again_if_the_correct_answer_has_been_posted()
+     {
         let client = CachingClient::new(FakeUnderlyingClient::new(), HashMap::new());
         let before = client.get_day(TEST_DATE_1).await.unwrap();
         assert_matches!(
@@ -312,8 +312,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn repeatedly_getting_day_response_for_the_same_day_only_uses_the_underlying_client_once_if_an_incorrect_answer_has_been_posted(
-    ) {
+    async fn repeatedly_getting_day_response_for_the_same_day_only_uses_the_underlying_client_once_if_an_incorrect_answer_has_been_posted()
+     {
         let client = CachingClient::new(FakeUnderlyingClient::new(), HashMap::new());
         let before = client.get_day(TEST_DATE_1).await.unwrap();
         client

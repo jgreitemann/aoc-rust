@@ -1,7 +1,7 @@
 use crate::api::{AnswerResponse, AoCClient, DayResponse};
 use crate::door::{DoorDate, Part};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use thiserror::Error;
 
 use std::collections::HashMap;
@@ -11,7 +11,9 @@ use std::sync::Arc;
 pub enum SessionError {
     #[error("Failed to retrieve SESSION environment variable")]
     CannotAccessSessionEnvVar,
-    #[error("The session token is invalid; it may have expired. Log into https://adventofcode.com/ and update the session token.")]
+    #[error(
+        "The session token is invalid; it may have expired. Log into https://adventofcode.com/ and update the session token."
+    )]
     AuthenticationInvalidOrExpired,
 }
 

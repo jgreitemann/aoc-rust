@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use anyhow::{anyhow, bail};
 use aoc_companion::prelude::*;
 use aoc_utils::array;
-use itertools::{iterate, Itertools};
+use itertools::{Itertools, iterate};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Door {

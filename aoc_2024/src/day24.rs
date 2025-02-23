@@ -159,10 +159,14 @@ fn full_adder_defects(
                     defects.insert(a.clone(), d.clone());
                     defects.insert(d.clone(), a.clone());
                 } else {
-                    panic!("swapping a={a:?} and d={d:?} didn't help: gate exists, but still doesn't produce {z:?}; instead produced {expected_z:?}");
+                    panic!(
+                        "swapping a={a:?} and d={d:?} didn't help: gate exists, but still doesn't produce {z:?}; instead produced {expected_z:?}"
+                    );
                 }
             } else {
-                panic!("swapping a={a:?} and d={d:?} didn't help: no XOR gate between d={d:?} and c={carry_in:?} either");
+                panic!(
+                    "swapping a={a:?} and d={d:?} didn't help: no XOR gate between d={d:?} and c={carry_in:?} either"
+                );
             }
         }
     }

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use aoc_companion::prelude::*;
 use aoc_utils::{
-    geometry::{map_bounds, Point},
+    geometry::{Point, map_bounds},
     linalg::Vector,
 };
 use itertools::Itertools;

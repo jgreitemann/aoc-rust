@@ -105,8 +105,8 @@ fn furthest_point_along_path(steps: &[HexBasis]) -> Vector<i32, 3> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use assert_matches::assert_matches;
     use HexBasis::*;
+    use assert_matches::assert_matches;
 
     const EXAMPLE_STEPS_1: &[HexBasis] = &[NorthEast; 3];
     const EXAMPLE_STEPS_2: &[HexBasis] = &[NorthEast, NorthEast, SouthWest, SouthWest];

@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use aoc_companion::prelude::*;
 use aoc_utils::{
     array,
-    geometry::{map_bounds, Point},
+    geometry::{Point, map_bounds},
     linalg::Vector,
 };
 

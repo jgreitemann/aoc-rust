@@ -286,10 +286,12 @@ mod tests {
     #[test]
     fn each_of_the_rocks_can_be_placed_in_an_empty_cavern() {
         let cavern = Cavern::new();
-        assert!(ROCK_SEQUENCE
-            .map(|rock| Rock(rock.to_vec()))
-            .iter()
-            .all(|rock| cavern.test(rock)));
+        assert!(
+            ROCK_SEQUENCE
+                .map(|rock| Rock(rock.to_vec()))
+                .iter()
+                .all(|rock| cavern.test(rock))
+        );
     }
 
     #[test]

@@ -1,7 +1,7 @@
-use anyhow::{bail, Context};
+use anyhow::{Context, bail};
 use aoc_companion::prelude::*;
 use aoc_utils::linalg::Vector;
-use itertools::{iterate, Itertools};
+use itertools::{Itertools, iterate};
 
 pub(crate) struct Door {
     particles: Vec<Particle>,

@@ -96,7 +96,9 @@ impl FromStr for DirListingEntry {
                 filename.as_str().into(),
             ))
         } else {
-            panic!("Logic error: Either the 'dirname' or both the 'size' and 'filename' captures have to exist if the regex matched.")
+            panic!(
+                "Logic error: Either the 'dirname' or both the 'size' and 'filename' captures have to exist if the regex matched."
+            )
         }
     }
 }

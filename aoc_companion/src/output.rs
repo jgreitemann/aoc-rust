@@ -109,7 +109,10 @@ impl Display for Table {
                     write_answer(f, &result.date, Part1, &result.part1)?;
                     write_answer(f, &result.date, Part2, &result.part2)?;
                 }
-                _ => writeln!(f, "Dec {day:2}, {year} - Part 1: {progress:?}\n               Part 2: {progress:?}")?,
+                _ => writeln!(
+                    f,
+                    "Dec {day:2}, {year} - Part 1: {progress:?}\n               Part 2: {progress:?}"
+                )?,
             }
         }
 

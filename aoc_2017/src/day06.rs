@@ -62,11 +62,7 @@ impl Iterator for Redistributor {
 fn count_redistribution_cycles_until_recurrence(bank: Vec<i32>) -> usize {
     Redistributor { current: bank }
         .scan(HashSet::new(), |seen, state| {
-            if seen.insert(state) {
-                Some(())
-            } else {
-                None
-            }
+            if seen.insert(state) { Some(()) } else { None }
         })
         .count()
 }

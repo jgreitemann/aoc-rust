@@ -4,7 +4,7 @@ use std::{
 };
 use thiserror::Error;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DoorDate {

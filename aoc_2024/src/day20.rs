@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aoc_companion::prelude::*;
 use aoc_utils::{
-    geometry::{map_bounds, Point},
+    geometry::{Point, map_bounds},
     linalg::Vector,
 };
 use ndarray::ShapeError;

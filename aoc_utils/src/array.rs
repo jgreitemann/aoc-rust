@@ -117,11 +117,7 @@ mod tests {
         let mut n = 0;
         std::iter::from_fn(move || {
             n += 1;
-            if n > 1 {
-                Some(n)
-            } else {
-                None
-            }
+            if n > 1 { Some(n) } else { None }
         })
     }
 

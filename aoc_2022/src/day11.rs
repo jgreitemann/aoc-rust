@@ -71,8 +71,14 @@ impl FromStr for Monkey {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let &[starting_items_line, operation_line, test_line, true_line, false_line, ..] =
-            &s.lines().collect_vec()[1..]
+        if let &[
+            starting_items_line,
+            operation_line,
+            test_line,
+            true_line,
+            false_line,
+            ..,
+        ] = &s.lines().collect_vec()[1..]
         {
             Ok(Monkey {
                 starting_items: starting_items_line

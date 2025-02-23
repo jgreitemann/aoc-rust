@@ -1,7 +1,7 @@
 use std::{collections::HashMap, num::ParseIntError};
 
 use aoc_companion::prelude::*;
-use itertools::{iterate, Itertools};
+use itertools::{Itertools, iterate};
 
 pub(crate) struct Door {
     initial_numbers: Vec<u64>,

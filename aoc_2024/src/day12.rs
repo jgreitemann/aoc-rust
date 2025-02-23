@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use aoc_companion::prelude::*;
 use aoc_utils::{
     array,
-    geometry::{parse_ascii_map, Point},
+    geometry::{Point, parse_ascii_map},
     linalg::Vector,
 };
 use ndarray::ShapeError;

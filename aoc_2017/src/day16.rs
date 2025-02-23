@@ -26,7 +26,9 @@ pub(crate) enum ParseError {
     InvalidSpin(#[source] ParseIntError),
     #[error("program index for Exchange instruction is invalid")]
     InvalidIndex(#[source] ParseIntError),
-    #[error("program name for Partner instruction is invalid: expected a single lowercase letter, got {0:?}")]
+    #[error(
+        "program name for Partner instruction is invalid: expected a single lowercase letter, got {0:?}"
+    )]
     InvalidName(String),
 }
 

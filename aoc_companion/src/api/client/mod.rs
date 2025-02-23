@@ -11,7 +11,7 @@ pub trait AoCClient {
     async fn get_input(&self, date: &DoorDate) -> Result<String>;
     async fn get_day(&self, date: &DoorDate) -> Result<DayResponse>;
     async fn post_answer(&self, date: &DoorDate, part: Part, guess: &str)
-        -> Result<AnswerResponse>;
+    -> Result<AnswerResponse>;
 }
 
 pub use cache::{Cache, CachingClient};

@@ -456,10 +456,11 @@ fn parse_instructions(s: &str) -> Result<Vec<Instruction>, ParseError> {
                     .collect()
             } else {
                 let str = String::from_iter(group);
-                vec![str
-                    .parse()
-                    .map(Instruction::Move)
-                    .map_err(ParseError::ParseIntError)]
+                vec![
+                    str.parse()
+                        .map(Instruction::Move)
+                        .map_err(ParseError::ParseIntError),
+                ]
             }
         })
         .try_collect()

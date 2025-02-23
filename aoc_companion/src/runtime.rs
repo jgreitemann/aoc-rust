@@ -4,8 +4,8 @@ use crate::door::*;
 use crate::output::*;
 use crate::validation::*;
 
-use anyhow::anyhow;
 use anyhow::Result;
+use anyhow::anyhow;
 use std::any::Any;
 use std::io::Write;
 use std::ops::Deref;

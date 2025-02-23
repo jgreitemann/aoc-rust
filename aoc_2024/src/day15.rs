@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use anyhow::{anyhow, bail};
 use aoc_companion::prelude::*;
 use aoc_utils::{
-    geometry::{try_parse_map, ParseMapError},
+    geometry::{ParseMapError, try_parse_map},
     linalg::Vector,
 };
 use itertools::Itertools;

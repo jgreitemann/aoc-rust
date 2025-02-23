@@ -1,6 +1,6 @@
 use aoc_companion::prelude::*;
 
-use enum_map::{enum_map, Enum, EnumMap};
+use enum_map::{Enum, EnumMap, enum_map};
 use itertools::Itertools;
 
 use std::num::ParseIntError;

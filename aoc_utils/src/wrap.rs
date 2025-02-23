@@ -50,7 +50,7 @@ impl<'a, T> WrappingIndex<T> for &'a mut [T] {
 
 #[cfg(test)]
 mod tests {
-    use itertools::{assert_equal, Itertools};
+    use itertools::{Itertools, assert_equal};
     use proptest::prelude::*;
 
     use super::*;
