@@ -74,9 +74,9 @@ fn parse_input(input: &str) -> Result<Vec<Instruction>, ParseError> {
 }
 
 fn execute(program: &[Instruction]) -> impl Iterator<Item = isize> + '_ {
-    use genawaiter::{rc::gen, yield_};
+    use genawaiter::{rc::r#gen, yield_};
     let mut x = 1;
-    gen!({
+    r#gen!({
         for instr in program {
             match instr {
                 Instruction::Noop => yield_!(x),

@@ -69,13 +69,13 @@ fn closest_particle_long_term(particles: &[Particle]) -> usize {
         .enumerate()
         .min_set_by_key(|(_, Particle { a, .. })| a.norm_l2_sq())
         .into_iter()
-        .min_set_by_key(|(_, &Particle { v, a, .. })| v.dot(a))
+        .min_set_by_key(|&(_, &Particle { v, a, .. })| v.dot(a))
         .into_iter()
-        .min_set_by_key(|(_, &Particle { p, v, a })| p.dot(a) + v.norm_l2_sq())
+        .min_set_by_key(|&(_, &Particle { p, v, a })| p.dot(a) + v.norm_l2_sq())
         .into_iter()
-        .min_set_by_key(|(_, &Particle { p, v, .. })| p.dot(v))
+        .min_set_by_key(|&(_, &Particle { p, v, .. })| p.dot(v))
         .into_iter()
-        .min_by_key(|(_, &Particle { p, .. })| p.norm_l2_sq())
+        .min_by_key(|&(_, &Particle { p, .. })| p.norm_l2_sq())
         .unwrap()
         .0
 }

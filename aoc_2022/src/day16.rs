@@ -153,7 +153,7 @@ fn parse_input(input: &str) -> Result<Cave, ParseIntError> {
 fn reduce_cave(mut cave: Cave) -> Cave {
     while let Some((&id, _)) = cave
         .iter()
-        .find(|(&id, Valve { flow_rate, .. })| *flow_rate == 0 && id != "AA".into())
+        .find(|&(&id, Valve { flow_rate, .. })| *flow_rate == 0 && id != "AA".into())
     {
         let Valve { connections, .. } = cave.remove(&id).unwrap();
         for (
