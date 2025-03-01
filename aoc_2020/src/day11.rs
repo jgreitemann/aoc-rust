@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{array, collections::HashSet, ops::RangeInclusive};
 
 use aoc_companion::prelude::*;
 use aoc_utils::{geometry::Point, linalg::Vector};
@@ -24,29 +24,81 @@ impl<'input> Solution<'input> for Door {
     }
 
     fn part1(&self) -> usize {
-        fixed_point_occupancy(&self.seats).len()
+        fixed_point_occupancy(&self.seats, &DirectNeighborSeatPolicy).len()
+    }
+
+    fn part2(&self) -> usize {
+        fixed_point_occupancy(&self.seats, &SightlineSeatPolicy::new(&self.seats)).len()
     }
 }
 
-fn evolve(
+trait SeatPolicy {
+    const THRESHOLD: usize;
+    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>>;
+}
+
+struct DirectNeighborSeatPolicy;
+
+impl SeatPolicy for DirectNeighborSeatPolicy {
+    const THRESHOLD: usize = 4;
+
+    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>> {
+        seat.neighbors()
+    }
+}
+
+struct SightlineSeatPolicy<'s> {
+    seats: &'s HashSet<Vector<usize, 2>>,
+    bounds: [RangeInclusive<usize>; 2],
+}
+
+impl<'s> SightlineSeatPolicy<'s> {
+    fn new(seats: &'s HashSet<Vector<usize, 2>>) -> Self {
+        Self {
+            seats,
+            bounds: array::from_fn(|i| 0..=seats.iter().map(|s| s[i]).max().unwrap_or(0)),
+        }
+    }
+}
+
+impl SeatPolicy for SightlineSeatPolicy<'_> {
+    const THRESHOLD: usize = 5;
+
+    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>> {
+        seat.neighbors().filter_map(move |neighbor| {
+            let dir = neighbor - seat;
+            (1..)
+                .map(|n| seat + dir * n)
+                .take_while(|s| s.in_bounds(&self.bounds))
+                .find(|s| self.seats.contains(s))
+        })
+    }
+}
+
+fn evolve<P: SeatPolicy>(
     occupied: &HashSet<Vector<usize, 2>>,
     seats: &HashSet<Vector<usize, 2>>,
+    policy: &P,
 ) -> HashSet<Vector<usize, 2>> {
     let empty = seats.difference(occupied);
     empty
         .copied()
-        .filter(|seat| seat.neighbors().all(|n| !occupied.contains(&n)))
-        .chain(
-            occupied
-                .iter()
-                .copied()
-                .filter(|seat| seat.neighbors().filter(|n| occupied.contains(n)).count() < 4),
-        )
+        .filter(|seat| policy.neighbors(*seat).all(|n| !occupied.contains(&n)))
+        .chain(occupied.iter().copied().filter(|seat| {
+            policy
+                .neighbors(*seat)
+                .filter(|n| occupied.contains(n))
+                .count()
+                < P::THRESHOLD
+        }))
         .collect()
 }
 
-fn fixed_point_occupancy(seats: &HashSet<Vector<usize, 2>>) -> HashSet<Vector<usize, 2>> {
-    itertools::iterate(HashSet::new(), |prev| evolve(prev, seats))
+fn fixed_point_occupancy(
+    seats: &HashSet<Vector<usize, 2>>,
+    policy: &impl SeatPolicy,
+) -> HashSet<Vector<usize, 2>> {
+    itertools::iterate(HashSet::new(), |prev| evolve(prev, seats, policy))
         .tuple_windows()
         .find(|(lhs, rhs)| lhs == rhs)
         .unwrap()
@@ -152,32 +204,40 @@ L.LLLLL.LL";
     #[test]
     fn all_seats_occupied_after_first_round() {
         let seats = HashSet::from(EXAMPLE_SEATS);
-        assert_eq!(evolve(&HashSet::new(), &seats), seats);
+        assert_eq!(
+            evolve(&HashSet::new(), &seats, &DirectNeighborSeatPolicy),
+            seats
+        );
     }
 
     #[test]
     fn number_of_occupied_seats_evolves() {
         let seats = HashSet::from(EXAMPLE_SEATS);
         let mut occupied = HashSet::new();
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), EXAMPLE_SEATS.len());
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), 20);
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), 51);
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), 30);
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), 37);
-        occupied = evolve(&occupied, &seats);
+        occupied = evolve(&occupied, &seats, &DirectNeighborSeatPolicy);
         assert_eq!(occupied.len(), 37);
     }
 
     #[test]
     fn find_fixed_point_occupancy() {
+        let seats = HashSet::from(EXAMPLE_SEATS);
         assert_eq!(
-            fixed_point_occupancy(&HashSet::from(EXAMPLE_SEATS)).len(),
+            fixed_point_occupancy(&seats, &DirectNeighborSeatPolicy).len(),
             37
+        );
+        assert_eq!(
+            fixed_point_occupancy(&seats, &SightlineSeatPolicy::new(&seats)).len(),
+            26
         );
     }
 }
