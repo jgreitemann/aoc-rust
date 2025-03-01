@@ -284,7 +284,12 @@ where
             .map(num_traits::sign::abs)
             .fold(T::zero(), std::ops::Add::add)
     }
+}
 
+impl<T, const N: usize> Vector<T, N>
+where
+    T: Num + Copy,
+{
     pub fn in_bounds(&self, bounds: &[impl RangeBounds<T>; N]) -> bool
     where
         T: PartialOrd,
