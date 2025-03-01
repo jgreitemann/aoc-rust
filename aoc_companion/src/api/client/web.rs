@@ -88,7 +88,7 @@ impl AoCClient for WebClient {
             .send()
             .await?;
 
-        if resp.status() == reqwest::StatusCode::from_u16(302).unwrap() {
+        if resp.status().is_redirection() {
             // Redirect in case of authentication failure
             return Err(SessionError::AuthenticationInvalidOrExpired).context(format!(
                     "Failed to authenticate when posting the answer {guess:?} for part {part} of day {day}, {year}"
