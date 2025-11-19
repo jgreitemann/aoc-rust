@@ -1,0 +1,18 @@
+when:
+  - event: ["push"]
+    branch: ["main"]
+  - event: ["pull_request"]
+    branch: ["main"]
+
+engine: "nixery"
+
+dependencies:
+  nixpkgs:
+    - gcc
+    - rustc
+    - cargo
+
+steps:
+  - name: "Build all projects"
+    command: |
+      cargo build --release --verbose --locked
