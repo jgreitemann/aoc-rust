@@ -11,8 +11,12 @@ dependencies:
     - gcc
     - rustc
     - cargo
+    - clippy
 
 steps:
   - name: "Build all projects"
     command: |
-      cargo build --release --verbose --locked
+       cargo build --release --verbose --locked
+  - name: "Clippy"
+    command: |
+      cargo clippy --release --workspace --locked
