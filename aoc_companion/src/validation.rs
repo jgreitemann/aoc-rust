@@ -360,11 +360,11 @@ mod tests {
             Ok(ValidationResult {
                 date: TEST_DAY,
                 part1: Ok(PartValidation {
-                    validity: GuessSubmitted(IncorrectTooHigh { .. }),
+                    validity: GuessSubmitted(IncorrectTooHigh),
                     ..
                 }),
                 part2: Ok(PartValidation {
-                    validity: GuessSubmitted(IncorrectTooManyGuesses { .. }),
+                    validity: GuessSubmitted(IncorrectTooManyGuesses),
                     ..
                 })
             })

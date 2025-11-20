@@ -33,7 +33,7 @@ fn try_split(r: u64) -> Result<(u64, u64), u64> {
         return Err(0);
     }
     let digits = r.ilog10() + 1;
-    if digits % 2 == 0 {
+    if digits.is_multiple_of(2) {
         let half_pow = 10u64.pow(digits / 2);
         Ok((r / half_pow, r % half_pow))
     } else {

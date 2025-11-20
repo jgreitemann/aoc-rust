@@ -162,7 +162,7 @@ impl WorryLevel for u64 {
     }
 
     fn divisible_by(&self, divisor: &u64) -> bool {
-        self % divisor == 0
+        self.is_multiple_of(*divisor)
     }
 
     fn apply(&self, op: &Operation) -> Self {

@@ -89,7 +89,7 @@ fn edges(cluster: &HashSet<Vector<usize, 2>>) -> usize {
         .sum();
 
     assert!(
-        total_vertex_value % 3 == 0,
+        total_vertex_value.is_multiple_of(3),
         "corner value should be divisible by three; got {total_vertex_value}"
     );
 

@@ -20,7 +20,7 @@ impl Door {
 
 impl Layer {
     fn will_catch(&self, delay: usize) -> bool {
-        (self.depth + delay) % (2 * (self.range - 1)) == 0
+        (self.depth + delay).is_multiple_of(2 * (self.range - 1))
     }
 
     fn severity(&self) -> usize {

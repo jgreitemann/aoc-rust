@@ -114,7 +114,7 @@ where
 
 fn as_directions(motions: impl Iterator<Item = Motion>) -> impl Iterator<Item = Direction> {
     motions
-        .flat_map(|Motion { direction, length }| std::iter::repeat(direction).take(length as usize))
+        .flat_map(|Motion { direction, length }| std::iter::repeat_n(direction, length as usize))
 }
 
 #[derive(Debug, Clone)]

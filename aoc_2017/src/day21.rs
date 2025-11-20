@@ -66,7 +66,7 @@ impl Door {
         let dim = pic.shape()[0];
         if iterations == 0 {
             pic.into_iter().filter(|&&x| x).count()
-        } else if dim % 2 == 0 {
+        } else if dim.is_multiple_of(2) {
             let mut new_pic = ndarray::Array2::from_elem([dim / 2 * 3, dim / 2 * 3], false);
             pic.exact_chunks((2, 2))
                 .into_iter()
