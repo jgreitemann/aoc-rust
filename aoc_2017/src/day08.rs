@@ -104,7 +104,7 @@ pub enum ExecutionError {
     RegistersEmpty,
 }
 
-fn parse_input(input: &str) -> Result<Vec<Instruction>, ParseError> {
+fn parse_input(input: &str) -> Result<Vec<Instruction<'_>>, ParseError> {
     let re = regex::Regex::new(r"^(?P<target>[a-z]+) (?P<op>inc|dec) (?P<amount>-?[0-9]+) if (?P<register>[a-z]+) (?P<cmp><|>|<=|>=|==|!=) (?P<value>-?[0-9]+)$").unwrap();
 
     input

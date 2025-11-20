@@ -47,11 +47,11 @@ struct Slope {
 }
 
 trait SlopeIterable {
-    fn slope_iter(&self, slope: Slope) -> SlopeIter;
+    fn slope_iter(&self, slope: Slope) -> SlopeIter<'_>;
 }
 
 impl SlopeIterable for Map {
-    fn slope_iter(&self, slope: Slope) -> SlopeIter {
+    fn slope_iter(&self, slope: Slope) -> SlopeIter<'_> {
         SlopeIter {
             game_board: self,
             row_iter: Box::new((0..self.nrows()).step_by(slope.down)),
