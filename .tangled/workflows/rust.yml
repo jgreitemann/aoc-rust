@@ -12,6 +12,7 @@ dependencies:
     - rustc
     - cargo
     - clippy
+    - cargo-nextest
 
 steps:
   - name: "Build all projects"
@@ -19,4 +20,7 @@ steps:
        cargo build --release --verbose --locked
   - name: "Clippy"
     command: |
-      cargo clippy --release --workspace --locked
+       cargo clippy --release --workspace --locked
+  - name: Run tests
+    command: |
+      cargo nextest run --release --locked
