@@ -11,7 +11,7 @@ assert_matches = { workspace = true }
 clap = { version = "4.5.53", features = ["derive"] }
 itertools = { workspace = true }
 rayon = { workspace = true }
-reqwest = { version = "0.12.24", features = ["cookies"] }
+reqwest = { version = "0.12.24", default-features = false, features = ["charset", "cookies", "http2", "rustls-tls", "system-proxy"] }
 scraper = "0.24.0"
 selectors = "0.33.0"
 serde = { version = "1.0.228", features = ["serde_derive"] }
