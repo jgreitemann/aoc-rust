@@ -18,7 +18,7 @@ rstest = { workspace = true }
 tap = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
-tracing = "0.1.40"
+tracing = "0.1.41"
 tracing-test = "0.2.5"
 primes = "0.4.0"
 
