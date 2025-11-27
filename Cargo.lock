@@ -98,6 +98,7 @@ dependencies = [
  "aoc_utils",
  "itertools",
  "ndarray",
+ "num-integer",
  "regex",
  "thiserror",
  "tokio",

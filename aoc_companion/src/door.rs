@@ -64,6 +64,8 @@ impl Submissible for u32 {}
 impl Submissible for i32 {}
 impl Submissible for u64 {}
 impl Submissible for i64 {}
+impl Submissible for u128 {}
+impl Submissible for i128 {}
 impl Submissible for usize {}
 impl Submissible for isize {}
 impl Submissible for String {}
