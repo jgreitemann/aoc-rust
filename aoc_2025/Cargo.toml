@@ -1,17 +1,14 @@
 [package]
-name = "aoc_utils"
+name = "aoc_2025"
 version = "0.1.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-assert_matches = { workspace = true }
+aoc_companion = { workspace = true }
+aoc_utils = { workspace = true }
+anyhow = { workspace = true }
 itertools = { workspace = true }
-ndarray = { workspace = true }
 num-traits = { workspace = true }
-paste = "1.0.15"
-thiserror = { workspace = true }
-
-[dev-dependencies]
-proptest = { workspace = true }
+tokio = { workspace = true }

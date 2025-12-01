@@ -11,8 +11,8 @@ aoc_utils = { workspace = true }
 anyhow = { workspace = true }
 itertools = { workspace = true }
 ndarray = { workspace = true }
+num-integer = { workspace = true }
 regex = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-num-integer = "0.1.46"
 
