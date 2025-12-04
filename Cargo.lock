@@ -150,6 +150,7 @@ dependencies = [
  "aoc_utils",
  "itertools",
  "num-traits",
+ "thiserror",
  "tokio",
 ]
 
