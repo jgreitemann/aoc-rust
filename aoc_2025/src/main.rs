@@ -4,7 +4,7 @@ mod day01;
 mod day02;
 mod day03;
 mod day04;
-// mod day05;
+mod day05;
 // mod day06;
 // mod day07;
 // mod day08;
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
         door!(2025-12-02 ~> day02),
         door!(2025-12-03 ~> day03),
         door!(2025-12-04 ~> day04),
-        // door!(2025-12-05 ~> day05),
+        door!(2025-12-05 ~> day05),
         // door!(2025-12-06 ~> day06),
         // door!(2025-12-07 ~> day07),
         // door!(2025-12-08 ~> day08),
