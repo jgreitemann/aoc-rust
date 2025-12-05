@@ -1,6 +1,7 @@
 use aoc_companion::prelude::*;
 use aoc_utils::linalg::Vector;
 
+use aoc_utils::range::RangeSet;
 use itertools::Itertools;
 use tap::Tap;
 use thiserror::Error;
@@ -89,12 +90,15 @@ fn parse_input(input: &str) -> Result<Vec<SensorData>, ParseIntError> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-struct Coverage<C: Covering> {
+struct Coverage<C: RangeSet> {
     positive: Vec<C>,
     negative: Vec<C>,
 }
 
-impl<C: Covering> Coverage<C> {
+impl<C> Coverage<C>
+where
+    C: RangeSet + Iterator + Clone,
+{
     fn new() -> Self {
         Self {
             positive: Vec::new(),
@@ -106,12 +110,12 @@ impl<C: Covering> Coverage<C> {
         let pos_intersections: Vec<_> = self
             .positive
             .iter()
-            .flat_map(|p| p.intersect(&new))
+            .flat_map(|p| p.intersection(&new))
             .collect();
         let neg_intersections: Vec<_> = self
             .negative
             .iter()
-            .flat_map(|p| p.intersect(&new))
+            .flat_map(|p| p.intersection(&new))
             .collect();
         self.positive.push(new);
         self.negative.extend(pos_intersections);
@@ -119,28 +123,15 @@ impl<C: Covering> Coverage<C> {
     }
 
     fn size(&self) -> usize {
-        self.positive.iter().map(Covering::size).sum::<usize>()
-            - self.negative.iter().map(Covering::size).sum::<usize>()
-    }
-}
-
-trait Covering: Sized {
-    fn intersect(&self, other: &Self) -> Option<Self>;
-    fn size(&self) -> usize;
-}
-
-impl Covering for RangeInclusive<isize> {
-    fn intersect(&self, other: &Self) -> Option<Self> {
-        let range = (*self.start().max(other.start()))..=(*self.end().min(other.end()));
-        (!range.is_empty()).then_some(range)
-    }
-
-    fn size(&self) -> usize {
-        if self.is_empty() {
-            0
-        } else {
-            (self.end() + 1 - self.start()) as usize
-        }
+        self.positive
+            .iter()
+            .map(|c| c.clone().count())
+            .sum::<usize>()
+            - self
+                .negative
+                .iter()
+                .map(|c| c.clone().count())
+                .sum::<usize>()
     }
 }
 
@@ -268,26 +259,6 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
         assert!(SENSOR.line_covering(-3).is_empty());
         assert!(SENSOR.line_covering(17).is_empty());
         assert!(SENSOR.line_covering(20).is_empty());
-    }
-
-    // 1 2 3 4 5 6 7 8
-    // ---------
-    //     -----------
-
-    #[test]
-    fn intersection_of_line_segments() {
-        assert_eq!(Covering::intersect(&(1..=5), &(3..=8)), Some(3..=5));
-        assert_eq!(Covering::intersect(&(1..=8), &(3..=5)), Some(3..=5));
-        assert_eq!(Covering::intersect(&(1..=3), &(5..=8)), None);
-    }
-
-    #[test]
-    #[allow(clippy::reversed_empty_ranges)]
-    fn size_of_line_segments() {
-        assert_eq!((1..=5).size(), 5);
-        assert_eq!((3..=5).size(), 3);
-        assert_eq!((5..=3).size(), 0);
-        assert_eq!((3..=3).size(), 1);
     }
 
     #[test]
