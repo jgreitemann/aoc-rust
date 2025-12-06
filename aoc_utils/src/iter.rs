@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{iter::FusedIterator, rc::Rc};
 
 pub trait IterUtils: Iterator {
     fn try_unzip<A, B, E, FromA, FromB>(mut self) -> Result<(FromA, FromB), E>
@@ -71,5 +71,114 @@ where
                 self.fallback_elem.take()
             }
         })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Few<T, const N: usize>([Option<T>; N]);
+
+pub type AtMostTwo<T> = Few<T, 2>;
+
+impl<T, const N: usize> Few<T, N> {
+    pub fn new<const M: usize>(items: [T; M]) -> Self {
+        assert!(M <= N);
+        Few(crate::array::from_iter(
+            items
+                .into_iter()
+                .map(Some)
+                .chain(std::iter::repeat_with(|| None)),
+        )
+        .ok()
+        .unwrap())
+    }
+
+    pub fn none() -> Self {
+        Few(std::array::from_fn(|_| None))
+    }
+
+    pub fn one(item: T) -> Self {
+        Few::new([item])
+    }
+
+    pub fn two(item1: T, item2: T) -> Self {
+        Few::new([item1, item2])
+    }
+}
+
+impl<T, const N: usize> Default for Few<T, N> {
+    fn default() -> Self {
+        Few::none()
+    }
+}
+
+impl<T, const N: usize> Iterator for Few<T, N> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if N > 0 {
+            let item = self.0[0].take();
+            self.0.rotate_left(1);
+            item
+        } else {
+            None
+        }
+    }
+}
+
+impl<T, const N: usize> FusedIterator for Few<T, N> {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn few_insufficient_capacity_one() {
+        Few::<i32, 0>::one(42);
+    }
+
+    #[test]
+    #[should_panic]
+    fn few_insufficient_capacity_two() {
+        Few::<i32, 1>::two(42, 17);
+    }
+
+    #[test]
+    #[should_panic]
+    fn few_insufficient_capacity_new() {
+        Few::<i32, 2>::new([42, 17, -1]);
+    }
+
+    #[test]
+    fn few_iterator() {
+        itertools::assert_equal(Few::<i32, 0>::none(), []);
+        itertools::assert_equal(Few::<i32, 1>::none(), []);
+        itertools::assert_equal(Few::<i32, 2>::none(), []);
+        itertools::assert_equal(Few::<i32, 1>::one(42), [42]);
+        itertools::assert_equal(Few::<i32, 2>::one(42), [42]);
+        itertools::assert_equal(Few::<i32, 2>::two(42, 17), [42, 17]);
+        itertools::assert_equal(Few::<i32, 3>::two(42, 17), [42, 17]);
+        itertools::assert_equal(Few::<i32, 3>::new([42, 17]), [42, 17]);
+        itertools::assert_equal(Few::<i32, 3>::new([42, 17, -1]), [42, 17, -1]);
+    }
+
+    #[test]
+    fn few_iterator_fused() {
+        let mut few = AtMostTwo::two(42, 17);
+        assert!(few.next().is_some());
+        assert!(few.next().is_some());
+        assert!(few.next().is_none());
+        assert!(few.next().is_none());
+        assert!(few.next().is_none());
+        assert!(few.next().is_none());
+        assert!(few.next().is_none());
+    }
+
+    #[test]
+    fn few_default_empty() {
+        itertools::assert_equal(Few::<i32, 0>::default(), []);
+        itertools::assert_equal(Few::<i32, 1>::default(), []);
+        itertools::assert_equal(Few::<i32, 2>::default(), []);
+        itertools::assert_equal(Few::<i32, 3>::default(), []);
     }
 }
