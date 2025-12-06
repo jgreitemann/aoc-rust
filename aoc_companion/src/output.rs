@@ -9,6 +9,7 @@ use tokio::sync::mpsc;
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::io::Write;
+use std::num::NonZero;
 
 #[derive(Debug)]
 pub enum Progress {
@@ -37,7 +38,10 @@ fn write_answer(
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, time },
             validity: Consistent,
-        }) => (format!("{answer} ({time:?})"), '⭐'),
+        }) => (
+            format!("{answer} ({time:.0$})", significant_decimals(time, 3)),
+            '⭐',
+        ),
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, .. },
             validity: DisparateAnswer { correct },
@@ -45,7 +49,10 @@ fn write_answer(
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, time },
             validity: GuessSubmitted(Correct),
-        }) => (format!("{answer} ({time:?})"), '🌟'),
+        }) => (
+            format!("{answer} ({time:.0$})", significant_decimals(time, 3)),
+            '🌟',
+        ),
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, .. },
             validity: GuessSubmitted(GuessedTooRecently),
@@ -56,7 +63,10 @@ fn write_answer(
         Ok(PartValidation {
             guess: DoorPartResult::Computed { answer, time },
             validity: Unknown,
-        }) => (format!("{answer} ({time:?})"), '🤷'),
+        }) => (
+            format!("{answer} ({time:.0$})", significant_decimals(time, 3)),
+            '🤷',
+        ),
         Ok(PartValidation {
             guess: DoorPartResult::Skipped,
             validity: Skipped { correct },
@@ -154,4 +164,46 @@ where
     }
 
     table
+}
+
+fn significant_decimals(duration: &time::Duration, significant_places: usize) -> usize {
+    let seconds = duration.as_seconds_f64();
+    let Some(non_zero_unit) =
+        NonZero::new((seconds / time::convert::Second::per_t::<f64>(time::convert::Day)) as i64)
+            .or_else(|| {
+                NonZero::new(
+                    (seconds / time::convert::Second::per_t::<f64>(time::convert::Hour)) as i64,
+                )
+            })
+            .or_else(|| {
+                NonZero::new(
+                    (seconds / time::convert::Second::per_t::<f64>(time::convert::Minute)) as i64,
+                )
+            })
+            .or_else(|| NonZero::new((seconds) as i64))
+            .or_else(|| {
+                NonZero::new(
+                    (seconds * time::convert::Millisecond::per_t::<f64>(time::convert::Second))
+                        as i64,
+                )
+            })
+            .or_else(|| {
+                NonZero::new(
+                    (seconds * time::convert::Microsecond::per_t::<f64>(time::convert::Second))
+                        as i64,
+                )
+            })
+            .or_else(|| {
+                NonZero::new(
+                    (seconds * time::convert::Nanosecond::per_t::<f64>(time::convert::Second))
+                        as i64,
+                )
+            })
+    else {
+        return 0;
+    };
+
+    let leading_digits = non_zero_unit.get().checked_ilog10().unwrap_or(0) as usize + 1;
+
+    significant_places.saturating_sub(leading_digits)
 }

@@ -119,7 +119,7 @@ pub struct DoorEntry(pub DoorDate, pub fn(&str, usize) -> DoorResult);
 pub enum DoorPartResult {
     Computed {
         answer: String,
-        time: std::time::Duration,
+        time: time::Duration,
     },
     Skipped,
 }
@@ -135,7 +135,9 @@ impl DoorPartResult {
         let end = std::time::Instant::now();
         Ok(DoorPartResult::Computed {
             answer: answer.to_string(),
-            time: end - start,
+            time: (end - start)
+                .try_into()
+                .expect("duration should be positive"),
         })
     }
 }
