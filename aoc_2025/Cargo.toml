@@ -10,6 +10,7 @@ aoc_companion = { workspace = true }
 aoc_utils = { workspace = true }
 anyhow = { workspace = true }
 itertools = { workspace = true }
+ndarray = { workspace = true }
 num-traits = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }

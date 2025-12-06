@@ -149,6 +149,7 @@ dependencies = [
  "aoc_companion",
  "aoc_utils",
  "itertools",
+ "ndarray",
  "num-traits",
  "thiserror",
  "tokio",
