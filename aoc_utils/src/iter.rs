@@ -78,6 +78,7 @@ where
 pub struct Few<T, const N: usize>([Option<T>; N]);
 
 pub type AtMostTwo<T> = Few<T, 2>;
+pub type AtMostThree<T> = Few<T, 3>;
 
 impl<T, const N: usize> Few<T, N> {
     pub fn new<const M: usize>(items: [T; M]) -> Self {
@@ -102,6 +103,10 @@ impl<T, const N: usize> Few<T, N> {
 
     pub fn two(item1: T, item2: T) -> Self {
         Few::new([item1, item2])
+    }
+
+    pub fn three(item1: T, item2: T, item3: T) -> Self {
+        Few::new([item1, item2, item3])
     }
 }
 
