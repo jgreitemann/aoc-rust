@@ -10,7 +10,7 @@ mod day07;
 mod day08;
 mod day09;
 mod day10;
-// mod day11;
+mod day11;
 // mod day12;
 
 use aoc_companion::prelude::*;
@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
         door!(2025-12-08 ~> day08),
         door!(2025-12-09 ~> day09),
         door!(2025-12-10 ~> day10),
-        // door!(2025-12-11 ~> day11),
+        door!(2025-12-11 ~> day11),
         // door!(2025-12-12 ~> day12),
     ])
     .await
