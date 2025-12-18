@@ -5,7 +5,7 @@ use aoc_utils::{geometry::Point, linalg::Vector};
 use itertools::Itertools;
 
 pub(crate) struct Door {
-    seats: HashSet<Vector<usize, 2>>,
+    seats: HashSet<Vector<isize, 2>>,
 }
 
 impl<'input> Solution<'input> for Door {
@@ -17,7 +17,7 @@ impl<'input> Solution<'input> for Door {
                 line.bytes()
                     .enumerate()
                     .filter(|&(_, b)| b == b'L')
-                    .map(move |(col, _)| Vector([row, col]))
+                    .map(move |(col, _)| Vector([row as isize, col as isize]))
             })
             .collect();
         Door { seats }
@@ -34,7 +34,7 @@ impl<'input> Solution<'input> for Door {
 
 trait SeatPolicy {
     const THRESHOLD: usize;
-    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>>;
+    fn neighbors(&self, seat: Vector<isize, 2>) -> impl Iterator<Item = Vector<isize, 2>>;
 }
 
 struct DirectNeighborSeatPolicy;
@@ -42,18 +42,18 @@ struct DirectNeighborSeatPolicy;
 impl SeatPolicy for DirectNeighborSeatPolicy {
     const THRESHOLD: usize = 4;
 
-    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>> {
+    fn neighbors(&self, seat: Vector<isize, 2>) -> impl Iterator<Item = Vector<isize, 2>> {
         seat.neighbors()
     }
 }
 
 struct SightlineSeatPolicy<'s> {
-    seats: &'s HashSet<Vector<usize, 2>>,
-    bounds: [RangeInclusive<usize>; 2],
+    seats: &'s HashSet<Vector<isize, 2>>,
+    bounds: [RangeInclusive<isize>; 2],
 }
 
 impl<'s> SightlineSeatPolicy<'s> {
-    fn new(seats: &'s HashSet<Vector<usize, 2>>) -> Self {
+    fn new(seats: &'s HashSet<Vector<isize, 2>>) -> Self {
         Self {
             seats,
             bounds: array::from_fn(|i| 0..=seats.iter().map(|s| s[i]).max().unwrap_or(0)),
@@ -64,7 +64,7 @@ impl<'s> SightlineSeatPolicy<'s> {
 impl SeatPolicy for SightlineSeatPolicy<'_> {
     const THRESHOLD: usize = 5;
 
-    fn neighbors(&self, seat: Vector<usize, 2>) -> impl Iterator<Item = Vector<usize, 2>> {
+    fn neighbors(&self, seat: Vector<isize, 2>) -> impl Iterator<Item = Vector<isize, 2>> {
         seat.neighbors().filter_map(move |neighbor| {
             let dir = neighbor - seat;
             (1..)
@@ -76,10 +76,10 @@ impl SeatPolicy for SightlineSeatPolicy<'_> {
 }
 
 fn evolve<P: SeatPolicy>(
-    occupied: &HashSet<Vector<usize, 2>>,
-    seats: &HashSet<Vector<usize, 2>>,
+    occupied: &HashSet<Vector<isize, 2>>,
+    seats: &HashSet<Vector<isize, 2>>,
     policy: &P,
-) -> HashSet<Vector<usize, 2>> {
+) -> HashSet<Vector<isize, 2>> {
     let empty = seats.difference(occupied);
     empty
         .copied()
@@ -95,9 +95,9 @@ fn evolve<P: SeatPolicy>(
 }
 
 fn fixed_point_occupancy(
-    seats: &HashSet<Vector<usize, 2>>,
+    seats: &HashSet<Vector<isize, 2>>,
     policy: &impl SeatPolicy,
-) -> HashSet<Vector<usize, 2>> {
+) -> HashSet<Vector<isize, 2>> {
     itertools::iterate(HashSet::new(), |prev| evolve(prev, seats, policy))
         .tuple_windows()
         .find(|(lhs, rhs)| lhs == rhs)
@@ -121,7 +121,7 @@ LLLLLLLLLL
 L.LLLLLL.L
 L.LLLLL.LL";
 
-    const EXAMPLE_SEATS: [Vector<usize, 2>; 71] = [
+    const EXAMPLE_SEATS: [Vector<isize, 2>; 71] = [
         Vector([0, 0]),
         Vector([0, 2]),
         Vector([0, 3]),
