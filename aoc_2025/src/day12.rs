@@ -79,8 +79,7 @@ impl std::str::FromStr for Problem {
                 Ok::<_, ParseIntError>([x.parse()?, y.parse()?])
                     .with_context(|| anyhow!("failed to parse region dimenions {dimensions:?}"))
             })?;
-        // TODO: add try_from_iter_exact
-        let presents = aoc_utils::array::try_from_iter(shapes.split_whitespace().map(|s| {
+        let presents = aoc_utils::array::try_from_iter_exact(shapes.split_whitespace().map(|s| {
             s.parse()
                 .with_context(|| anyhow!("failed to parse present count {s:?}"))
         }))?

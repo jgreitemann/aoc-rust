@@ -63,8 +63,7 @@ impl std::str::FromStr for Mask {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        // FIXME: This should use `try_from_iter_exact()`
-        aoc_utils::array::try_from_iter(s.chars().rev().map(|c| match c {
+        aoc_utils::array::try_from_iter_exact(s.chars().rev().map(|c| match c {
             'X' => Ok(None),
             '0' => Ok(Some(false)),
             '1' => Ok(Some(true)),

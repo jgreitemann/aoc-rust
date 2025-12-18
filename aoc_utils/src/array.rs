@@ -95,6 +95,43 @@ pub fn try_from_iter<T, E, const N: usize>(
     })
 }
 
+pub fn try_from_iter_exact<T, E, const N: usize>(
+    iter: impl IntoIterator<Item = Result<T, E>>,
+) -> Result<Result<[T; N], Vec<T>>, E> {
+    let mut n = 0;
+    let mut fused = iter.into_iter().fuse();
+    let array: [_; N] = try_from_fn(|i| {
+        if let Some(elem) = fused.next() {
+            n = i + 1;
+            Ok(MaybeUninit::new(elem?))
+        } else {
+            Ok(MaybeUninit::uninit())
+        }
+    })?;
+
+    Ok(if n != N {
+        // received fewer elements from the iterator than N
+        Err(array
+            .into_iter()
+            .take(n)
+            .map(|x| unsafe { x.assume_init() })
+            .collect())
+    } else if let Some(extra) = fused.next() {
+        // received at least one more element than expected
+        let mut vec: Vec<T> = array
+            .into_iter()
+            .map(|x| unsafe { x.assume_init() })
+            .collect();
+        vec.push(extra?);
+        for extra in fused {
+            vec.push(extra?);
+        }
+        Err(vec)
+    } else {
+        Ok(array.map(|x| unsafe { x.assume_init() }))
+    })
+}
+
 pub fn try_map<T, U, E, const N: usize>(
     array: [T; N],
     f: impl FnMut(T) -> Result<U, E>,
