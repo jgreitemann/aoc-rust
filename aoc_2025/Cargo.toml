@@ -15,4 +15,3 @@ num-traits = { workspace = true }
 rayon = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-fxhash = "0.2.1"

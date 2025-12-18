@@ -148,7 +148,6 @@ dependencies = [
  "anyhow",
  "aoc_companion",
  "aoc_utils",
- "fxhash",
  "itertools",
  "ndarray",
  "num-traits",
