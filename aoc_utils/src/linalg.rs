@@ -44,6 +44,16 @@ impl<T: Num, const N: usize> Vector<T, N> {
             Ok(Vector(results.map(|res| res.unwrap())))
         }
     }
+
+    pub fn embed<const M: usize>(self) -> Vector<T, M> {
+        let mut res = Vector::new();
+
+        for (dest, elem) in res.iter_mut().zip(self.into_iter()) {
+            *dest = elem;
+        }
+
+        res
+    }
 }
 
 impl<T, const N: usize> Default for Vector<T, N>
@@ -525,6 +535,116 @@ impl_point_3d!(i64);
 impl_point_3d!(i128);
 impl_point_3d!(isize);
 
+macro_rules! impl_point_4d {
+    ($num:ty) => {
+        impl Point for Vector<$num, 4> {
+            fn neighbors(self) -> Neighbors<Self> {
+                const NN: &[Vector<$num, 4>] = &[
+                    Vector([-1, -1, -1, -1]),
+                    Vector([-1, -1, -1, 0]),
+                    Vector([-1, -1, -1, 1]),
+                    Vector([-1, -1, 0, -1]),
+                    Vector([-1, -1, 0, 0]),
+                    Vector([-1, -1, 0, 1]),
+                    Vector([-1, -1, 1, -1]),
+                    Vector([-1, -1, 1, 0]),
+                    Vector([-1, -1, 1, 1]),
+                    Vector([-1, 0, -1, -1]),
+                    Vector([-1, 0, -1, 0]),
+                    Vector([-1, 0, -1, 1]),
+                    Vector([-1, 0, 0, -1]),
+                    Vector([-1, 0, 0, 0]),
+                    Vector([-1, 0, 0, 1]),
+                    Vector([-1, 0, 1, -1]),
+                    Vector([-1, 0, 1, 0]),
+                    Vector([-1, 0, 1, 1]),
+                    Vector([-1, 1, -1, -1]),
+                    Vector([-1, 1, -1, 0]),
+                    Vector([-1, 1, -1, 1]),
+                    Vector([-1, 1, 0, -1]),
+                    Vector([-1, 1, 0, 0]),
+                    Vector([-1, 1, 0, 1]),
+                    Vector([-1, 1, 1, -1]),
+                    Vector([-1, 1, 1, 0]),
+                    Vector([-1, 1, 1, 1]),
+                    Vector([0, -1, -1, -1]),
+                    Vector([0, -1, -1, 0]),
+                    Vector([0, -1, -1, 1]),
+                    Vector([0, -1, 0, -1]),
+                    Vector([0, -1, 0, 0]),
+                    Vector([0, -1, 0, 1]),
+                    Vector([0, -1, 1, -1]),
+                    Vector([0, -1, 1, 0]),
+                    Vector([0, -1, 1, 1]),
+                    Vector([0, 0, -1, -1]),
+                    Vector([0, 0, -1, 0]),
+                    Vector([0, 0, -1, 1]),
+                    Vector([0, 0, 0, -1]),
+                    Vector([0, 0, 0, 1]),
+                    Vector([0, 0, 1, -1]),
+                    Vector([0, 0, 1, 0]),
+                    Vector([0, 0, 1, 1]),
+                    Vector([0, 1, -1, -1]),
+                    Vector([0, 1, -1, 0]),
+                    Vector([0, 1, -1, 1]),
+                    Vector([0, 1, 0, -1]),
+                    Vector([0, 1, 0, 0]),
+                    Vector([0, 1, 0, 1]),
+                    Vector([0, 1, 1, -1]),
+                    Vector([0, 1, 1, 0]),
+                    Vector([0, 1, 1, 1]),
+                    Vector([1, -1, -1, -1]),
+                    Vector([1, -1, -1, 0]),
+                    Vector([1, -1, -1, 1]),
+                    Vector([1, -1, 0, -1]),
+                    Vector([1, -1, 0, 0]),
+                    Vector([1, -1, 0, 1]),
+                    Vector([1, -1, 1, -1]),
+                    Vector([1, -1, 1, 0]),
+                    Vector([1, -1, 1, 1]),
+                    Vector([1, 0, -1, -1]),
+                    Vector([1, 0, -1, 0]),
+                    Vector([1, 0, -1, 1]),
+                    Vector([1, 0, 0, -1]),
+                    Vector([1, 0, 0, 0]),
+                    Vector([1, 0, 0, 1]),
+                    Vector([1, 0, 1, -1]),
+                    Vector([1, 0, 1, 0]),
+                    Vector([1, 0, 1, 1]),
+                    Vector([1, 1, -1, -1]),
+                    Vector([1, 1, -1, 0]),
+                    Vector([1, 1, -1, 1]),
+                    Vector([1, 1, 0, -1]),
+                    Vector([1, 1, 0, 0]),
+                    Vector([1, 1, 0, 1]),
+                    Vector([1, 1, 1, -1]),
+                    Vector([1, 1, 1, 0]),
+                    Vector([1, 1, 1, 1]),
+                ];
+                Neighbors {
+                    center: self,
+                    rel_iter: NN.iter(),
+                }
+            }
+
+            fn nearest_neighbors(self) -> Neighbors<Self> {
+                unimplemented!()
+            }
+
+            fn next_nearest_neighbors(self) -> Neighbors<Self> {
+                unimplemented!()
+            }
+        }
+    };
+}
+
+impl_point_4d!(i8);
+impl_point_4d!(i16);
+impl_point_4d!(i32);
+impl_point_4d!(i64);
+impl_point_4d!(i128);
+impl_point_4d!(isize);
+
 unsafe impl<const N: usize> ndarray::NdIndex<ndarray::Dim<[usize; N]>> for Vector<usize, N>
 where
     [usize; N]: ndarray::NdIndex<ndarray::Dim<[usize; N]>>,
@@ -544,6 +664,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
     use assert_matches::assert_matches;
     use itertools::assert_equal;
@@ -802,5 +924,37 @@ mod tests {
                 Vector([3, -5]),
             ],
         );
+    }
+
+    #[test]
+    fn vector_3d_neighbors_covers_cube() {
+        let center = Vector([5, -6, 3]);
+        let cube: HashSet<_> = [[-1, 0, 1]; 3]
+            .iter()
+            .multi_cartesian_product()
+            .map(|cs| {
+                let v = Vector(crate::array::from_iter_exact(cs.into_iter().copied()).unwrap());
+                center + v
+            })
+            .collect();
+        assert_eq!(cube.len(), 27);
+        let center_and_neighbors: HashSet<_> = center.neighbors().chain([center]).collect();
+        assert_eq!(center_and_neighbors, cube);
+    }
+
+    #[test]
+    fn vector_4d_neighbors_covers_cube() {
+        let center = Vector([5, -6, 3, -1]);
+        let cube: HashSet<_> = [[-1, 0, 1]; 4]
+            .iter()
+            .multi_cartesian_product()
+            .map(|cs| {
+                let v = Vector(crate::array::from_iter_exact(cs.into_iter().copied()).unwrap());
+                center + v
+            })
+            .collect();
+        assert_eq!(cube.len(), 81);
+        let center_and_neighbors: HashSet<_> = center.neighbors().chain([center]).collect();
+        assert_eq!(center_and_neighbors, cube);
     }
 }
