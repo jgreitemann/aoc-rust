@@ -1,6 +1,19 @@
-use std::{iter::FusedIterator, rc::Rc};
+use std::{
+    iter::{FusedIterator, Sum},
+    rc::Rc,
+};
 
 pub trait IterUtils: Iterator {
+    fn try_sum<T, E>(mut self) -> Result<T, E>
+    where
+        Self: Sized + Iterator<Item = Result<T, E>>,
+        T: Sum,
+    {
+        self.try_fold(std::iter::empty::<T>().sum(), |acc, val| {
+            Ok(AtMostTwo::two(acc, val?).sum())
+        })
+    }
+
     fn try_unzip<A, B, E, FromA, FromB>(mut self) -> Result<(FromA, FromB), E>
     where
         Self: Sized + Iterator<Item = Result<(A, B), E>>,
