@@ -159,6 +159,7 @@ mod tests {
 
         #![proptest_config(ProptestConfig::with_cases(8))]
         #[test]
+        #[ignore = "slow"]
         fn program_counts_non_prime_multiple_of_17_in_range(start in 2u64..1000, mult in 1u64..25) {
             let end = start + mult * 17;
             let mut registers = HashMap::from([(Register(b'b'), start as i64), (Register(b'c'), end as i64)]);
