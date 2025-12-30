@@ -1,4 +1,5 @@
 use std::{
+    collections::{BTreeMap, HashMap},
     iter::{FusedIterator, Sum},
     rc::Rc,
 };
@@ -34,6 +35,42 @@ pub trait IterUtils: Iterator {
             iter: Some(self),
             fallback_elem: Some(fallback_elem),
         }
+    }
+
+    fn btree_merge<K, V>(self, mut merge_fn: impl FnMut(&mut V, V)) -> BTreeMap<K, V>
+    where
+        Self: Sized + Iterator<Item = (K, V)>,
+        K: Ord,
+    {
+        self.fold(BTreeMap::new(), |mut map, (k, v)| {
+            use std::collections::btree_map::Entry::*;
+            match map.entry(k) {
+                Vacant(vacant_entry) => {
+                    vacant_entry.insert(v);
+                }
+                Occupied(mut occupied_entry) => merge_fn(occupied_entry.get_mut(), v),
+            };
+
+            map
+        })
+    }
+
+    fn hash_merge<K, V>(self, mut merge_fn: impl FnMut(&mut V, V)) -> HashMap<K, V>
+    where
+        Self: Sized + Iterator<Item = (K, V)>,
+        K: std::hash::Hash + Eq,
+    {
+        self.fold(HashMap::new(), |mut map, (k, v)| {
+            use std::collections::hash_map::Entry::*;
+            match map.entry(k) {
+                Vacant(vacant_entry) => {
+                    vacant_entry.insert(v);
+                }
+                Occupied(mut occupied_entry) => merge_fn(occupied_entry.get_mut(), v),
+            };
+
+            map
+        })
     }
 }
 
@@ -147,6 +184,8 @@ impl<T, const N: usize> FusedIterator for Few<T, N> {}
 
 #[cfg(test)]
 mod tests {
+    use itertools::Itertools;
+
     use super::*;
 
     #[test]
@@ -198,5 +237,22 @@ mod tests {
         itertools::assert_equal(Few::<i32, 1>::default(), []);
         itertools::assert_equal(Few::<i32, 2>::default(), []);
         itertools::assert_equal(Few::<i32, 3>::default(), []);
+    }
+
+    #[test]
+    fn merge_by_counts() {
+        let pi_str = format!("{:.15}", core::f64::consts::PI);
+        let digits_of_pi = pi_str.chars().filter_map(|c| c.to_digit(10));
+        let btree_map = digits_of_pi
+            .clone()
+            .map(|d| (d, 1))
+            .btree_merge(|c, i| *c += i);
+        let hash_map = digits_of_pi
+            .clone()
+            .map(|d| (d, 1))
+            .hash_merge(|c, i| *c += i);
+        let counts = digits_of_pi.counts();
+        assert_eq!(hash_map, counts);
+        itertools::assert_equal(btree_map, hash_map.into_iter().sorted());
     }
 }
